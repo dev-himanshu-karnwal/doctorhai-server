@@ -1,5 +1,5 @@
 /**
- * Seed data: permissions, roles, and superadmin user.
+ * Seed data: permissions, roles, and superadmin account.
  */
 
 export const PERMISSIONS = [
@@ -39,7 +39,6 @@ export const PERMISSIONS = [
     key: 'super_admin.manage',
     description: 'Manage hospitals, doctors, and permissions',
   },
-  { key: 'super_admin.users', description: 'Manage users' },
 ];
 
 export const ROLES = [
@@ -71,7 +70,6 @@ export const ROLES = [
     isSystem: true,
     permissionKeys: [
       'super_admin.manage',
-      'super_admin.users',
       'hospital.doctor.create',
       'hospital.doctor.update',
       'hospital.doctor.delete',

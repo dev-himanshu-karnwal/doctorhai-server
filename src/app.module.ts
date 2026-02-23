@@ -7,8 +7,6 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { HospitalsModule } from './modules/hospitals/hospitals.module';
 import { DoctorProfilesModule } from './modules/doctor-profiles/doctor-profiles.module';
-import { UsersModule } from './modules/users/users.module';
-
 @Module({
   imports: [
     ConfigModule,
@@ -18,7 +16,6 @@ import { UsersModule } from './modules/users/users.module';
     AddressesModule,
     HospitalsModule,
     DoctorProfilesModule,
-    UsersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

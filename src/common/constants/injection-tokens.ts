@@ -1,5 +1,3 @@
-export const USER_REPOSITORY_TOKEN = Symbol('IUserRepository');
-
 // Addresses module
 export const ADDRESS_REPOSITORY_TOKEN = Symbol('IAddressRepository');
 export const ADDRESS_SERVICE_TOKEN = Symbol('IAddressService');

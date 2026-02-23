@@ -1,5 +1,5 @@
 /**
- * Production seed: permissions, roles, superadmin user.
+ * Production seed: permissions, roles, superadmin account.
  *
  * Run: pnpm seed:prod
  */
@@ -27,7 +27,7 @@ async function run(): Promise<void> {
     await seedRoles(conn, ROLES);
     console.log('  ✓ Roles');
     await seedSuperadmin(conn, SUPERADMIN);
-    console.log('  ✓ Superadmin user');
+    console.log('  ✓ Superadmin account');
   } finally {
     await closeDataSource(conn);
   }
