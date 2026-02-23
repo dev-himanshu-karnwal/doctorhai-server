@@ -1,1 +1,1 @@
-export { ApiResponse } from './api-response.class';
+export { ApiResponse, isDataKeyWrapper } from './api-response.class';

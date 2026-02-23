@@ -33,6 +33,7 @@ import type {
   CreateDoctorByHospitalDto,
   AuthResponseDto,
   CheckUsernameResponseDto,
+  MeResponseDto,
 } from '../dto';
 import type { CreateAccountDto } from '../dto';
 import type { RegistrationType } from '../enums/registration-type.enum';
@@ -86,6 +87,16 @@ export class AuthFlowService implements IAuthFlowService {
       ) {
         throw new BusinessRuleViolationException(
           'name, designation and specialization are required when registering as doctor',
+        );
+      }
+      if (
+        await this.doctorProfileService.findByEmailAndHospitalId(
+          dto.email,
+          null,
+        )
+      ) {
+        throw new BusinessRuleViolationException(
+          `Email '${dto.email}' is already used for an individual doctor profile`,
         );
       }
     }
@@ -239,6 +250,98 @@ export class AuthFlowService implements IAuthFlowService {
     };
   }
 
+  async getMe(accountId: string): Promise<MeResponseDto> {
+    const account = await this.accountRepo.findById(accountId);
+    if (!account) {
+      throw new UnauthorizedException('Account not found');
+    }
+    if (!account.isActive) {
+      throw new UnauthorizedException('Account is inactive');
+    }
+    const roleNames: string[] = [];
+    for (const assignment of account.roles) {
+      try {
+        const role = await this.roleService.findById(assignment.roleId);
+        roleNames.push(role.name);
+      } catch {
+        // Skip roles that no longer exist
+      }
+    }
+
+    const accountMe = {
+      id: account.id,
+      loginType: account.loginType,
+      loginValue: account.loginValue,
+      roles: roleNames,
+      isActive: account.isActive,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    };
+
+    const result: MeResponseDto = { account: accountMe };
+
+    if (roleNames.includes('hospital')) {
+      const hospital = await this.hospitalService.findByAccountId(accountId);
+      if (hospital) {
+        const address = await this.addressService.findById(hospital.addressId);
+        result.hospital = {
+          id: hospital.id,
+          name: hospital.name,
+          slug: hospital.slug,
+          phone: hospital.phone,
+          email: hospital.email,
+          coverPhotoUrl: hospital.coverPhotoUrl,
+          isActive: hospital.isActive,
+          address: {
+            id: address.id,
+            addressLine1: address.addressLine1,
+            addressLine2: address.addressLine2,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            latitude: address.latitude,
+            longitude: address.longitude,
+          },
+          createdAt: hospital.createdAt,
+          updatedAt: hospital.updatedAt,
+        };
+      }
+    }
+
+    if (roleNames.includes('doctor')) {
+      const doctor = await this.doctorProfileService.findByAccountId(accountId);
+      if (doctor) {
+        const address = await this.addressService.findById(doctor.addressId);
+        result.doctor = {
+          id: doctor.id,
+          fullName: doctor.fullName,
+          designation: doctor.designation,
+          specialization: doctor.specialization,
+          phone: doctor.phone,
+          email: doctor.email,
+          slug: doctor.slug,
+          bio: doctor.bio,
+          profilePhotoUrl: doctor.profilePhotoUrl,
+          hospitalId: doctor.hospitalId,
+          address: {
+            id: address.id,
+            addressLine1: address.addressLine1,
+            addressLine2: address.addressLine2,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            latitude: address.latitude,
+            longitude: address.longitude,
+          },
+          createdAt: doctor.createdAt,
+          updatedAt: doctor.updatedAt,
+        };
+      }
+    }
+
+    return result;
+  }
+
   async createDoctorByHospital(
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
@@ -250,6 +353,17 @@ export class AuthFlowService implements IAuthFlowService {
     if (existing) {
       throw new BusinessRuleViolationException(
         `Username '${dto.username}' is already taken`,
+      );
+    }
+
+    if (
+      await this.doctorProfileService.findByEmailAndHospitalId(
+        dto.email,
+        dto.hospitalId,
+      )
+    ) {
+      throw new BusinessRuleViolationException(
+        `Email '${dto.email}' is already used for a doctor profile at this hospital`,
       );
     }
 

@@ -18,6 +18,10 @@ export interface CreateDoctorProfileData {
 
 export interface IDoctorProfileService {
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
+  findByEmailAndHospitalId(
+    email: string,
+    hospitalId: string | null,
+  ): Promise<DoctorProfileEntity | null>;
   create(
     data: CreateDoctorProfileData,
     session?: ClientSession,

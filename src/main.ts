@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config';
 import { GlobalExceptionFilter } from './common/filters';
@@ -11,6 +12,7 @@ import {
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
   const config = app.get(AppConfigService);
 
   app.setGlobalPrefix(config.apiPrefix);

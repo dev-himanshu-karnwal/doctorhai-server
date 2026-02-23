@@ -11,7 +11,8 @@ import {
 
 /**
  * When a hospital creates a doctor: same profile info as doctor self-registration.
- * Hospital chooses the username for the doctor; email may repeat.
+ * Hospital chooses the username for the doctor.
+ * Email must be unique per hospital (same email cannot be used twice at the same hospital).
  */
 export class CreateDoctorByHospitalDto {
   @ApiProperty({ example: 'Dr. John Doe' })

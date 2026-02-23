@@ -17,6 +17,8 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './services';
 import { CreateUserDto, UserResponseDto } from './dto';
+import { ApiResponse } from '../../common/classes';
+import type { DataKeyWrapper } from '../../common/interfaces';
 import { ParseObjectIdPipe } from '../../common/pipes';
 import { Public } from '../../common/decorators';
 
@@ -33,8 +35,9 @@ export class UsersController {
   @ApiBadRequestResponse({ description: 'Invalid ObjectId' })
   async findOne(
     @Param('id', ParseObjectIdPipe) id: string,
-  ): Promise<UserResponseDto> {
-    return this.userService.findById(id);
+  ): Promise<DataKeyWrapper<'user'>> {
+    const result = await this.userService.findById(id);
+    return ApiResponse.withDataKey('user', result);
   }
 
   @Post()
@@ -43,7 +46,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Create user' })
   @ApiCreatedResponse({ type: UserResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed' })
-  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    return this.userService.create(dto);
+  async create(@Body() dto: CreateUserDto): Promise<DataKeyWrapper<'user'>> {
+    const result = await this.userService.create(dto);
+    return ApiResponse.withDataKey('user', result);
   }
 }

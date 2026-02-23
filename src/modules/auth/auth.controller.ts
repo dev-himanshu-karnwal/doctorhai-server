@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   HttpCode,
   HttpStatus,
@@ -17,6 +18,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Public, CurrentUser } from '../../common/decorators';
+import { ApiResponse } from '../../common/classes';
+import type { DataKeyWrapper } from '../../common/interfaces';
 import { AUTH_FLOW_SERVICE_TOKEN } from '../../common/constants';
 import type { IAuthFlowService } from './interfaces/auth-flow-service.interface';
 import type { JwtPayload } from './strategies/jwt.strategy';
@@ -27,6 +30,7 @@ import {
   CreateDoctorByHospitalDto,
   AuthResponseDto,
   CheckUsernameResponseDto,
+  MeResponseDto,
 } from './dto';
 
 @ApiTags('auth')
@@ -48,8 +52,9 @@ export class AuthController {
   })
   @ApiCreatedResponse({ type: AuthResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed or username taken' })
-  async register(@Body() dto: RegisterDto): Promise<AuthResponseDto> {
-    return this.authFlowService.register(dto);
+  async register(@Body() dto: RegisterDto): Promise<DataKeyWrapper<'auth'>> {
+    const result = await this.authFlowService.register(dto);
+    return ApiResponse.withDataKey('auth', result);
   }
 
   @Post('login')
@@ -63,8 +68,25 @@ export class AuthController {
   })
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
-  async login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
-    return this.authFlowService.login(dto);
+  async login(@Body() dto: LoginDto): Promise<DataKeyWrapper<'auth'>> {
+    const result = await this.authFlowService.login(dto);
+    return ApiResponse.withDataKey('auth', result);
+  }
+
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get current user',
+    description:
+      'Returns the currently logged-in user. Accepts access token from cookie (access_token) or Bearer header.',
+  })
+  @ApiOkResponse({ type: MeResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  async getMe(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<DataKeyWrapper<'user'>> {
+    const result = await this.authFlowService.getMe(user.sub);
+    return ApiResponse.withDataKey('user', result);
   }
 
   @Post('check-username')
@@ -80,8 +102,11 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Validation failed' })
   async checkUsername(
     @Body() dto: CheckUsernameDto,
-  ): Promise<CheckUsernameResponseDto> {
-    return this.authFlowService.checkUsernameAvailable(dto.username);
+  ): Promise<DataKeyWrapper<'availability'>> {
+    const result = await this.authFlowService.checkUsernameAvailable(
+      dto.username,
+    );
+    return ApiResponse.withDataKey('availability', result);
   }
 
   @Post('hospital/doctors')
@@ -98,7 +123,11 @@ export class AuthController {
   async createDoctorByHospital(
     @Body() dto: CreateDoctorByHospitalDto,
     @CurrentUser() user: JwtPayload,
-  ): Promise<AuthResponseDto> {
-    return this.authFlowService.createDoctorByHospital(dto, user.sub);
+  ): Promise<DataKeyWrapper<'auth'>> {
+    const result = await this.authFlowService.createDoctorByHospital(
+      dto,
+      user.sub,
+    );
+    return ApiResponse.withDataKey('auth', result);
   }
 }

@@ -29,6 +29,22 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
 
+  async findByEmailAndHospitalId(
+    email: string,
+    hospitalId: string | null,
+  ): Promise<DoctorProfileEntity | null> {
+    const query: Record<string, unknown> = {
+      email: email.toLowerCase().trim(),
+      ...this.notDeleted,
+    };
+    query.hospitalId =
+      hospitalId != null && Types.ObjectId.isValid(hospitalId)
+        ? new Types.ObjectId(hospitalId)
+        : null;
+    const doc = await this.doctorProfileModel.findOne(query).lean().exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
+
   async create(
     data: CreateDoctorProfileInput,
     session?: ClientSession,

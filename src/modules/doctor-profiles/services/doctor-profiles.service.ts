@@ -23,6 +23,18 @@ export class DoctorProfilesService implements IDoctorProfileService {
     return this.doctorProfileRepo.findByAccountId(accountId);
   }
 
+  async findByEmailAndHospitalId(
+    email: string,
+    hospitalId: string | null,
+  ): Promise<
+    Awaited<ReturnType<IDoctorProfileService['findByEmailAndHospitalId']>>
+  > {
+    this.logger.debug(
+      `Finding doctor profile by email and hospitalId: ${email}, ${hospitalId ?? 'individual'}`,
+    );
+    return this.doctorProfileRepo.findByEmailAndHospitalId(email, hospitalId);
+  }
+
   async create(
     data: CreateDoctorProfileData,
     session?: ClientSession,

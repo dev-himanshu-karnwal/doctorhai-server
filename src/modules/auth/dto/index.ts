@@ -16,3 +16,10 @@ export { CheckUsernameDto } from './check-username.dto';
 export { CheckUsernameResponseDto } from './check-username-response.dto';
 export { CreateDoctorByHospitalDto } from './create-doctor-by-hospital.dto';
 export { AuthResponseDto } from './auth-response.dto';
+export {
+  MeResponseDto,
+  AccountMeDto,
+  HospitalMeDto,
+  DoctorMeDto,
+  AddressMeDto,
+} from './me-response.dto';
