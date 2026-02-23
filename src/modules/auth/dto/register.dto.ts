@@ -108,9 +108,12 @@ export class RegisterDto {
   @Transform(({ value }: { value: string }) => value?.trim())
   username?: string;
 
-  /** Required when registrationType is hospital */
+  @ApiProperty({
+    example: 'city-hospital-mumbai',
+    description:
+      'Required when registrationType is hospital. URL-friendly slug',
+  })
   @ValidateIf((o: RegisterDto) => o.registrationType === 'hospital')
-  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(120)
@@ -126,43 +129,56 @@ export class RegisterDto {
   @MaxLength(2000)
   coverPhotoUrl?: string;
 
-  /** Required when registrationType is doctor */
+  /** Required when registrationType is doctor. Use name for doctor full name. */
+  @ApiProperty({
+    example: 'MD',
+    description:
+      'Required when registrationType is doctor. Designation (e.g. MD, MBBS)',
+  })
   @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(120)
   @Transform(({ value }: { value: string }) => value?.trim())
-  fullName?: string;
-
-  @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  @Transform(({ value }: { value: string }) => value?.trim())
   designation?: string;
 
+  @ApiProperty({
+    example: 'Cardiology',
+    description:
+      'Required when registrationType is doctor. Medical specialization',
+  })
   @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsOptional()
   @IsString()
+  @MinLength(1)
   @MaxLength(120)
   @Transform(({ value }: { value: string }) => value?.trim())
   specialization?: string;
 
+  @ApiProperty({
+    example: 'dr-jane-smith',
+    description:
+      'Required when registrationType is doctor. URL-friendly slug for doctor profile',
+  })
   @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(64)
   @Transform(({ value }: { value: string }) => value?.trim())
   doctorSlug?: string;
 
+  @ApiPropertyOptional({
+    example: 'Experienced cardiologist with 15 years of practice.',
+    description: 'Doctor bio (optional)',
+  })
   @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
   @IsOptional()
   @IsString()
   @MaxLength(2000)
   bio?: string;
 
+  @ApiPropertyOptional({
+    description: 'Doctor profile photo URL (optional)',
+  })
   @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
   @IsOptional()
   @IsString()

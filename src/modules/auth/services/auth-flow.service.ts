@@ -80,13 +80,13 @@ export class AuthFlowService implements IAuthFlowService {
 
     if (dto.registrationType === 'doctor') {
       if (
-        !dto.fullName?.trim() ||
+        !dto.name?.trim() ||
         !dto.designation?.trim() ||
         !dto.specialization?.trim() ||
         !dto.doctorSlug?.trim()
       ) {
         throw new BusinessRuleViolationException(
-          'fullName, designation, specialization and doctorSlug are required when registering as doctor',
+          'name, designation, specialization and doctorSlug are required when registering as doctor',
         );
       }
     }
@@ -139,7 +139,7 @@ export class AuthFlowService implements IAuthFlowService {
     const doctorPayload =
       dto.registrationType === 'doctor'
         ? {
-            fullName: (dto.fullName as string).trim(),
+            fullName: dto.name.trim(),
             designation: (dto.designation as string).trim(),
             specialization: (dto.specialization as string).trim(),
             slug: (dto.doctorSlug as string).trim(),
