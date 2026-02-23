@@ -4,6 +4,7 @@ import {
   Inject,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectConnection } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -36,8 +37,6 @@ import type {
 import type { CreateAccountDto } from '../dto';
 import type { RegistrationType } from '../enums/registration-type.enum';
 
-const BCRYPT_ROUNDS = 12;
-
 @Injectable()
 export class AuthFlowService implements IAuthFlowService {
   private readonly logger = new Logger(AuthFlowService.name);
@@ -54,6 +53,7 @@ export class AuthFlowService implements IAuthFlowService {
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
     @InjectConnection()
     private readonly connection: Connection,
   ) {}
@@ -101,9 +101,11 @@ export class AuthFlowService implements IAuthFlowService {
         ? (dto.username as string).trim()
         : dto.email;
 
+    const bcryptRounds =
+      this.configService.get<number>('auth.bcryptRounds') ?? 12;
     const passwordHash = (await bcrypt.hash(
       dto.password,
-      BCRYPT_ROUNDS,
+      bcryptRounds,
     )) as string;
 
     const createAccountDto: CreateAccountDto = {
@@ -256,9 +258,11 @@ export class AuthFlowService implements IAuthFlowService {
       throw new ResourceNotFoundException('Role', 'doctor');
     }
 
+    const bcryptRounds =
+      this.configService.get<number>('auth.bcryptRounds') ?? 12;
     const passwordHash = (await bcrypt.hash(
       dto.password,
-      BCRYPT_ROUNDS,
+      bcryptRounds,
     )) as string;
 
     const createAccountDto: CreateAccountDto = {

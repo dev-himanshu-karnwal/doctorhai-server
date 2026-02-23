@@ -28,6 +28,10 @@ export class AppConfigService {
     return this.config.get<string>('app.nodeEnv') ?? 'development';
   }
 
+  get bcryptRounds(): number {
+    return this.config.get<number>('auth.bcryptRounds') ?? 12;
+  }
+
   /**
    * Generic get for any config key (e.g. app.get('database.uri')).
    */
