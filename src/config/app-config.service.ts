@@ -12,7 +12,7 @@ export class AppConfigService {
   get databaseUri(): string {
     return (
       this.config.get<string>('database.uri') ??
-      'mongodb://localhost:27017/doctor-status'
+      'mongodb://localhost:27017/doctorhai'
     );
   }
 

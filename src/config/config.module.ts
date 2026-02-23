@@ -4,11 +4,14 @@ import { appConfig } from './app.config';
 import { databaseConfig } from './database.config';
 import { AppConfigService } from './app-config.service';
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+
 @Global()
 @Module({
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', `.env.${nodeEnv}`],
       load: [appConfig, databaseConfig],
     }),
   ],
