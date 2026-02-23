@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -15,14 +16,20 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Public, CurrentUser } from '../../common/decorators';
+import {
+  Public,
+  CurrentUser,
+  RequirePermissions,
+} from '../../common/decorators';
 import { ApiResponse } from '../../common/classes';
 import type { DataKeyWrapper } from '../../common/interfaces';
 import { AUTH_FLOW_SERVICE_TOKEN } from '../../common/constants';
 import type { IAuthFlowService } from './interfaces/auth-flow-service.interface';
 import type { JwtPayload } from './strategies/jwt.strategy';
+import { PermissionsGuard } from './guards/permissions.guard';
 import {
   RegisterDto,
   LoginDto,
@@ -110,16 +117,22 @@ export class AuthController {
   }
 
   @Post('hospital/doctors')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({
+    permissions: ['hospital.doctor.create', 'super_admin.manage'],
+    requireAll: false,
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Hospital creates doctor',
     description:
-      'Hospital creates a doctor account. Requires auth; createdBy is set from JWT. Same profile info as doctor self-registration; hospital chooses username.',
+      'Hospital creates a doctor account. Requires auth and permission hospital.doctor.create or super_admin.manage; createdBy is set from JWT. Same profile info as doctor self-registration; hospital chooses username.',
   })
   @ApiCreatedResponse({ type: AuthResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed or username taken' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async createDoctorByHospital(
     @Body() dto: CreateDoctorByHospitalDto,
     @CurrentUser() user: JwtPayload,

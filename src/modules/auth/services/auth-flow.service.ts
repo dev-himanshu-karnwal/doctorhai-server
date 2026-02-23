@@ -12,6 +12,7 @@ import type { Connection } from 'mongoose';
 import {
   ACCOUNT_REPOSITORY_TOKEN,
   ROLE_SERVICE_TOKEN,
+  PERMISSION_SERVICE_TOKEN,
   ADDRESS_SERVICE_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
   HOSPITAL_SERVICE_TOKEN,
@@ -23,6 +24,7 @@ import {
 import { generateSlugFromName } from '../../../common/utils';
 import type { IAccountRepository } from '../interfaces/account-repository.interface';
 import type { IRoleService } from '../interfaces/role-service.interface';
+import type { IPermissionService } from '../interfaces/permission-service.interface';
 import type { IAuthFlowService } from '../interfaces/auth-flow-service.interface';
 import type { IAddressService } from '../../addresses/interfaces';
 import type { IDoctorProfileService } from '../../doctor-profiles/interfaces';
@@ -47,6 +49,8 @@ export class AuthFlowService implements IAuthFlowService {
     private readonly accountRepo: IAccountRepository,
     @Inject(ROLE_SERVICE_TOKEN)
     private readonly roleService: IRoleService,
+    @Inject(PERMISSION_SERVICE_TOKEN)
+    private readonly permissionService: IPermissionService,
     @Inject(ADDRESS_SERVICE_TOKEN)
     private readonly addressService: IAddressService,
     @Inject(DOCTOR_PROFILE_SERVICE_TOKEN)
@@ -421,6 +425,36 @@ export class AuthFlowService implements IAuthFlowService {
       'username',
       account.loginValue,
     );
+  }
+
+  async getPermissionKeysForAccount(accountId: string): Promise<string[]> {
+    const account = await this.accountRepo.findById(accountId);
+    if (!account) {
+      return [];
+    }
+
+    const permissionIds = new Set<string>();
+    for (const assignment of account.roles) {
+      try {
+        const role = await this.roleService.findById(assignment.roleId);
+        for (const permissionId of role.permissions) {
+          permissionIds.add(permissionId);
+        }
+      } catch {
+        // Skip roles that no longer exist
+      }
+    }
+
+    const keys: string[] = [];
+    for (const id of permissionIds) {
+      try {
+        const permission = await this.permissionService.findById(id);
+        keys.push(permission.key);
+      } catch {
+        // Skip permissions that no longer exist
+      }
+    }
+    return keys;
   }
 
   private registrationTypeToRoleName(

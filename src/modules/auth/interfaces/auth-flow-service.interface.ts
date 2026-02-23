@@ -14,4 +14,5 @@ export interface IAuthFlowService {
     createdByAccountId: string,
   ): Promise<AuthResponseDto>;
   getMe(accountId: string): Promise<MeResponseDto>;
+  getPermissionKeysForAccount(accountId: string): Promise<string[]>;
 }

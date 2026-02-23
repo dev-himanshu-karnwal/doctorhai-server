@@ -26,6 +26,7 @@ import {
 } from './services';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { PermissionsGuard } from './guards/permissions.guard';
 import { AuthController } from './auth.controller';
 import { AddressesModule } from '../addresses';
 import { DoctorProfilesModule } from '../doctor-profiles';
@@ -61,9 +62,11 @@ import { HospitalsModule } from '../hospitals';
     { provide: ACCOUNT_SERVICE_TOKEN, useClass: AccountsService },
     { provide: AUTH_FLOW_SERVICE_TOKEN, useClass: AuthFlowService },
     JwtStrategy,
+    PermissionsGuard,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
   exports: [
+    PermissionsGuard,
     PERMISSION_SERVICE_TOKEN,
     ROLE_SERVICE_TOKEN,
     ACCOUNT_SERVICE_TOKEN,
