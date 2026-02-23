@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../../config';
 import { APP_GUARD } from '@nestjs/core';
 import {
   PERMISSION_REPOSITORY_TOKEN,
@@ -39,13 +39,13 @@ import { HospitalsModule } from '../hospitals';
       { name: 'Account', schema: AccountSchema },
     ]),
     JwtModule.registerAsync({
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('jwt.secret'),
+      useFactory: (appConfig: AppConfigService) => ({
+        secret: appConfig.jwtSecret,
         signOptions: {
-          expiresIn: config.get<string>('jwt.expiresIn') ?? '15m',
+          expiresIn: appConfig.jwtExpiresIn,
         },
       }),
-      inject: [ConfigService],
+      inject: [AppConfigService],
     }),
     AddressesModule,
     DoctorProfilesModule,

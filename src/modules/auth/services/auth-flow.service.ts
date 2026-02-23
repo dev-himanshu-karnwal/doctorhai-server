@@ -4,7 +4,7 @@ import {
   Inject,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../../../config';
 import { InjectConnection } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -54,7 +54,7 @@ export class AuthFlowService implements IAuthFlowService {
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
     @InjectConnection()
     private readonly connection: Connection,
   ) {}
@@ -112,8 +112,7 @@ export class AuthFlowService implements IAuthFlowService {
         ? (dto.username as string).trim()
         : dto.email;
 
-    const bcryptRounds =
-      this.configService.get<number>('auth.bcryptRounds') ?? 12;
+    const bcryptRounds = this.appConfig.bcryptRounds;
     const passwordHash = (await bcrypt.hash(
       dto.password,
       bcryptRounds,
@@ -372,8 +371,7 @@ export class AuthFlowService implements IAuthFlowService {
       throw new ResourceNotFoundException('Role', 'doctor');
     }
 
-    const bcryptRounds =
-      this.configService.get<number>('auth.bcryptRounds') ?? 12;
+    const bcryptRounds = this.appConfig.bcryptRounds;
     const passwordHash = (await bcrypt.hash(
       dto.password,
       bcryptRounds,

@@ -32,6 +32,21 @@ export class AppConfigService {
     return this.config.get<number>('auth.bcryptRounds') ?? 12;
   }
 
+  get jwtSecret(): string {
+    return (
+      this.config.get<string>('jwt.secret') ??
+      'change-me-in-production-use-long-random-string'
+    );
+  }
+
+  get jwtCookieName(): string {
+    return this.config.get<string>('jwt.cookieName') ?? 'access_token';
+  }
+
+  get jwtExpiresIn(): string {
+    return this.config.get<string>('jwt.expiresIn') ?? '15m';
+  }
+
   /**
    * Generic get for any config key (e.g. app.get('database.uri')).
    */

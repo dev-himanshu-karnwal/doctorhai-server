@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../../../config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { Request } from 'express';
@@ -27,16 +27,14 @@ function extractJwtFromCookieOrBearer(
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(config: ConfigService) {
-    const secret = config.get<string>('jwt.secret');
-    const cookieName = config.get<string>('jwt.cookieName') ?? 'access_token';
+  constructor(appConfig: AppConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        extractJwtFromCookieOrBearer(cookieName),
+        extractJwtFromCookieOrBearer(appConfig.jwtCookieName),
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: secret ?? 'change-me-in-production-use-long-random-string',
+      secretOrKey: appConfig.jwtSecret,
     });
   }
 
