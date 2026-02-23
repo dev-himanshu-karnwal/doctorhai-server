@@ -1,13 +1,11 @@
 import { PermissionEntity } from '../entities';
-import type {
-  CreatePermissionInput,
-  UpdatePermissionInput,
-} from './permission-repository.interface';
+import type { CreatePermissionDto } from '../dto';
+import type { UpdatePermissionDto } from '../dto';
 
 export interface IPermissionService {
   findById(id: string): Promise<PermissionEntity>;
   findByKey(key: string): Promise<PermissionEntity | null>;
   findAll(): Promise<PermissionEntity[]>;
-  create(data: CreatePermissionInput): Promise<PermissionEntity>;
-  update(id: string, data: UpdatePermissionInput): Promise<PermissionEntity>;
+  create(data: CreatePermissionDto): Promise<PermissionEntity>;
+  update(id: string, data: UpdatePermissionDto): Promise<PermissionEntity>;
 }

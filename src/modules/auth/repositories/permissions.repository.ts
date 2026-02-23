@@ -5,11 +5,8 @@ import { Model, Types } from 'mongoose';
 import { PermissionDocument } from '../schemas';
 import { PermissionEntity } from '../entities';
 import { PermissionMapper } from '../mappers';
-import type {
-  CreatePermissionInput,
-  IPermissionRepository,
-  UpdatePermissionInput,
-} from '../interfaces';
+import type { IPermissionRepository } from '../interfaces';
+import type { CreatePermissionDto, UpdatePermissionDto } from '../dto';
 
 @Injectable()
 export class PermissionsRepository implements IPermissionRepository {
@@ -41,7 +38,7 @@ export class PermissionsRepository implements IPermissionRepository {
     return docs.map((d) => PermissionMapper.toDomain(d));
   }
 
-  async create(data: CreatePermissionInput): Promise<PermissionEntity> {
+  async create(data: CreatePermissionDto): Promise<PermissionEntity> {
     const [doc] = await this.permissionModel.create([
       { key: data.key, description: data.description ?? null },
     ]);
@@ -50,12 +47,17 @@ export class PermissionsRepository implements IPermissionRepository {
 
   async update(
     id: string,
-    data: UpdatePermissionInput,
+    data: UpdatePermissionDto,
   ): Promise<PermissionEntity> {
+    const update: Record<string, unknown> = {
+      updatedAt: new Date(),
+      ...(data.key !== undefined && { key: data.key }),
+      ...(data.description !== undefined && { description: data.description }),
+    };
     const doc = await this.permissionModel
       .findOneAndUpdate(
         { _id: new Types.ObjectId(id) },
-        { $set: { ...data, updatedAt: new Date() } },
+        { $set: update },
         { new: true },
       )
       .lean()

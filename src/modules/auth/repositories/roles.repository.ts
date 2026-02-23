@@ -5,11 +5,8 @@ import { Model, Types } from 'mongoose';
 import { RoleDocument } from '../schemas';
 import { RoleEntity } from '../entities';
 import { RoleMapper } from '../mappers';
-import type {
-  CreateRoleInput,
-  IRoleRepository,
-  UpdateRoleInput,
-} from '../interfaces';
+import type { IRoleRepository } from '../interfaces';
+import type { CreateRoleDto, UpdateRoleDto } from '../dto';
 
 @Injectable()
 export class RolesRepository implements IRoleRepository {
@@ -41,29 +38,30 @@ export class RolesRepository implements IRoleRepository {
     return docs.map((d) => RoleMapper.toDomain(d));
   }
 
-  async create(data: CreateRoleInput): Promise<RoleEntity> {
-    const permissionIds = (data.permissionIds ?? []).map(
-      (id) => new Types.ObjectId(id),
+  async create(data: CreateRoleDto): Promise<RoleEntity> {
+    const permissionIds: string[] = data.permissions ?? [];
+    const permissions: Types.ObjectId[] = permissionIds.map(
+      (id: string) => new Types.ObjectId(id),
     );
     const [doc] = await this.roleModel.create([
       {
         name: data.name,
         description: data.description ?? null,
         isSystem: data.isSystem ?? false,
-        permissionIds,
+        permissions,
       },
     ]);
     return RoleMapper.toDomain(doc);
   }
 
-  async update(id: string, data: UpdateRoleInput): Promise<RoleEntity> {
+  async update(id: string, data: UpdateRoleDto): Promise<RoleEntity> {
     const update: Record<string, unknown> = { updatedAt: new Date() };
     if (data.name !== undefined) update.name = data.name;
     if (data.description !== undefined) update.description = data.description;
     if (data.isSystem !== undefined) update.isSystem = data.isSystem;
-    if (data.permissionIds !== undefined) {
-      update.permissionIds = data.permissionIds.map(
-        (pid) => new Types.ObjectId(pid),
+    if (data.permissions !== undefined) {
+      update.permissions = data.permissions.map(
+        (pid: string) => new Types.ObjectId(pid),
       );
     }
     const doc = await this.roleModel

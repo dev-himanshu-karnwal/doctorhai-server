@@ -4,12 +4,8 @@ import {
   BusinessRuleViolationException,
   ResourceNotFoundException,
 } from '../../../common/exceptions';
-import type {
-  CreateRoleInput,
-  IRoleRepository,
-  IRoleService,
-  UpdateRoleInput,
-} from '../interfaces';
+import type { IRoleRepository, IRoleService } from '../interfaces';
+import type { CreateRoleDto, UpdateRoleDto } from '../dto';
 
 @Injectable()
 export class RolesService implements IRoleService {
@@ -42,7 +38,7 @@ export class RolesService implements IRoleService {
   }
 
   async create(
-    data: CreateRoleInput,
+    data: CreateRoleDto,
   ): Promise<Awaited<ReturnType<IRoleService['create']>>> {
     this.logger.debug(`Creating role with name: ${data.name}`);
     const existing = await this.roleRepo.findByName(data.name);
@@ -56,7 +52,7 @@ export class RolesService implements IRoleService {
 
   async update(
     id: string,
-    data: UpdateRoleInput,
+    data: UpdateRoleDto,
   ): Promise<Awaited<ReturnType<IRoleService['update']>>> {
     this.logger.debug(`Updating role: ${id}`);
     if (data.name != null) {

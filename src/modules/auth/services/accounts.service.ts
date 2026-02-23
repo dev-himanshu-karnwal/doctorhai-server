@@ -4,13 +4,12 @@ import {
   BusinessRuleViolationException,
   ResourceNotFoundException,
 } from '../../../common/exceptions';
-import type { AccountRoleAssignmentEntity } from '../entities';
+import type { IAccountRepository, IAccountService } from '../interfaces';
 import type {
-  CreateAccountInput,
-  IAccountRepository,
-  IAccountService,
-  UpdateAccountInput,
-} from '../interfaces';
+  CreateAccountDto,
+  UpdateAccountDto,
+  AddRoleToAccountDto,
+} from '../dto';
 
 @Injectable()
 export class AccountsService implements IAccountService {
@@ -39,7 +38,7 @@ export class AccountsService implements IAccountService {
   }
 
   async create(
-    data: CreateAccountInput,
+    data: CreateAccountDto,
   ): Promise<Awaited<ReturnType<IAccountService['create']>>> {
     this.logger.debug(`Creating account: ${data.loginType}:${data.loginValue}`);
     const existing = await this.accountRepo.findByLogin(
@@ -56,7 +55,7 @@ export class AccountsService implements IAccountService {
 
   async update(
     id: string,
-    data: UpdateAccountInput,
+    data: UpdateAccountDto,
   ): Promise<Awaited<ReturnType<IAccountService['update']>>> {
     this.logger.debug(`Updating account: ${id}`);
     return this.accountRepo.update(id, data);
@@ -69,12 +68,10 @@ export class AccountsService implements IAccountService {
 
   async addRole(
     accountId: string,
-    assignment: AccountRoleAssignmentEntity,
+    dto: AddRoleToAccountDto,
   ): Promise<Awaited<ReturnType<IAccountService['addRole']>>> {
-    this.logger.debug(
-      `Adding role ${assignment.roleId} to account: ${accountId}`,
-    );
-    return this.accountRepo.addRole(accountId, assignment);
+    this.logger.debug(`Adding role ${dto.roleId} to account: ${accountId}`);
+    return this.accountRepo.addRole(accountId, dto);
   }
 
   async removeRole(

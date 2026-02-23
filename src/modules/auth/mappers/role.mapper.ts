@@ -5,20 +5,20 @@ export interface RoleDocLike {
   name: string;
   description?: string | null;
   isSystem?: boolean;
-  permissionIds?: { toString(): string }[];
+  permissions?: { toString(): string }[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export class RoleMapper {
   static toDomain(doc: RoleDocLike): RoleEntity {
-    const permissionIds = (doc.permissionIds ?? []).map((id) => id.toString());
+    const permissions = (doc.permissions ?? []).map((id) => id.toString());
     return new RoleEntity(
       doc._id.toString(),
       doc.name,
       doc.description ?? null,
       doc.isSystem ?? false,
-      permissionIds,
+      permissions,
       doc.createdAt,
       doc.updatedAt,
     );

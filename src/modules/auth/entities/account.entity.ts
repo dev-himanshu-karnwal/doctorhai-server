@@ -1,4 +1,4 @@
-import { AccountRoleAssignmentEntity } from './account-role-assignment.entity';
+import { AccountRoleAssignmentEntity } from '.';
 
 export class AccountEntity {
   constructor(

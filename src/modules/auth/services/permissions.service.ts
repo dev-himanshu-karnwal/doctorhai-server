@@ -4,12 +4,8 @@ import {
   BusinessRuleViolationException,
   ResourceNotFoundException,
 } from '../../../common/exceptions';
-import type {
-  CreatePermissionInput,
-  IPermissionRepository,
-  IPermissionService,
-  UpdatePermissionInput,
-} from '../interfaces';
+import type { IPermissionRepository, IPermissionService } from '../interfaces';
+import type { CreatePermissionDto, UpdatePermissionDto } from '../dto';
 
 @Injectable()
 export class PermissionsService implements IPermissionService {
@@ -42,7 +38,7 @@ export class PermissionsService implements IPermissionService {
   }
 
   async create(
-    data: CreatePermissionInput,
+    data: CreatePermissionDto,
   ): Promise<Awaited<ReturnType<IPermissionService['create']>>> {
     this.logger.debug(`Creating permission with key: ${data.key}`);
     const existing = await this.permissionRepo.findByKey(data.key);
@@ -56,7 +52,7 @@ export class PermissionsService implements IPermissionService {
 
   async update(
     id: string,
-    data: UpdatePermissionInput,
+    data: UpdatePermissionDto,
   ): Promise<Awaited<ReturnType<IPermissionService['update']>>> {
     this.logger.debug(`Updating permission: ${id}`);
     if (data.key != null) {

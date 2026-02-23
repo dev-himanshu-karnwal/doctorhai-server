@@ -4,7 +4,7 @@ export interface RoleDocument extends Document {
   name: string;
   description: string | null;
   isSystem: boolean;
-  permissionIds: Types.ObjectId[];
+  permissions: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,7 +14,7 @@ export const RoleSchema = new Schema<RoleDocument>(
     name: { type: String, required: true, unique: true },
     description: { type: String, default: null },
     isSystem: { type: Boolean, default: false },
-    permissionIds: [
+    permissions: [
       { type: Schema.Types.ObjectId, ref: 'Permission', default: [] },
     ],
   },
@@ -22,4 +22,4 @@ export const RoleSchema = new Schema<RoleDocument>(
 );
 
 RoleSchema.index({ name: 1 });
-RoleSchema.index({ permissionIds: 1 });
+RoleSchema.index({ permissions: 1 });

@@ -1,19 +1,7 @@
-import { AccountEntity, AccountRoleAssignmentEntity } from '../entities';
-
-export interface CreateAccountInput {
-  loginType: string;
-  loginValue: string;
-  passwordHash?: string | null;
-  isActive?: boolean;
-  roles?: { roleId: string; grantedBy?: string | null }[];
-}
-
-export interface UpdateAccountInput {
-  passwordHash?: string | null;
-  isActive?: boolean;
-  passwordUpdatedAt?: Date | null;
-  roles?: { roleId: string; grantedBy?: string | null }[];
-}
+import { AccountEntity } from '../entities';
+import type { CreateAccountDto } from '../dto';
+import type { UpdateAccountDto } from '../dto';
+import type { AddRoleToAccountDto } from '../dto';
 
 export interface IAccountRepository {
   findById(id: string): Promise<AccountEntity | null>;
@@ -21,12 +9,9 @@ export interface IAccountRepository {
     loginType: string,
     loginValue: string,
   ): Promise<AccountEntity | null>;
-  create(data: CreateAccountInput): Promise<AccountEntity>;
-  update(id: string, data: UpdateAccountInput): Promise<AccountEntity>;
+  create(data: CreateAccountDto): Promise<AccountEntity>;
+  update(id: string, data: UpdateAccountDto): Promise<AccountEntity>;
   softDelete(id: string): Promise<void>;
-  addRole(
-    accountId: string,
-    assignment: AccountRoleAssignmentEntity,
-  ): Promise<AccountEntity>;
+  addRole(accountId: string, dto: AddRoleToAccountDto): Promise<AccountEntity>;
   removeRole(accountId: string, roleId: string): Promise<AccountEntity>;
 }

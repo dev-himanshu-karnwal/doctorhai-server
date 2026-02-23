@@ -3,13 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ResourceNotFoundException } from '../../../common/exceptions';
 import { Model, Types } from 'mongoose';
 import { AccountDocument } from '../schemas';
-import { AccountEntity, AccountRoleAssignmentEntity } from '../entities';
+import { AccountEntity } from '../entities';
 import { AccountMapper } from '../mappers';
+import type { IAccountRepository } from '../interfaces';
 import type {
-  IAccountRepository,
-  CreateAccountInput,
-  UpdateAccountInput,
-} from '../interfaces';
+  CreateAccountDto,
+  UpdateAccountDto,
+  AddRoleToAccountDto,
+} from '../dto';
 
 @Injectable()
 export class AccountsRepository implements IAccountRepository {
@@ -41,7 +42,7 @@ export class AccountsRepository implements IAccountRepository {
     return doc ? AccountMapper.toDomain(doc) : null;
   }
 
-  async create(data: CreateAccountInput): Promise<AccountEntity> {
+  async create(data: CreateAccountDto): Promise<AccountEntity> {
     const roles = (data.roles ?? []).map((r) => ({
       roleId: new Types.ObjectId(r.roleId),
       grantedBy: r.grantedBy != null ? new Types.ObjectId(r.grantedBy) : null,
@@ -60,13 +61,17 @@ export class AccountsRepository implements IAccountRepository {
     return AccountMapper.toDomain(doc);
   }
 
-  async update(id: string, data: UpdateAccountInput): Promise<AccountEntity> {
+  async update(id: string, data: UpdateAccountDto): Promise<AccountEntity> {
     const update: Record<string, unknown> = { updatedAt: new Date() };
     if (data.passwordHash !== undefined)
       update.passwordHash = data.passwordHash;
     if (data.isActive !== undefined) update.isActive = data.isActive;
-    if (data.passwordUpdatedAt !== undefined)
-      update.passwordUpdatedAt = data.passwordUpdatedAt;
+    if (data.passwordUpdatedAt !== undefined) {
+      update.passwordUpdatedAt =
+        typeof data.passwordUpdatedAt === 'string'
+          ? new Date(data.passwordUpdatedAt)
+          : data.passwordUpdatedAt;
+    }
     if (data.roles !== undefined) {
       update.roles = data.roles.map((r) => ({
         roleId: new Types.ObjectId(r.roleId),
@@ -99,7 +104,7 @@ export class AccountsRepository implements IAccountRepository {
 
   async addRole(
     accountId: string,
-    assignment: AccountRoleAssignmentEntity,
+    dto: AddRoleToAccountDto,
   ): Promise<AccountEntity> {
     const doc = await this.accountModel
       .findOneAndUpdate(
@@ -107,12 +112,12 @@ export class AccountsRepository implements IAccountRepository {
         {
           $push: {
             roles: {
-              roleId: new Types.ObjectId(assignment.roleId),
+              roleId: new Types.ObjectId(dto.roleId),
               grantedBy:
-                assignment.grantedBy != null
-                  ? new Types.ObjectId(assignment.grantedBy)
+                dto.grantedBy != null
+                  ? new Types.ObjectId(dto.grantedBy)
                   : null,
-              grantedAt: assignment.grantedAt,
+              grantedAt: new Date(),
             },
           },
           $set: { updatedAt: new Date() },
