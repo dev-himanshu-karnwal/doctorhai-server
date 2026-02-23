@@ -4,4 +4,3 @@ export type { IPermissionRepository } from './permission-repository.interface';
 export type { IPermissionService } from './permission-service.interface';
 export type { IRoleRepository } from './role-repository.interface';
 export type { IRoleService } from './role-service.interface';
-export type { IAuthFlowService } from './auth-flow-service.interface';

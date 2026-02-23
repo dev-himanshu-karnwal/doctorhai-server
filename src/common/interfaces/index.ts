@@ -1,5 +1,1 @@
-export type {
-  ApiResponseBody,
-  ApiResponseData,
-  DataKeyWrapper,
-} from './api-response.interface';
+export type { ApiResponseBody, DataKeyWrapper } from './api-response.interface';
