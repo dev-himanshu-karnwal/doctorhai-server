@@ -176,7 +176,7 @@ export class AuthFlowService implements IAuthFlowService {
       await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      void session.endSession();
     }
   }
 

@@ -38,9 +38,11 @@ export async function seedPermissions(
   conn: DataSource,
   data: SeedPermission[],
 ): Promise<void> {
-  const { PermissionSchema } =
-    await import('../../../modules/auth/schemas/permission.schema');
-  const Permission = getOrCreateModel(conn, 'Permission', PermissionSchema);
+  const mod =
+    (await import('../../../modules/auth/schemas/permission.schema')) as {
+      PermissionSchema: mongoose.Schema;
+    };
+  const Permission = getOrCreateModel(conn, 'Permission', mod.PermissionSchema);
   for (const item of data) {
     await Permission.findOneAndUpdate(
       { key: item.key },
@@ -54,12 +56,20 @@ export async function seedRoles(
   conn: DataSource,
   data: SeedRole[],
 ): Promise<void> {
-  const { RoleSchema } =
-    await import('../../../modules/auth/schemas/role.schema');
-  const { PermissionSchema } =
-    await import('../../../modules/auth/schemas/permission.schema');
-  const Role = getOrCreateModel(conn, 'Role', RoleSchema);
-  const Permission = getOrCreateModel(conn, 'Permission', PermissionSchema);
+  const roleMod =
+    (await import('../../../modules/auth/schemas/role.schema')) as {
+      RoleSchema: mongoose.Schema;
+    };
+  const permMod =
+    (await import('../../../modules/auth/schemas/permission.schema')) as {
+      PermissionSchema: mongoose.Schema;
+    };
+  const Role = getOrCreateModel(conn, 'Role', roleMod.RoleSchema);
+  const Permission = getOrCreateModel(
+    conn,
+    'Permission',
+    permMod.PermissionSchema,
+  );
   for (const item of data) {
     let permissionIds: mongoose.Types.ObjectId[] = [];
     if (item.permissionKeys?.length) {
@@ -88,15 +98,21 @@ export async function seedSuperadmin(
   data: { name: string; email: string; password: string },
   bcryptRounds = 12,
 ): Promise<void> {
-  const { UserSchema } =
-    await import('../../../modules/users/schemas/user.schema');
-  const { AccountSchema } =
-    await import('../../../modules/auth/schemas/account.schema');
-  const { RoleSchema } =
-    await import('../../../modules/auth/schemas/role.schema');
-  const User = getOrCreateModel(conn, 'User', UserSchema);
-  const Account = getOrCreateModel(conn, 'Account', AccountSchema);
-  const Role = getOrCreateModel(conn, 'Role', RoleSchema);
+  const userMod =
+    (await import('../../../modules/users/schemas/user.schema')) as {
+      UserSchema: mongoose.Schema;
+    };
+  const accountMod =
+    (await import('../../../modules/auth/schemas/account.schema')) as {
+      AccountSchema: mongoose.Schema;
+    };
+  const roleMod =
+    (await import('../../../modules/auth/schemas/role.schema')) as {
+      RoleSchema: mongoose.Schema;
+    };
+  const User = getOrCreateModel(conn, 'User', userMod.UserSchema);
+  const Account = getOrCreateModel(conn, 'Account', accountMod.AccountSchema);
+  const Role = getOrCreateModel(conn, 'Role', roleMod.RoleSchema);
 
   const superadminRole = await Role.findOne({ name: 'superadmin' });
   if (!superadminRole) {
@@ -109,7 +125,10 @@ export async function seedSuperadmin(
     { upsert: true, new: true },
   );
 
-  const passwordHash = await bcrypt.hash(data.password, bcryptRounds);
+  const passwordHash = (await bcrypt.hash(
+    data.password,
+    bcryptRounds,
+  )) as string;
   await Account.findOneAndUpdate(
     { loginType: 'email', loginValue: data.email },
     {
