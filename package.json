@@ -15,7 +15,10 @@
     "start:dev": "NODE_ENV=development nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "NODE_ENV=production node dist/main",
-    "lint": "eslint \"{src,modules}/**/*.ts\" --fix"
+    "lint": "eslint \"{src,modules}/**/*.ts\" --fix",
+    "seed:dev": "ts-node -r tsconfig-paths/register --project tsconfig.seed.json src/database/seeds/seed.development.ts",
+    "seed:prod": "ts-node -r tsconfig-paths/register --project tsconfig.seed.json src/database/seeds/seed.production.ts",
+    "script": "ts-node -r tsconfig-paths/register --project tsconfig.seed.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -56,6 +59,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
+    "dotenv": "^16.4.5",
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3"
   },
