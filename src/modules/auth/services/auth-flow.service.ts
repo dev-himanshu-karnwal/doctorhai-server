@@ -236,6 +236,7 @@ export class AuthFlowService implements IAuthFlowService {
     this.logger.log(
       `Logged in account ${account.id} (${dto.loginType}:${loginValue})`,
     );
+
     return this.signAndReturnAuthResponse(
       account.id,
       account.loginType,
