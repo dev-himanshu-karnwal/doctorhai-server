@@ -27,6 +27,7 @@ import type { IRoleService } from '../interfaces/role-service.interface';
 import type { IPermissionService } from '../interfaces/permission-service.interface';
 import type { IAuthFlowService } from '../interfaces/auth-flow-service.interface';
 import type { IAddressService } from '../../addresses/interfaces';
+import type { DoctorProfileEntity } from '../../doctor-profiles/entities';
 import type { IDoctorProfileService } from '../../doctor-profiles/interfaces';
 import type { IHospitalService } from '../../hospitals/interfaces';
 import type {
@@ -349,7 +350,7 @@ export class AuthFlowService implements IAuthFlowService {
   async createDoctorByHospital(
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
-  ): Promise<AuthResponseDto> {
+  ): Promise<DoctorProfileEntity> {
     const existing = await this.accountRepo.findByLogin(
       'username',
       dto.username,
@@ -402,7 +403,7 @@ export class AuthFlowService implements IAuthFlowService {
       longitude: dto.longitude ?? null,
     });
 
-    await this.doctorProfileService.create({
+    const doctor = await this.doctorProfileService.create({
       fullName: dto.fullName,
       designation: dto.designation,
       specialization: dto.specialization,
@@ -421,11 +422,7 @@ export class AuthFlowService implements IAuthFlowService {
       `Hospital created doctor account ${account.id} (username:${dto.username})`,
     );
 
-    return this.signAndReturnAuthResponse(
-      account.id,
-      'username',
-      account.loginValue,
-    );
+    return doctor;
   }
 
   async getPermissionKeysForAccount(accountId: string): Promise<string[]> {

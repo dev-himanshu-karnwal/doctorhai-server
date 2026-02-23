@@ -129,18 +129,18 @@ export class AuthController {
     description:
       'Hospital creates a doctor account. Requires auth and permission hospital.doctor.create or super_admin.manage; createdBy is set from JWT. Same profile info as doctor self-registration; hospital chooses username.',
   })
-  @ApiCreatedResponse({ type: AuthResponseDto })
+  @ApiCreatedResponse({ description: 'Created doctor profile' })
   @ApiBadRequestResponse({ description: 'Validation failed or username taken' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   async createDoctorByHospital(
     @Body() dto: CreateDoctorByHospitalDto,
     @CurrentUser() user: JwtPayload,
-  ): Promise<DataKeyWrapper<'auth'>> {
+  ): Promise<DataKeyWrapper<'doctor'>> {
     const result = await this.authFlowService.createDoctorByHospital(
       dto,
       user.sub,
     );
-    return ApiResponse.withDataKey('auth', result);
+    return ApiResponse.withDataKey('doctor', result);
   }
 }

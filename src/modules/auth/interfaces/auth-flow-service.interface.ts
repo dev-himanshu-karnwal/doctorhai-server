@@ -4,6 +4,7 @@ import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital
 import type { AuthResponseDto } from '../dto/auth-response.dto';
 import type { CheckUsernameResponseDto } from '../dto/check-username-response.dto';
 import type { MeResponseDto } from '../dto/me-response.dto';
+import type { DoctorProfileEntity } from '../../doctor-profiles/entities';
 
 export interface IAuthFlowService {
   register(dto: RegisterDto): Promise<AuthResponseDto>;
@@ -12,7 +13,7 @@ export interface IAuthFlowService {
   createDoctorByHospital(
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
-  ): Promise<AuthResponseDto>;
+  ): Promise<DoctorProfileEntity>;
   getMe(accountId: string): Promise<MeResponseDto>;
   getPermissionKeysForAccount(accountId: string): Promise<string[]>;
 }
