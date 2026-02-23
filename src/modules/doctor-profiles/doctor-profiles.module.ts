@@ -1,11 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
 } from '../../common/constants';
 import { AddressesModule } from '../addresses';
+import { AuthModule } from '../auth/auth.module';
 import { DoctorProfileSchema } from './schemas';
+import { DoctorProfilesController } from './controllers/doctor-profiles.controller';
 import { DoctorProfilesRepository } from './repositories';
 import { DoctorProfilesService } from './services';
 
@@ -15,8 +17,9 @@ import { DoctorProfilesService } from './services';
       { name: 'DoctorProfile', schema: DoctorProfileSchema },
     ]),
     AddressesModule,
+    forwardRef(() => AuthModule),
   ],
-  controllers: [],
+  controllers: [DoctorProfilesController],
   providers: [
     {
       provide: DOCTOR_PROFILE_REPOSITORY_TOKEN,

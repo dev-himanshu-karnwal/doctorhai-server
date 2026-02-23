@@ -10,6 +10,7 @@ import {
   PERMISSION_SERVICE_TOKEN,
   ROLE_SERVICE_TOKEN,
   ACCOUNT_SERVICE_TOKEN,
+  ACCOUNT_CREATION_SERVICE_TOKEN,
   AUTH_FLOW_SERVICE_TOKEN,
 } from '../../common/constants';
 import { AccountSchema, PermissionSchema, RoleSchema } from './schemas';
@@ -19,6 +20,7 @@ import {
   RolesRepository,
 } from './repositories';
 import {
+  AccountCreationService,
   AccountsService,
   AuthFlowService,
   PermissionsService,
@@ -60,6 +62,10 @@ import { HospitalsModule } from '../hospitals';
     { provide: PERMISSION_SERVICE_TOKEN, useClass: PermissionsService },
     { provide: ROLE_SERVICE_TOKEN, useClass: RolesService },
     { provide: ACCOUNT_SERVICE_TOKEN, useClass: AccountsService },
+    {
+      provide: ACCOUNT_CREATION_SERVICE_TOKEN,
+      useClass: AccountCreationService,
+    },
     { provide: AUTH_FLOW_SERVICE_TOKEN, useClass: AuthFlowService },
     JwtStrategy,
     PermissionsGuard,
@@ -70,6 +76,7 @@ import { HospitalsModule } from '../hospitals';
     PERMISSION_SERVICE_TOKEN,
     ROLE_SERVICE_TOKEN,
     ACCOUNT_SERVICE_TOKEN,
+    ACCOUNT_CREATION_SERVICE_TOKEN,
   ],
 })
 export class AuthModule {}

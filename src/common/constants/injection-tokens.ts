@@ -20,3 +20,4 @@ export const PERMISSION_SERVICE_TOKEN = Symbol('IPermissionService');
 export const ROLE_SERVICE_TOKEN = Symbol('IRoleService');
 export const ACCOUNT_SERVICE_TOKEN = Symbol('IAccountService');
 export const AUTH_FLOW_SERVICE_TOKEN = Symbol('IAuthFlowService');
+export const ACCOUNT_CREATION_SERVICE_TOKEN = Symbol('IAccountCreationService');

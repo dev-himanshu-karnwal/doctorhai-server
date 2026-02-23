@@ -16,6 +16,7 @@ import {
   ADDRESS_SERVICE_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
   HOSPITAL_SERVICE_TOKEN,
+  ACCOUNT_CREATION_SERVICE_TOKEN,
 } from '../../../common/constants';
 import {
   BusinessRuleViolationException,
@@ -25,15 +26,14 @@ import { generateSlugFromName } from '../../../common/utils';
 import type { IAccountRepository } from '../interfaces/account-repository.interface';
 import type { IRoleService } from '../interfaces/role-service.interface';
 import type { IPermissionService } from '../interfaces/permission-service.interface';
+import type { IAccountCreationService } from '../interfaces/account-creation-service.interface';
 import type { IAuthFlowService } from '../interfaces/auth-flow-service.interface';
 import type { IAddressService } from '../../addresses/interfaces';
-import type { DoctorProfileEntity } from '../../doctor-profiles/entities';
 import type { IDoctorProfileService } from '../../doctor-profiles/interfaces';
 import type { IHospitalService } from '../../hospitals/interfaces';
 import type {
   RegisterDto,
   LoginDto,
-  CreateDoctorByHospitalDto,
   AuthResponseDto,
   CheckUsernameResponseDto,
   MeResponseDto,
@@ -58,6 +58,8 @@ export class AuthFlowService implements IAuthFlowService {
     private readonly doctorProfileService: IDoctorProfileService,
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
+    @Inject(ACCOUNT_CREATION_SERVICE_TOKEN)
+    private readonly accountCreationService: IAccountCreationService,
     private readonly jwtService: JwtService,
     private readonly appConfig: AppConfigService,
     @InjectConnection()
@@ -73,15 +75,9 @@ export class AuthFlowService implements IAuthFlowService {
           'Username is required when registering as doctor',
         );
       }
-      const existing = await this.accountRepo.findByLogin(
-        'username',
+      await this.accountCreationService.ensureUsernameAvailable(
         dto.username.trim(),
       );
-      if (existing) {
-        throw new BusinessRuleViolationException(
-          `Username '${dto.username}' is already taken`,
-        );
-      }
     }
 
     if (dto.registrationType === 'doctor') {
@@ -345,84 +341,6 @@ export class AuthFlowService implements IAuthFlowService {
     }
 
     return result;
-  }
-
-  async createDoctorByHospital(
-    dto: CreateDoctorByHospitalDto,
-    createdByAccountId: string,
-  ): Promise<DoctorProfileEntity> {
-    const existing = await this.accountRepo.findByLogin(
-      'username',
-      dto.username,
-    );
-    if (existing) {
-      throw new BusinessRuleViolationException(
-        `Username '${dto.username}' is already taken`,
-      );
-    }
-
-    if (
-      await this.doctorProfileService.findByEmailAndHospitalId(
-        dto.email,
-        dto.hospitalId,
-      )
-    ) {
-      throw new BusinessRuleViolationException(
-        `Email '${dto.email}' is already used for a doctor profile at this hospital`,
-      );
-    }
-
-    const role = await this.roleService.findByName('doctor');
-    if (!role) {
-      throw new ResourceNotFoundException('Role', 'doctor');
-    }
-
-    const bcryptRounds = this.appConfig.bcryptRounds;
-    const passwordHash = (await bcrypt.hash(
-      dto.password,
-      bcryptRounds,
-    )) as string;
-
-    const createAccountDto: CreateAccountDto = {
-      loginType: 'username',
-      loginValue: dto.username,
-      passwordHash,
-      isActive: true,
-      roles: [{ roleId: role.id }],
-    };
-
-    const account = await this.accountRepo.create(createAccountDto);
-
-    const address = await this.addressService.create({
-      addressLine1: dto.addressLine1,
-      addressLine2: dto.addressLine2 ?? null,
-      city: dto.city,
-      state: dto.state,
-      pincode: dto.pincode,
-      latitude: dto.latitude ?? null,
-      longitude: dto.longitude ?? null,
-    });
-
-    const doctor = await this.doctorProfileService.create({
-      fullName: dto.fullName,
-      designation: dto.designation,
-      specialization: dto.specialization,
-      phone: dto.phone,
-      email: dto.email,
-      addressId: address.id,
-      accountId: account.id,
-      slug: generateSlugFromName(dto.fullName),
-      bio: dto.bio ?? null,
-      profilePhotoUrl: dto.profilePhotoUrl ?? null,
-      createdBy: createdByAccountId,
-      hospitalId: dto.hospitalId,
-    });
-
-    this.logger.log(
-      `Hospital created doctor account ${account.id} (username:${dto.username})`,
-    );
-
-    return doctor;
   }
 
   async getPermissionKeysForAccount(accountId: string): Promise<string[]> {

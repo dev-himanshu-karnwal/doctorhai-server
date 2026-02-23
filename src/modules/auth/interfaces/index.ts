@@ -1,3 +1,4 @@
+export type { IAccountCreationService } from './account-creation-service.interface';
 export type { IAccountRepository } from './account-repository.interface';
 export type { IAccountService } from './account-service.interface';
 export type { IPermissionRepository } from './permission-repository.interface';

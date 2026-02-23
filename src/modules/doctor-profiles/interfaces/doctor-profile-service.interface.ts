@@ -1,5 +1,6 @@
 import type { ClientSession } from 'mongoose';
 import { DoctorProfileEntity } from '../entities';
+import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
 
 export interface CreateDoctorProfileData {
   fullName: string;
@@ -25,5 +26,9 @@ export interface IDoctorProfileService {
   create(
     data: CreateDoctorProfileData,
     session?: ClientSession,
+  ): Promise<DoctorProfileEntity>;
+  createByHospital(
+    dto: CreateDoctorByHospitalDto,
+    createdByAccountId: string,
   ): Promise<DoctorProfileEntity>;
 }
