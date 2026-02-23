@@ -77,6 +77,7 @@ import { HospitalsModule } from '../hospitals';
     ROLE_SERVICE_TOKEN,
     ACCOUNT_SERVICE_TOKEN,
     ACCOUNT_CREATION_SERVICE_TOKEN,
+    AUTH_FLOW_SERVICE_TOKEN,
   ],
 })
 export class AuthModule {}
