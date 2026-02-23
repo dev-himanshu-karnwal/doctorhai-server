@@ -55,10 +55,8 @@ export class DoctorProfilesController {
     @Body() dto: CreateDoctorByHospitalDto,
     @CurrentUser() user: JwtPayload,
   ): Promise<DataKeyWrapper<'doctor'>> {
-    const doctor = (await this.doctorProfileService.createByHospital(
-      dto,
-      user.sub,
-    )) as DoctorProfileEntity;
+    const doctor: DoctorProfileEntity =
+      await this.doctorProfileService.createByHospital(dto, user.sub);
     return ApiResponse.withDataKey('doctor', doctor);
   }
 }
