@@ -1,5 +1,5 @@
-import { UserEntity } from '../entities/user.entity';
-import { UserResponseDto } from '../dto/user-response.dto';
+import { UserEntity } from '../entities';
+import { UserResponseDto } from '../dto';
 
 export interface UserDocLike {
   _id: { toString(): string };

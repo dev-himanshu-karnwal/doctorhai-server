@@ -1,5 +1,5 @@
-import { ApiResponseStatus } from '../enums/api-response-status.enum';
-import type { ApiResponseBody } from '../interfaces/api-response.interface';
+import { ApiResponseStatus } from '../enums';
+import type { ApiResponseBody } from '../interfaces';
 
 export class ApiResponse {
   static success<T>(entity: T, message = 'Success'): ApiResponseBody<T> {

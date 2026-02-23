@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiResponse } from '../classes/api-response.class';
-import type { ApiResponseBody } from '../interfaces/api-response.interface';
+import { ApiResponse } from '../classes';
+import type { ApiResponseBody } from '../interfaces';
 
 /**
  * Wraps all successful controller responses in the standard API format.

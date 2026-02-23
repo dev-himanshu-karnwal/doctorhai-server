@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AppConfigService } from './config/app-config.service';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
-import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { AppConfigService } from './config';
+import { GlobalExceptionFilter } from './common/filters';
+import {
+  ApiResponseInterceptor,
+  RequestIdInterceptor,
+} from './common/interceptors';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);

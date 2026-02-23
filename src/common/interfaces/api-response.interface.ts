@@ -1,4 +1,4 @@
-import { ApiResponseStatus } from '../enums/api-response-status.enum';
+import { ApiResponseStatus } from '../enums';
 
 export interface ApiResponseData<T = unknown> {
   entity: T;

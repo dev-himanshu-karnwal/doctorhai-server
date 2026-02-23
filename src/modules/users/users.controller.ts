@@ -15,11 +15,10 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
-import { UsersService } from './services/users.service';
-import { UserResponseDto } from './dto/user-response.dto';
-import { CreateUserDto } from './dto/create-user.dto';
-import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
-import { Public } from '../../common/decorators/public.decorator';
+import { UsersService } from './services';
+import { CreateUserDto, UserResponseDto } from './dto';
+import { ParseObjectIdPipe } from '../../common/pipes';
+import { Public } from '../../common/decorators';
 
 @ApiTags('users')
 @Controller('users')
