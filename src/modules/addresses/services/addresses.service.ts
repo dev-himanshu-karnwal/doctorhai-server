@@ -1,6 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ADDRESS_REPOSITORY_TOKEN } from '../../../common/constants';
 import { ResourceNotFoundException } from '../../../common/exceptions';
+import type { ClientSession } from 'mongoose';
 import type { IAddressRepository, IAddressService } from '../interfaces';
 import type { CreateAddressInput } from '../interfaces';
 
@@ -24,8 +25,9 @@ export class AddressesService implements IAddressService {
 
   async create(
     data: CreateAddressInput,
+    session?: ClientSession,
   ): Promise<Awaited<ReturnType<IAddressService['create']>>> {
     this.logger.debug('Creating address');
-    return this.addressRepo.create(data);
+    return this.addressRepo.create(data, session);
   }
 }

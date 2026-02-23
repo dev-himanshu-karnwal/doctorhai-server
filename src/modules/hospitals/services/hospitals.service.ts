@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { HOSPITAL_REPOSITORY_TOKEN } from '../../../common/constants';
 import type { IHospitalRepository, IHospitalService } from '../interfaces';
 import type { CreateHospitalInput } from '../interfaces';
+import type { ClientSession } from 'mongoose';
 
 @Injectable()
 export class HospitalsService implements IHospitalService {
@@ -21,8 +22,9 @@ export class HospitalsService implements IHospitalService {
 
   async create(
     data: CreateHospitalInput,
+    session?: ClientSession,
   ): Promise<Awaited<ReturnType<IHospitalService['create']>>> {
     this.logger.debug(`Creating hospital for account: ${data.accountId}`);
-    return this.hospitalRepo.create(data);
+    return this.hospitalRepo.create(data, session);
   }
 }

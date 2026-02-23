@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import { AddressEntity } from '../entities';
 
 export interface CreateAddressInput {
@@ -12,5 +13,8 @@ export interface CreateAddressInput {
 
 export interface IAddressRepository {
   findById(id: string): Promise<AddressEntity | null>;
-  create(data: CreateAddressInput): Promise<AddressEntity>;
+  create(
+    data: CreateAddressInput,
+    session?: ClientSession,
+  ): Promise<AddressEntity>;
 }

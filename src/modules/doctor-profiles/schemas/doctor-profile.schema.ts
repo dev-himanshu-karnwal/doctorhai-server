@@ -36,7 +36,7 @@ export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
       required: true,
       unique: true,
     },
-    slug: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
     bio: { type: String, default: null },
     profilePhotoUrl: { type: String, default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'Account', default: null },

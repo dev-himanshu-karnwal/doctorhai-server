@@ -108,18 +108,6 @@ export class RegisterDto {
   @Transform(({ value }: { value: string }) => value?.trim())
   username?: string;
 
-  @ApiProperty({
-    example: 'city-hospital-mumbai',
-    description:
-      'Required when registrationType is hospital. URL-friendly slug',
-  })
-  @ValidateIf((o: RegisterDto) => o.registrationType === 'hospital')
-  @IsString()
-  @MinLength(1)
-  @MaxLength(120)
-  @Transform(({ value }: { value: string }) => value?.trim())
-  slug?: string;
-
   @ApiPropertyOptional({
     description: 'Hospital cover photo URL',
   })
@@ -153,18 +141,6 @@ export class RegisterDto {
   @MaxLength(120)
   @Transform(({ value }: { value: string }) => value?.trim())
   specialization?: string;
-
-  @ApiProperty({
-    example: 'dr-jane-smith',
-    description:
-      'Required when registrationType is doctor. URL-friendly slug for doctor profile',
-  })
-  @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsString()
-  @MinLength(1)
-  @MaxLength(64)
-  @Transform(({ value }: { value: string }) => value?.trim())
-  doctorSlug?: string;
 
   @ApiPropertyOptional({
     example: 'Experienced cardiologist with 15 years of practice.',

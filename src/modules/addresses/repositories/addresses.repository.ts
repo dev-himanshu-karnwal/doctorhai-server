@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { AddressDocument } from '../schemas';
 import { AddressEntity } from '../entities';
 import { AddressMapper } from '../mappers';
@@ -22,18 +22,25 @@ export class AddressesRepository implements IAddressRepository {
     return doc ? AddressMapper.toDomain(doc) : null;
   }
 
-  async create(data: CreateAddressInput): Promise<AddressEntity> {
-    const [doc] = await this.addressModel.create([
-      {
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2 ?? null,
-        city: data.city,
-        state: data.state,
-        pincode: data.pincode,
-        latitude: data.latitude ?? null,
-        longitude: data.longitude ?? null,
-      },
-    ]);
+  async create(
+    data: CreateAddressInput,
+    session?: ClientSession,
+  ): Promise<AddressEntity> {
+    const options = session ? { session } : {};
+    const [doc] = await this.addressModel.create(
+      [
+        {
+          addressLine1: data.addressLine1,
+          addressLine2: data.addressLine2 ?? null,
+          city: data.city,
+          state: data.state,
+          pincode: data.pincode,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+        },
+      ],
+      options,
+    );
     return AddressMapper.toDomain(doc);
   }
 }

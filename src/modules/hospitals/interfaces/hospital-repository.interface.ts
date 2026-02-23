@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import { HospitalEntity } from '../entities';
 
 export interface CreateHospitalInput {
@@ -12,5 +13,8 @@ export interface CreateHospitalInput {
 
 export interface IHospitalRepository {
   findByAccountId(accountId: string): Promise<HospitalEntity | null>;
-  create(data: CreateHospitalInput): Promise<HospitalEntity>;
+  create(
+    data: CreateHospitalInput,
+    session?: ClientSession,
+  ): Promise<HospitalEntity>;
 }

@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import { DoctorProfileEntity } from '../entities';
 
 export interface CreateDoctorProfileInput {
@@ -17,5 +18,8 @@ export interface CreateDoctorProfileInput {
 
 export interface IDoctorProfileRepository {
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
-  create(data: CreateDoctorProfileInput): Promise<DoctorProfileEntity>;
+  create(
+    data: CreateDoctorProfileInput,
+    session?: ClientSession,
+  ): Promise<DoctorProfileEntity>;
 }

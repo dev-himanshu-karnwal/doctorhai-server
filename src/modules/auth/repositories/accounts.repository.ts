@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ResourceNotFoundException } from '../../../common/exceptions';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { AccountDocument } from '../schemas';
 import { AccountEntity } from '../entities';
 import { AccountMapper } from '../mappers';
@@ -42,22 +42,29 @@ export class AccountsRepository implements IAccountRepository {
     return doc ? AccountMapper.toDomain(doc) : null;
   }
 
-  async create(data: CreateAccountDto): Promise<AccountEntity> {
+  async create(
+    data: CreateAccountDto,
+    session?: ClientSession,
+  ): Promise<AccountEntity> {
     const roles = (data.roles ?? []).map((r) => ({
       roleId: new Types.ObjectId(r.roleId),
       grantedBy: r.grantedBy != null ? new Types.ObjectId(r.grantedBy) : null,
       grantedAt: new Date(),
     }));
-    const [doc] = await this.accountModel.create([
-      {
-        loginType: data.loginType,
-        loginValue: data.loginValue,
-        passwordHash: data.passwordHash ?? null,
-        isActive: data.isActive ?? true,
-        roles,
-        deletedAt: null,
-      },
-    ]);
+    const options = session ? { session } : {};
+    const [doc] = await this.accountModel.create(
+      [
+        {
+          loginType: data.loginType,
+          loginValue: data.loginValue,
+          passwordHash: data.passwordHash ?? null,
+          isActive: data.isActive ?? true,
+          roles,
+          deletedAt: null,
+        },
+      ],
+      options,
+    );
     return AccountMapper.toDomain(doc);
   }
 

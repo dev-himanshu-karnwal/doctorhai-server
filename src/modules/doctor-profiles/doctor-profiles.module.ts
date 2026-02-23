@@ -8,7 +8,6 @@ import { AddressesModule } from '../addresses';
 import { DoctorProfileSchema } from './schemas';
 import { DoctorProfilesRepository } from './repositories';
 import { DoctorProfilesService } from './services';
-import { DoctorRegistrationListener } from './listeners/doctor-registration.listener';
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { DoctorRegistrationListener } from './listeners/doctor-registration.list
       useClass: DoctorProfilesRepository,
     },
     { provide: DOCTOR_PROFILE_SERVICE_TOKEN, useClass: DoctorProfilesService },
-    DoctorRegistrationListener,
   ],
   exports: [DOCTOR_PROFILE_SERVICE_TOKEN],
 })

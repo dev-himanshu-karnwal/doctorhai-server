@@ -29,6 +29,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthController } from './auth.controller';
 import { AddressesModule } from '../addresses';
 import { DoctorProfilesModule } from '../doctor-profiles';
+import { HospitalsModule } from '../hospitals';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { DoctorProfilesModule } from '../doctor-profiles';
     }),
     AddressesModule,
     DoctorProfilesModule,
+    HospitalsModule,
   ],
   controllers: [AuthController],
   providers: [

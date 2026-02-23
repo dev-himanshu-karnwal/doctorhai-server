@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { HospitalDocument } from '../schemas';
 import { HospitalEntity } from '../entities';
 import { HospitalMapper } from '../mappers';
@@ -24,20 +24,27 @@ export class HospitalsRepository implements IHospitalRepository {
     return doc ? HospitalMapper.toDomain(doc) : null;
   }
 
-  async create(data: CreateHospitalInput): Promise<HospitalEntity> {
-    const [doc] = await this.hospitalModel.create([
-      {
-        accountId: new Types.ObjectId(data.accountId),
-        addressId: new Types.ObjectId(data.addressId),
-        name: data.name,
-        slug: data.slug,
-        phone: data.phone,
-        email: data.email,
-        coverPhotoUrl: data.coverPhotoUrl ?? null,
-        isActive: true,
-        deletedAt: null,
-      },
-    ]);
+  async create(
+    data: CreateHospitalInput,
+    session?: ClientSession,
+  ): Promise<HospitalEntity> {
+    const options = session ? { session } : {};
+    const [doc] = await this.hospitalModel.create(
+      [
+        {
+          accountId: new Types.ObjectId(data.accountId),
+          addressId: new Types.ObjectId(data.addressId),
+          name: data.name,
+          slug: data.slug,
+          phone: data.phone,
+          email: data.email,
+          coverPhotoUrl: data.coverPhotoUrl ?? null,
+          isActive: true,
+          deletedAt: null,
+        },
+      ],
+      options,
+    );
     return HospitalMapper.toDomain(doc);
   }
 }

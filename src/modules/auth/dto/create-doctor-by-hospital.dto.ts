@@ -106,16 +106,6 @@ export class CreateDoctorByHospitalDto {
   @MaxLength(72)
   password: string;
 
-  @ApiProperty({
-    example: 'dr_john_hospital',
-    description: 'Slug for the doctor profile',
-  })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(64)
-  @Transform(({ value }: { value: string }) => value?.trim())
-  slug: string;
-
   @ApiPropertyOptional({ description: 'Bio' })
   @IsOptional()
   @IsString()

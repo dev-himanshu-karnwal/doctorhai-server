@@ -1,5 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { DOCTOR_PROFILE_REPOSITORY_TOKEN } from '../../../common/constants';
+import type { ClientSession } from 'mongoose';
 import type {
   IDoctorProfileRepository,
   IDoctorProfileService,
@@ -24,8 +25,9 @@ export class DoctorProfilesService implements IDoctorProfileService {
 
   async create(
     data: CreateDoctorProfileData,
+    session?: ClientSession,
   ): Promise<Awaited<ReturnType<IDoctorProfileService['create']>>> {
     this.logger.debug(`Creating doctor profile for account: ${data.accountId}`);
-    return this.doctorProfileRepo.create(data);
+    return this.doctorProfileRepo.create(data, session);
   }
 }

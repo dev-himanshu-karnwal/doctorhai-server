@@ -8,7 +8,6 @@ import { AddressesModule } from '../addresses';
 import { HospitalSchema } from './schemas';
 import { HospitalsRepository } from './repositories';
 import { HospitalsService } from './services';
-import { HospitalRegistrationListener } from './listeners/hospital-registration.listener';
 
 @Module({
   imports: [
@@ -19,7 +18,6 @@ import { HospitalRegistrationListener } from './listeners/hospital-registration.
   providers: [
     { provide: HOSPITAL_REPOSITORY_TOKEN, useClass: HospitalsRepository },
     { provide: HOSPITAL_SERVICE_TOKEN, useClass: HospitalsService },
-    HospitalRegistrationListener,
   ],
   exports: [HOSPITAL_SERVICE_TOKEN],
 })
