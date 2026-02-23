@@ -5,6 +5,8 @@ export class AccountEntity {
     public readonly id: string,
     public readonly loginType: string,
     public readonly loginValue: string,
+    /** Only present when loaded for auth (e.g. login); never expose in API responses */
+    public readonly passwordHash: string | null,
     public readonly isActive: boolean,
     public readonly passwordUpdatedAt: Date | null,
     public readonly roles: AccountRoleAssignmentEntity[],

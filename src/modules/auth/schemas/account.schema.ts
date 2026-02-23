@@ -1,4 +1,5 @@
 import { Schema, Document, Types } from 'mongoose';
+import { LOGIN_TYPE } from '../dto';
 
 export interface AccountRoleAssignmentDocument {
   roleId: Types.ObjectId;
@@ -29,7 +30,7 @@ const AccountRoleAssignmentSchema = new Schema<AccountRoleAssignmentDocument>(
 
 export const AccountSchema = new Schema<AccountDocument>(
   {
-    loginType: { type: String, enum: ['email', 'username'], required: true },
+    loginType: { type: String, enum: LOGIN_TYPE, required: true },
     loginValue: { type: String, required: true },
     passwordHash: { type: String, default: null },
     isActive: { type: Boolean, default: true },

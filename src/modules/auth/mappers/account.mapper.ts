@@ -10,6 +10,7 @@ export interface AccountDocLike {
   _id: { toString(): string };
   loginType: string;
   loginValue: string;
+  passwordHash?: string | null;
   isActive?: boolean;
   passwordUpdatedAt?: Date | null;
   roles?: AccountRoleAssignmentDocLike[];
@@ -35,6 +36,7 @@ export class AccountMapper {
       doc._id.toString(),
       doc.loginType,
       doc.loginValue,
+      doc.passwordHash ?? null,
       doc.isActive ?? true,
       doc.passwordUpdatedAt ?? null,
       roles,
