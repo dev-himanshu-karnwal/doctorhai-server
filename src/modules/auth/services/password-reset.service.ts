@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -31,6 +32,7 @@ import type {
   ResetProfilesItem,
 } from '../interfaces/password-reset-service.interface';
 import { AccountEntity } from '../entities';
+import { AppConfigService } from '../../../config';
 
 interface ResetTokenPayload {
   sub: string;
@@ -39,7 +41,7 @@ interface ResetTokenPayload {
   purpose: 'password_reset';
 }
 
-const REQUEST_WINDOW_MS = 10 * 60 * 1000;
+const REQUEST_WINDOW_MS = 60 * 1000;
 
 @Injectable()
 export class PasswordResetService implements IPasswordResetService {
@@ -57,6 +59,7 @@ export class PasswordResetService implements IPasswordResetService {
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
     private readonly jwtService: JwtService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async requestReset(dto: ForgotPasswordRequestDto): Promise<void> {
@@ -68,17 +71,24 @@ export class PasswordResetService implements IPasswordResetService {
       recentReset &&
       recentReset.createdAt.getTime() > Date.now() - REQUEST_WINDOW_MS
     ) {
-      this.logger.warn(`Password reset rate limit hit for email: ${email}`);
-      return;
+      this.logger.warn(`Password reset rate limit hit for email: ${email}.`);
+      throw new BadRequestException(
+        `Password reset rate limit hit. Try again in ${Math.floor((REQUEST_WINDOW_MS - (Date.now() - recentReset.createdAt.getTime())) / 1000)} seconds.`,
+      );
     }
 
     const accounts = (await this.accountService.findAllByEmail(email, [
       'id',
     ])) as Pick<AccountEntity, 'id'>[];
     const accountIds: string[] = accounts.map((account) => account.id);
-    if (accountIds.length === 0) return;
+    if (accountIds.length === 0) {
+      throw new BadRequestException('No accounts found for email');
+    }
 
     const otp = this.otpService.generateOtp();
+    if (this.appConfig.isDevelopment) {
+      this.logger.log(`Generated OTP: ${otp}`);
+    }
     const otpHash = await this.otpService.hashOtp(otp);
     const expiresAt = this.otpService.getExpiryDate();
 
@@ -139,7 +149,9 @@ export class PasswordResetService implements IPasswordResetService {
       accountIds,
       purpose: 'password_reset',
     };
-    const resetToken = this.jwtService.sign(payload, { expiresIn: '10m' });
+    const resetToken = this.jwtService.sign(payload, {
+      expiresIn: this.appConfig.jwtExpiresIn,
+    });
 
     return {
       resetToken,
@@ -181,6 +193,7 @@ export class PasswordResetService implements IPasswordResetService {
     const profiles: ResetProfilesItem[] = [];
     for (const accountId of accountIds) {
       const doctor = await this.doctorProfileService.findByAccountId(accountId);
+      console.log('doctor', doctor);
       if (doctor && doctor.email === email) {
         profiles.push({
           accountId: doctor.accountId,
@@ -191,6 +204,7 @@ export class PasswordResetService implements IPasswordResetService {
       }
 
       const hospital = await this.hospitalService.findByAccountId(accountId);
+      console.log('hospital', hospital);
       if (hospital && hospital.email === email) {
         profiles.push({
           accountId: hospital.accountId,

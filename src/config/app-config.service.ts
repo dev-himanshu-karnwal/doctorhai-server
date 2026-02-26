@@ -28,6 +28,10 @@ export class AppConfigService {
     return this.config.get<string>('app.nodeEnv') ?? 'development';
   }
 
+  get isDevelopment(): boolean {
+    return this.nodeEnv.toLowerCase().trim() === 'development';
+  }
+
   get bcryptRounds(): number {
     return this.config.get<number>('auth.bcryptRounds') ?? 12;
   }
