@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { AppConfigService } from '../../../config';
 import {
@@ -17,8 +17,6 @@ import type { CreateAccountDto } from '../dto';
 
 @Injectable()
 export class AccountCreationService implements IAccountCreationService {
-  private readonly logger = new Logger(AccountCreationService.name);
-
   constructor(
     @Inject(ACCOUNT_SERVICE_TOKEN)
     private readonly accountService: IAccountService,
@@ -28,7 +26,7 @@ export class AccountCreationService implements IAccountCreationService {
   ) {}
 
   async ensureUsernameAvailable(username: string): Promise<void> {
-    const existing = await this.accountService.findByLogin(
+    const existing = await this.accountService.findOneByLogin(
       'username',
       username.trim(),
     );
@@ -41,6 +39,7 @@ export class AccountCreationService implements IAccountCreationService {
 
   async createUsernameAccount(
     username: string,
+    email: string,
     plainPassword: string,
     roleName: string,
   ): Promise<AccountEntity> {
@@ -57,7 +56,8 @@ export class AccountCreationService implements IAccountCreationService {
 
     const createAccountDto: CreateAccountDto = {
       loginType: 'username',
-      loginValue: username.trim(),
+      email: email.toLowerCase().trim(),
+      username: username.trim(),
       passwordHash,
       isActive: true,
       roles: [{ roleId: role.id }],

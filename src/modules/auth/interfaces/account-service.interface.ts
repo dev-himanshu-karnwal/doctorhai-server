@@ -7,7 +7,11 @@ import type {
 
 export interface IAccountService {
   findById(id: string): Promise<AccountEntity>;
-  findByLogin(
+  findAllByEmail(
+    email: string,
+    select?: readonly string[],
+  ): Promise<Partial<AccountEntity>[]>;
+  findOneByLogin(
     loginType: string,
     loginValue: string,
   ): Promise<AccountEntity | null>;

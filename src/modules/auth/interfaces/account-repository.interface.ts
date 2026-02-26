@@ -6,10 +6,14 @@ import type { AddRoleToAccountDto } from '../dto';
 
 export interface IAccountRepository {
   findById(id: string): Promise<AccountEntity | null>;
-  findByLogin(
+  findOneByLogin(
     loginType: string,
     loginValue: string,
   ): Promise<AccountEntity | null>;
+  findAllByEmail(
+    email: string,
+    select?: readonly string[],
+  ): Promise<Partial<AccountEntity>[]>;
   create(
     data: CreateAccountDto,
     session?: ClientSession,

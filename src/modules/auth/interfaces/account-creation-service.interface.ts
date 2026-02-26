@@ -16,6 +16,7 @@ export interface IAccountCreationService {
    */
   createUsernameAccount(
     username: string,
+    email: string,
     plainPassword: string,
     roleName: string,
   ): Promise<AccountEntity>;

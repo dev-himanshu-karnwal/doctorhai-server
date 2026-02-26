@@ -39,6 +39,7 @@ import type {
   MeResponseDto,
 } from '../dto';
 import type { CreateAccountDto } from '../dto';
+import type { AccountEntity } from '../entities';
 import type { RegistrationType } from '../enums/registration-type.enum';
 
 @Injectable()
@@ -108,10 +109,11 @@ export class AuthFlowService implements IAuthFlowService {
     }
 
     const loginType = dto.registrationType === 'doctor' ? 'username' : 'email';
-    const loginValue =
+    const email = dto.email.toLowerCase().trim();
+    const username =
       dto.registrationType === 'doctor'
         ? (dto.username as string).trim()
-        : dto.email;
+        : null;
 
     const bcryptRounds = this.appConfig.bcryptRounds;
     const passwordHash = (await bcrypt.hash(
@@ -121,7 +123,8 @@ export class AuthFlowService implements IAuthFlowService {
 
     const createAccountDto: CreateAccountDto = {
       loginType,
-      loginValue,
+      email,
+      username,
       passwordHash,
       isActive: true,
       roles: [{ roleId: role.id }],
@@ -179,10 +182,14 @@ export class AuthFlowService implements IAuthFlowService {
       }
 
       await session.commitTransaction();
+      const identifier =
+        account.loginType === 'email'
+          ? account.email
+          : (account.username ?? '');
       this.logger.log(
-        `Registered account ${account.id} as ${dto.registrationType} (${loginType}:${loginValue})`,
+        `Registered account ${account.id} as ${dto.registrationType} (${account.loginType}:${identifier})`,
       );
-      return this.signAndReturnAuthResponse(account.id, loginType, loginValue);
+      return this.signAndReturnAuthResponse(account);
     } catch (err) {
       await session.abortTransaction();
       throw err;
@@ -201,7 +208,7 @@ export class AuthFlowService implements IAuthFlowService {
       );
     }
 
-    const account = await this.accountRepo.findByLogin(
+    const account = await this.accountRepo.findOneByLogin(
       dto.loginType,
       loginValue,
     );
@@ -234,17 +241,16 @@ export class AuthFlowService implements IAuthFlowService {
       `Logged in account ${account.id} (${dto.loginType}:${loginValue})`,
     );
 
-    return this.signAndReturnAuthResponse(
-      account.id,
-      account.loginType,
-      account.loginValue,
-    );
+    return this.signAndReturnAuthResponse(account);
   }
 
   async checkUsernameAvailable(
     username: string,
   ): Promise<CheckUsernameResponseDto> {
-    const existing = await this.accountRepo.findByLogin('username', username);
+    const existing = await this.accountRepo.findOneByLogin(
+      'username',
+      username,
+    );
     return {
       username,
       available: !existing,
@@ -272,7 +278,8 @@ export class AuthFlowService implements IAuthFlowService {
     const accountMe = {
       id: account.id,
       loginType: account.loginType,
-      loginValue: account.loginValue,
+      email: account.email,
+      username: account.username,
       roles: roleNames,
       isActive: account.isActive,
       createdAt: account.createdAt,
@@ -379,18 +386,20 @@ export class AuthFlowService implements IAuthFlowService {
     return registrationType;
   }
 
-  private signAndReturnAuthResponse(
-    accountId: string,
-    loginType: string,
-    loginValue: string,
-  ): AuthResponseDto {
-    const payload = { sub: accountId, loginType, loginValue };
+  private signAndReturnAuthResponse(account: AccountEntity): AuthResponseDto {
+    const payload = {
+      sub: account.id,
+      loginType: account.loginType,
+      email: account.email,
+      username: account.username,
+    };
     const accessToken = this.jwtService.sign(payload);
     return {
       accessToken,
-      accountId,
-      loginType,
-      loginValue,
+      accountId: account.id,
+      loginType: account.loginType,
+      email: account.email,
+      username: account.username,
     };
   }
 }

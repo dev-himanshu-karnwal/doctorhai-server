@@ -30,16 +30,36 @@ export class AccountsRepository implements IAccountRepository {
     return doc ? AccountMapper.toDomain(doc) : null;
   }
 
-  async findByLogin(
+  async findOneByLogin(
     loginType: string,
     loginValue: string,
   ): Promise<AccountEntity | null> {
+    const filter: Record<string, unknown> = { loginType, ...this.notDeleted };
+    if (loginType === 'email') {
+      filter.email = loginValue.toLowerCase().trim();
+    } else {
+      filter.username = loginValue.trim();
+    }
+
     const doc = await this.accountModel
-      .findOne({ loginType, loginValue, ...this.notDeleted })
+      .findOne(filter)
       .sort({ createdAt: 1 })
       .lean()
       .exec();
     return doc ? AccountMapper.toDomain(doc) : null;
+  }
+
+  async findAllByEmail(
+    email: string,
+    select?: readonly string[],
+  ): Promise<AccountEntity[]> {
+    const docs = await this.accountModel
+      .find({ email: email.toLowerCase().trim(), ...this.notDeleted })
+      .sort({ createdAt: 1 })
+      .select(select ?? [])
+      .lean()
+      .exec();
+    return docs.map((doc) => AccountMapper.toDomain(doc));
   }
 
   async create(
@@ -56,7 +76,8 @@ export class AccountsRepository implements IAccountRepository {
       [
         {
           loginType: data.loginType,
-          loginValue: data.loginValue,
+          email: data.email.toLowerCase().trim(),
+          username: data.username ?? null,
           passwordHash: data.passwordHash ?? null,
           isActive: data.isActive ?? true,
           roles,

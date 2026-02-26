@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthResponseDto {
   @ApiProperty({
@@ -20,8 +20,15 @@ export class AuthResponseDto {
   loginType: string;
 
   @ApiProperty({
-    example: 'dr_janesmith',
-    description: 'Login value (email or username)',
+    example: 'user@example.com',
+    description: 'Primary email for this account',
   })
-  loginValue: string;
+  email: string;
+
+  @ApiPropertyOptional({
+    example: 'dr_janesmith',
+    description:
+      'Username for doctor accounts; null for non-doctor accounts (e.g. hospitals, superadmin)',
+  })
+  username: string | null;
 }

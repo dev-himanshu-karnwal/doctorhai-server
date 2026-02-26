@@ -100,11 +100,12 @@ export async function seedSuperadmin(
     bcryptRounds,
   )) as string;
   await Account.findOneAndUpdate(
-    { loginType: 'email', loginValue: data.email },
+    { loginType: 'email', email: data.email },
     {
       $set: {
         loginType: 'email',
-        loginValue: data.email,
+        email: data.email,
+        username: null,
         passwordHash,
         isActive: true,
         roles: [

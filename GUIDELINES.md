@@ -1,6 +1,6 @@
 # ============================================================
 
-# CURSOR RULES — NestJS + MongoDB + Mongoose Modular Monolith
+# GUIDELINES — NestJS + MongoDB + Mongoose Modular Monolith
 
 # Production-Grade Application Standards
 

@@ -9,7 +9,8 @@ export interface AccountRoleAssignmentDocLike {
 export interface AccountDocLike {
   _id: { toString(): string };
   loginType: string;
-  loginValue: string;
+  email: string;
+  username?: string | null;
   passwordHash?: string | null;
   isActive?: boolean;
   passwordUpdatedAt?: Date | null;
@@ -35,7 +36,8 @@ export class AccountMapper {
     return new AccountEntity(
       doc._id.toString(),
       doc.loginType,
-      doc.loginValue,
+      doc.email,
+      doc.username ?? null,
       doc.passwordHash ?? null,
       doc.isActive ?? true,
       doc.passwordUpdatedAt ?? null,

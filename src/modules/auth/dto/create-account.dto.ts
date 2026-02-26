@@ -3,6 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
+  IsEmail,
   IsEnum,
   IsOptional,
   IsString,
@@ -26,13 +27,23 @@ export class CreateAccountDto {
 
   @ApiProperty({
     example: 'user@example.com',
-    description: 'Login value (email or username)',
+    description: 'Primary email for the account (required for all roles)',
   })
+  @IsEmail()
+  @Transform(({ value }: { value: string }) => value?.toLowerCase().trim())
+  email: string;
+
+  @ApiPropertyOptional({
+    example: 'dr_janesmith',
+    description:
+      'Username (required for doctor accounts; must be globally unique; must be absent for non-doctor accounts)',
+  })
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(255)
   @Transform(({ value }: { value: string }) => value?.trim())
-  loginValue: string;
+  username?: string | null;
 
   @ApiPropertyOptional({
     description: 'Hashed password (set by server; never send plain password)',

@@ -73,6 +73,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
 
     const account = await this.accountCreationService.createUsernameAccount(
       dto.username,
+      dto.email,
       dto.password,
       'doctor',
     );

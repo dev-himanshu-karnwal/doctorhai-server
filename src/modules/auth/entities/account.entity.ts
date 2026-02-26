@@ -4,7 +4,8 @@ export class AccountEntity {
   constructor(
     public readonly id: string,
     public readonly loginType: string,
-    public readonly loginValue: string,
+    public readonly email: string,
+    public readonly username: string | null,
     /** Only present when loaded for auth (e.g. login); never expose in API responses */
     public readonly passwordHash: string | null,
     public readonly isActive: boolean,

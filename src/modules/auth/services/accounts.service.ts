@@ -29,25 +29,35 @@ export class AccountsService implements IAccountService {
     return entity;
   }
 
-  async findByLogin(
+  async findOneByLogin(
     loginType: string,
     loginValue: string,
-  ): Promise<Awaited<ReturnType<IAccountService['findByLogin']>>> {
+  ): Promise<Awaited<ReturnType<IAccountService['findOneByLogin']>>> {
     this.logger.debug(`Finding account by login: ${loginType}:${loginValue}`);
-    return this.accountRepo.findByLogin(loginType, loginValue);
+    return this.accountRepo.findOneByLogin(loginType, loginValue);
+  }
+
+  async findAllByEmail(
+    email: string,
+    select?: readonly string[],
+  ): Promise<Awaited<ReturnType<IAccountService['findAllByEmail']>>> {
+    this.logger.debug(`Finding accounts by email: ${email}`);
+    return this.accountRepo.findAllByEmail(email, select);
   }
 
   async create(
     data: CreateAccountDto,
   ): Promise<Awaited<ReturnType<IAccountService['create']>>> {
-    this.logger.debug(`Creating account: ${data.loginType}:${data.loginValue}`);
-    const existing = await this.accountRepo.findByLogin(
+    const identifier =
+      data.loginType === 'email' ? data.email : (data.username ?? '');
+    this.logger.debug(`Creating account: ${data.loginType}:${identifier}`);
+    const existing = await this.accountRepo.findOneByLogin(
       data.loginType,
-      data.loginValue,
+      identifier,
     );
     if (existing) {
       throw new BusinessRuleViolationException(
-        `Account with login ${data.loginType}:${data.loginValue} already exists`,
+        `Account with login ${data.loginType}:${identifier} already exists`,
       );
     }
     return this.accountRepo.create(data);

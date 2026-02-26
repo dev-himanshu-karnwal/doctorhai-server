@@ -9,7 +9,8 @@ export interface AccountRoleAssignmentDocument {
 
 export interface AccountDocument extends Document {
   loginType: string;
-  loginValue: string;
+  email: string;
+  username: string | null;
   passwordHash: string | null;
   isActive: boolean;
   passwordUpdatedAt: Date | null;
@@ -31,7 +32,8 @@ const AccountRoleAssignmentSchema = new Schema<AccountRoleAssignmentDocument>(
 export const AccountSchema = new Schema<AccountDocument>(
   {
     loginType: { type: String, enum: LOGIN_TYPE, required: true },
-    loginValue: { type: String, required: true },
+    email: { type: String, required: true },
+    username: { type: String, default: null },
     passwordHash: { type: String, default: null },
     isActive: { type: Boolean, default: true },
     passwordUpdatedAt: { type: Date, default: null },
@@ -41,6 +43,15 @@ export const AccountSchema = new Schema<AccountDocument>(
   { timestamps: true, collection: 'accounts' },
 );
 
-AccountSchema.index({ loginType: 1, loginValue: 1 }, { unique: true });
+// Username must be globally unique when present.
+AccountSchema.index(
+  { username: 1 },
+  { unique: true, partialFilterExpression: { username: { $type: 'string' } } },
+);
+// For email-based logins, ensure a single account per email.
+AccountSchema.index(
+  { loginType: 1, email: 1 },
+  { unique: true, partialFilterExpression: { loginType: 'email' } },
+);
 AccountSchema.index({ deletedAt: 1 });
 AccountSchema.index({ 'roles.roleId': 1 });

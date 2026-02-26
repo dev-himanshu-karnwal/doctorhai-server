@@ -7,7 +7,8 @@ import type { Request } from 'express';
 export interface JwtPayload {
   sub: string;
   loginType: string;
-  loginValue: string;
+  email: string;
+  username: string | null;
 }
 
 function extractJwtFromCookieOrBearer(
@@ -41,12 +42,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   validate(payload: {
     sub: string;
     loginType?: string;
-    loginValue?: string;
+    email?: string;
+    username?: string | null;
   }): JwtPayload {
     return {
       sub: payload.sub,
       loginType: payload.loginType ?? 'email',
-      loginValue: payload.loginValue ?? '',
+      email: payload.email ?? '',
+      username: payload.username ?? null,
     };
   }
 }

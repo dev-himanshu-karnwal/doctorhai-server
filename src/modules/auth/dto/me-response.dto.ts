@@ -34,10 +34,17 @@ export class AccountMeDto {
   loginType: string;
 
   @ApiProperty({
-    example: 'dr_janesmith',
-    description: 'Login value (email or username)',
+    example: 'user@example.com',
+    description: 'Primary email for the account',
   })
-  loginValue: string;
+  email: string;
+
+  @ApiPropertyOptional({
+    example: 'dr_janesmith',
+    description:
+      'Username for doctor accounts; null for non-doctor accounts (e.g. hospitals, superadmin)',
+  })
+  username: string | null;
 
   @ApiProperty({
     example: ['doctor'],
