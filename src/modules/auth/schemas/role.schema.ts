@@ -21,5 +21,4 @@ export const RoleSchema = new Schema<RoleDocument>(
   { timestamps: true, collection: 'roles' },
 );
 
-RoleSchema.index({ name: 1 });
 RoleSchema.index({ permissions: 1 });

@@ -14,5 +14,3 @@ export const PermissionSchema = new Schema<PermissionDocument>(
   },
   { timestamps: true, collection: 'permissions' },
 );
-
-PermissionSchema.index({ key: 1 });

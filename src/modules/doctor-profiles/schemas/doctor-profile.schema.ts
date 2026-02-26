@@ -46,8 +46,6 @@ export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
   { timestamps: true, collection: 'doctor_profiles' },
 );
 
-DoctorProfileSchema.index({ accountId: 1 });
-DoctorProfileSchema.index({ slug: 1 });
 DoctorProfileSchema.index({ hospitalId: 1 });
 DoctorProfileSchema.index({ deletedAt: 1 });
 // Email unique per profile type: one per individual (hospitalId null), one per hospital

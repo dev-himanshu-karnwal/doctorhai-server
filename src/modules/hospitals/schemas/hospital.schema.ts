@@ -38,6 +38,4 @@ export const HospitalSchema = new Schema<HospitalDocument>(
   { timestamps: true, collection: 'hospitals' },
 );
 
-HospitalSchema.index({ accountId: 1 });
-HospitalSchema.index({ slug: 1 });
 HospitalSchema.index({ deletedAt: 1 });
