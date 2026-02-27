@@ -12,6 +12,11 @@ import type {
   HospitalDoctorsQuery,
   PaginatedDoctorProfiles,
 } from '../interfaces/doctor-profile-service.interface';
+import {
+  buildSort,
+  findWithPagination,
+} from '../../../common/mongoose/query-helpers';
+import type { PaginationOptions } from '../../../common/interfaces';
 
 @Injectable()
 export class DoctorProfilesRepository implements IDoctorProfileRepository {
@@ -95,12 +100,10 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       };
     }
 
-    const baseFilter: Record<string, string | null> = {
+    const filter: FilterQuery<DoctorProfileDocument> = {
       ...this.notDeleted,
-      hospitalId: hospitalId.toString(),
+      hospitalId: new Types.ObjectId(hospitalId),
     };
-
-    const filter: FilterQuery<DoctorProfileDocument> = { ...baseFilter };
 
     if (query.specialization != null && query.specialization.trim() !== '') {
       filter.specialization = new RegExp(query.specialization.trim(), 'i');
@@ -120,28 +123,29 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       ];
     }
 
-    console.log('filter', filter);
-    const total = await this.doctorProfileModel.countDocuments(filter).exec();
-    console.log('total', total);
+    const sort = buildSort<NonNullable<HospitalDoctorsQuery['sortBy']>>(
+      { sortBy: query.sortBy, sortOrder: query.sortOrder },
+      'fullName',
+      ['fullName', 'createdAt'] as const,
+    );
 
-    const sortField = query.sortBy === 'createdAt' ? 'createdAt' : 'fullName';
-    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
-
-    const docs = await this.doctorProfileModel
-      .find(filter)
-      .sort({ [sortField]: sortDirection })
-      .skip((query.page - 1) * query.limit)
-      .limit(query.limit)
-      .lean()
-      .exec();
-
-    const doctors = docs.map((doc) => DoctorProfileMapper.toDomain(doc));
-
-    return {
-      doctors,
-      total,
+    const paginationOptions: PaginationOptions = {
       page: query.page,
       limit: query.limit,
+    };
+
+    const result = await findWithPagination(
+      this.doctorProfileModel,
+      filter,
+      paginationOptions,
+      sort,
+    );
+
+    return {
+      doctors: result.items.map((doc) => DoctorProfileMapper.toDomain(doc)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
     };
   }
 }
