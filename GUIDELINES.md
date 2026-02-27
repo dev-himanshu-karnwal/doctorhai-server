@@ -17,7 +17,6 @@
 - Write code as if the next maintainer is a senior engineer who will review every decision.
 - Prefer boring, explicit, well-named code over terse, implicit, "clever" code.
 - Fail loudly in development; gracefully in production.
-- **Prefer event-driven communication** between modules and for side effects to keep coupling minimal and boundaries clear.
 
 # ─────────────────────────────────────────────
 
@@ -115,7 +114,6 @@ modules/[feature]/
 - Controllers MUST NOT contain business logic.
 - Services MUST NOT import Mongoose document types directly — only domain entities.
 - Repositories MUST NOT contain business logic.
-- **No cross-module direct service injection** — use events (preferred) or a shared interface; events keep modules independent and reduce coupling.
 - Modules expose only what's in their `exports` array.
 
 # ─────────────────────────────────────────────
@@ -236,47 +234,12 @@ export class UserMapper {
 - Leverage NestJS custom decorators for cross-cutting concerns (auth, roles, current user).
 - Prefer decorators over repeating guard logic inline.
 
-## 4.6 Event-Driven Architecture — PREFERRED FOR DECOUPLING
-
-- **Default to events** wherever one module or layer needs to react to something another did. Prefer event-driven over direct calls to minimize coupling.
-- Cross-module communication **MUST** use NestJS `EventEmitter2` events, **NOT** direct service injection. Never import another feature’s service (e.g. `UserService` in `OrderModule`) — emit an event and let subscribers react.
-- **Within a module**, use events for: side effects (e.g. send email, invalidate cache), async follow-ups, or when the same action triggers multiple independent flows. Keeps the core flow simple and side effects decoupled.
-- **Event contracts**: Define typed event payloads in `common/events/` (or module `events/` for module-internal). Use past-tense, dot-notation names: `order.created`, `user.registered`, `payment.completed`.
-- **Fire-and-forget**: Emitters must not depend on handler results. Handlers run asynchronously; do not use events as RPC. For request/response, keep a direct call within the same module or use CQRS.
-- **Single responsibility per handler**: One handler = one reaction. Multiple handlers for the same event are fine (e.g. `order.created` → send email, update analytics, notify warehouse).
-
-```typescript
-// common/events/order.events.ts
-export class OrderCreatedEvent {
-  constructor(
-    public readonly orderId: string,
-    public readonly userId: string,
-    public readonly totalCents: number,
-  ) {}
-}
-
-// In OrderService (OrderModule)
-this.eventEmitter.emit('order.created', new OrderCreatedEvent(order.id, order.userId, order.totalCents));
-
-// In NotificationModule — no import of OrderModule/OrderService
-@OnEvent('order.created')
-async handleOrderCreated(event: OrderCreatedEvent): Promise<void> {
-  await this.notificationService.sendOrderConfirmation(event.orderId, event.userId);
-}
-
-// In AnalyticsModule — same event, different handler
-@OnEvent('order.created')
-async handleOrderCreatedForAnalytics(event: OrderCreatedEvent): Promise<void> {
-  await this.analyticsService.trackOrderCreated(event);
-}
-```
-
-## 4.7 CQRS (where complexity warrants)
+## 4.6 CQRS (where complexity warrants)
 
 - For complex domains, use `@nestjs/cqrs` with Commands, Queries, and Handlers.
 - Queries never mutate state. Commands never return query results.
 
-## 4.8 Guard Pattern
+## 4.7 Guard Pattern
 
 - Authentication: `JwtAuthGuard` (global)
 - Authorization: `RolesGuard` + `@Roles()` decorator
@@ -868,7 +831,6 @@ app.setGlobalPrefix('api/v1');
 ❌ Direct `process.env` access outside config files.
 ❌ `console.log` in application code.
 ❌ Business logic in controllers or repositories.
-❌ Cross-module direct service injection — use event-driven communication (EventEmitter2) instead.
 ❌ Hard-deleting records without explicit domain justification.
 ❌ Returning Mongoose/DB errors or stack traces to API consumers.
 ❌ Committing secrets, `.env` files, or credentials.
@@ -897,7 +859,6 @@ app.setGlobalPrefix('api/v1');
 - [ ] Error handling delegates to domain exceptions.
 - [ ] Soft-delete filter applied in all repository queries.
 - [ ] No business logic in controllers.
-- [ ] Cross-module communication is event-driven only (no direct service injection).
 - [ ] Lint passes: `npm run lint`.
 - [ ] Tests pass: `npm run test`.
 - [ ] Build passes: `npm run build`.
