@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: doctorhai-server
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env.development
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6
+    container_name: doctorhai-mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

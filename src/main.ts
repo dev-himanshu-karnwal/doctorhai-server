@@ -1,13 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
-import { AppConfigService } from './config/app-config.service';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
-import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { AppConfigService } from './config';
+import { GlobalExceptionFilter } from './common/filters';
+import {
+  ApiResponseInterceptor,
+  RequestIdInterceptor,
+} from './common/interceptors';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
   const config = app.get(AppConfigService);
 
   app.setGlobalPrefix(config.apiPrefix);
@@ -25,6 +30,14 @@ async function bootstrap(): Promise<void> {
     new RequestIdInterceptor(),
     new ApiResponseInterceptor(),
   );
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('DoctorHai API')
+    .setDescription('DoctorHai server API documentation')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(config.port);
 }

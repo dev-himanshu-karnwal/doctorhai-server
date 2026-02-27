@@ -6,13 +6,14 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiResponse } from '../classes/api-response.class';
-import type { ApiResponseBody } from '../interfaces/api-response.interface';
+import { ApiResponse, isDataKeyWrapper } from '../classes';
+import type { ApiResponseBody } from '../interfaces';
 
 /**
  * Wraps all successful controller responses in the standard API format.
- * Returned value is set as data.entity; use ApiResponse.success() in controller
- * for custom message, or return raw entity and it will be wrapped here.
+ * - Return ApiResponse.withDataKey('user', userDto) for dynamic keys (user, hospital, hospitals, etc.)
+ * - Return raw entity for default data.entity
+ * - Return full ApiResponseBody for custom responses
  */
 @Injectable()
 export class ApiResponseInterceptor implements NestInterceptor {
@@ -29,6 +30,13 @@ export class ApiResponseInterceptor implements NestInterceptor {
           'data' in value
         ) {
           return value as ApiResponseBody<unknown>;
+        }
+        if (isDataKeyWrapper(value)) {
+          return ApiResponse.success(
+            value.value ?? null,
+            'Success',
+            value.dataKey,
+          );
         }
         return ApiResponse.success(value ?? null, 'Success');
       }),

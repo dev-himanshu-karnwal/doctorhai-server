@@ -7,12 +7,36 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ApiResponseStatus } from '../enums/api-response-status.enum';
-import type { ApiResponseBody } from '../interfaces/api-response.interface';
+import { ApiResponseStatus } from '../enums';
+import type { ApiResponseBody } from '../interfaces';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
+
+  private isMongoDuplicateKeyError(exception: unknown): boolean {
+    return (
+      exception !== null &&
+      typeof exception === 'object' &&
+      'code' in exception &&
+      (exception as { code: number }).code === 11000
+    );
+  }
+
+  private getDuplicateKeyMessage(exception: unknown): string {
+    const err = exception as {
+      message?: string;
+      keyValue?: Record<string, unknown>;
+    };
+    if (err.keyValue && typeof err.keyValue === 'object') {
+      const fields = Object.keys(err.keyValue);
+      if (fields.length > 0) {
+        const fieldList = fields.join(', ');
+        return `A record with this ${fieldList} already exists`;
+      }
+    }
+    return 'A record with this value already exists';
+  }
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -20,15 +44,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const req = ctx.getRequest<Request>();
     const requestId = (req as Request & { requestId?: string }).requestId ?? '';
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    let status: number;
+    let rawResponse: string | object;
 
-    const rawResponse =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal server error';
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      rawResponse = exception.getResponse();
+    } else if (this.isMongoDuplicateKeyError(exception)) {
+      status = HttpStatus.CONFLICT;
+      rawResponse = this.getDuplicateKeyMessage(exception);
+    } else {
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+      rawResponse = 'Internal server error';
+    }
 
     const message =
       typeof rawResponse === 'object' &&
