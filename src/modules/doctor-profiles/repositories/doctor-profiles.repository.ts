@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 import { DoctorProfileDocument } from '../schemas';
 import { DoctorProfileEntity } from '../entities';
 import { DoctorProfileMapper } from '../mappers';
@@ -8,6 +8,10 @@ import type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
 } from '../interfaces';
+import type {
+  HospitalDoctorsQuery,
+  PaginatedDoctorProfiles,
+} from '../interfaces/doctor-profile-service.interface';
 
 @Injectable()
 export class DoctorProfilesRepository implements IDoctorProfileRepository {
@@ -76,5 +80,68 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       options,
     );
     return DoctorProfileMapper.toDomain(doc);
+  }
+
+  async findHospitalDoctors(
+    hospitalId: string,
+    query: HospitalDoctorsQuery,
+  ): Promise<PaginatedDoctorProfiles> {
+    if (!Types.ObjectId.isValid(hospitalId)) {
+      return {
+        doctors: [],
+        total: 0,
+        page: query.page,
+        limit: query.limit,
+      };
+    }
+
+    const baseFilter: Record<string, string | null> = {
+      ...this.notDeleted,
+      hospitalId: hospitalId.toString(),
+    };
+
+    const filter: FilterQuery<DoctorProfileDocument> = { ...baseFilter };
+
+    if (query.specialization != null && query.specialization.trim() !== '') {
+      filter.specialization = new RegExp(query.specialization.trim(), 'i');
+    }
+
+    if (query.designation != null && query.designation.trim() !== '') {
+      filter.designation = new RegExp(query.designation.trim(), 'i');
+    }
+
+    if (query.search != null && query.search.trim() !== '') {
+      const searchRegex = new RegExp(query.search.trim(), 'i');
+      filter.$or = [
+        { fullName: searchRegex },
+        { specialization: searchRegex },
+        { designation: searchRegex },
+        { email: searchRegex },
+      ];
+    }
+
+    console.log('filter', filter);
+    const total = await this.doctorProfileModel.countDocuments(filter).exec();
+    console.log('total', total);
+
+    const sortField = query.sortBy === 'createdAt' ? 'createdAt' : 'fullName';
+    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+
+    const docs = await this.doctorProfileModel
+      .find(filter)
+      .sort({ [sortField]: sortDirection })
+      .skip((query.page - 1) * query.limit)
+      .limit(query.limit)
+      .lean()
+      .exec();
+
+    const doctors = docs.map((doc) => DoctorProfileMapper.toDomain(doc));
+
+    return {
+      doctors,
+      total,
+      page: query.page,
+      limit: query.limit,
+    };
   }
 }
