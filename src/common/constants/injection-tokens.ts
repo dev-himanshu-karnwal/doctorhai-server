@@ -26,3 +26,6 @@ export const ACCOUNT_SERVICE_TOKEN = Symbol('IAccountService');
 export const PASSWORD_RESET_SERVICE_TOKEN = Symbol('IPasswordResetService');
 export const AUTH_FLOW_SERVICE_TOKEN = Symbol('IAuthFlowService');
 export const ACCOUNT_CREATION_SERVICE_TOKEN = Symbol('IAccountCreationService');
+
+// Infra
+export const MAIL_SERVICE_TOKEN = Symbol('IMailService');

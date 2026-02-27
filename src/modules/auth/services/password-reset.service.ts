@@ -13,6 +13,7 @@ import {
   HOSPITAL_SERVICE_TOKEN,
   PASSWORD_RESET_REPOSITORY_TOKEN,
   OTP_SERVICE_TOKEN,
+  MAIL_SERVICE_TOKEN,
 } from '../../../common/constants';
 import { ResourceNotFoundException } from '../../../common/exceptions';
 import type { IOtpService } from '../../../common/interfaces';
@@ -33,6 +34,7 @@ import type {
 } from '../interfaces/password-reset-service.interface';
 import { AccountEntity } from '../entities';
 import { AppConfigService } from '../../../config';
+import type { IMailService } from '../../../infra/mail/interfaces/mail-service.interface';
 
 interface ResetTokenPayload {
   sub: string;
@@ -58,6 +60,8 @@ export class PasswordResetService implements IPasswordResetService {
     private readonly doctorProfileService: IDoctorProfileService,
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
+    @Inject(MAIL_SERVICE_TOKEN)
+    private readonly mailService: IMailService,
     private readonly jwtService: JwtService,
     private readonly appConfig: AppConfigService,
   ) {}
@@ -81,9 +85,7 @@ export class PasswordResetService implements IPasswordResetService {
       'id',
     ])) as Pick<AccountEntity, 'id'>[];
     const accountIds: string[] = accounts.map((account) => account.id);
-    if (accountIds.length === 0) {
-      throw new BadRequestException('No accounts found for email');
-    }
+    if (accountIds.length === 0) return;
 
     const otp = this.otpService.generateOtp();
     if (this.appConfig.isDevelopment) {
@@ -102,7 +104,12 @@ export class PasswordResetService implements IPasswordResetService {
     await this.passwordResetRepo.create(createInput);
     this.logger.log(`Generated password reset OTP for email: ${email}`);
 
-    // TODO: send OTP email
+    await this.mailService.sendMail({
+      to: email,
+      subject: 'DoctorHai password reset code',
+      text: `Your password reset code is ${otp}. It expires at ${expiresAt.toISOString()}. If you did not request this, please ignore this email.`,
+      html: `<p>Your password reset code is <strong>${otp}</strong>.</p><p>It expires at <strong>${expiresAt.toISOString()}</strong>.</p><p>If you did not request this, you can safely ignore this email.</p>`,
+    });
   }
 
   async verifyOtp(

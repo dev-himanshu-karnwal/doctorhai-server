@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
+import { MailProvider } from 'src/infra/mail/enums/mail-provider.enum';
 
 /**
  * Typed app config service injectable anywhere (global).
@@ -49,6 +50,38 @@ export class AppConfigService {
 
   get jwtExpiresIn(): string {
     return this.config.get<string>('jwt.expiresIn') ?? '15m';
+  }
+
+  get mailProvider(): MailProvider {
+    return (
+      this.config.get<MailProvider>('mail.provider') ?? MailProvider.NODEMAILER
+    );
+  }
+
+  get mailDefaultFrom(): string {
+    return (
+      this.config.get<string>('mail.defaultFrom') ?? 'no-reply@doctorhai.local'
+    );
+  }
+
+  get mailSmtpHost(): string {
+    return this.config.get<string>('mail.smtpHost') ?? 'localhost';
+  }
+
+  get mailSmtpPort(): number {
+    return this.config.get<number>('mail.smtpPort') ?? 1025;
+  }
+
+  get mailSmtpSecure(): boolean {
+    return this.config.get<boolean>('mail.smtpSecure') ?? false;
+  }
+
+  get mailSmtpUser(): string | undefined {
+    return this.config.get<string>('mail.smtpUser') ?? undefined;
+  }
+
+  get mailSmtpPass(): string | undefined {
+    return this.config.get<string>('mail.smtpPass') ?? undefined;
   }
 
   /**
