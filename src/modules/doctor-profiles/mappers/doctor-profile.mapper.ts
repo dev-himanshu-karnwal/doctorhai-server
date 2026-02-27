@@ -7,7 +7,7 @@ export interface DoctorProfileDocLike {
   specialization: string;
   phone: string;
   email: string;
-  addressId: { toString(): string };
+  addressId?: { toString(): string } | null;
   accountId: { toString(): string };
   slug: string;
   bio?: string | null;
@@ -28,7 +28,7 @@ export class DoctorProfileMapper {
       doc.specialization,
       doc.phone,
       doc.email,
-      doc.addressId.toString(),
+      doc.addressId != null ? doc.addressId.toString() : null,
       doc.accountId.toString(),
       doc.slug,
       doc.bio ?? null,

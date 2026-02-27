@@ -33,7 +33,8 @@ export class HospitalsRepository implements IHospitalRepository {
       [
         {
           accountId: new Types.ObjectId(data.accountId),
-          addressId: new Types.ObjectId(data.addressId),
+          addressId:
+            data.addressId != null ? new Types.ObjectId(data.addressId) : null,
           name: data.name,
           slug: data.slug,
           phone: data.phone,

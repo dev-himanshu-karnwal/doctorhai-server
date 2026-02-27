@@ -3,7 +3,7 @@ import { HospitalEntity } from '../entities';
 export interface HospitalDocLike {
   _id: { toString(): string };
   accountId: { toString(): string };
-  addressId: { toString(): string };
+  addressId?: { toString(): string } | null;
   name: string;
   slug: string;
   phone: string;
@@ -20,7 +20,7 @@ export class HospitalMapper {
     return new HospitalEntity(
       doc._id.toString(),
       doc.accountId.toString(),
-      doc.addressId.toString(),
+      doc.addressId != null ? doc.addressId.toString() : null,
       doc.name,
       doc.slug,
       doc.phone,

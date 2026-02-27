@@ -8,7 +8,7 @@ export interface CreateDoctorProfileData {
   specialization: string;
   phone: string;
   email: string;
-  addressId: string;
+  addressId?: string | null;
   accountId: string;
   slug: string;
   bio?: string | null;

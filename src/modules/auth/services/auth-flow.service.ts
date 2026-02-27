@@ -41,6 +41,7 @@ import type {
 import type { CreateAccountDto } from '../dto';
 import type { AccountEntity } from '../entities';
 import type { RegistrationType } from '../enums/registration-type.enum';
+import { DoctorMeDto, HospitalMeDto } from '../dto/me-response.dto';
 
 @Injectable()
 export class AuthFlowService implements IAuthFlowService {
@@ -135,29 +136,16 @@ export class AuthFlowService implements IAuthFlowService {
     try {
       const account = await this.accountRepo.create(createAccountDto, session);
 
-      const address = await this.addressService.create(
-        {
-          addressLine1: dto.addressLine1,
-          addressLine2: dto.addressLine2 ?? null,
-          city: dto.city,
-          state: dto.state,
-          pincode: dto.pincode,
-          latitude: dto.latitude ?? null,
-          longitude: dto.longitude ?? null,
-        },
-        session,
-      );
-
       if (dto.registrationType === 'hospital') {
         await this.hospitalService.create(
           {
             accountId: account.id,
-            addressId: address.id,
+            addressId: null,
             name: dto.name,
             slug: generateSlugFromName(dto.name),
             phone: dto.phone,
             email: dto.email,
-            coverPhotoUrl: dto.coverPhotoUrl ?? null,
+            coverPhotoUrl: null,
           },
           session,
         );
@@ -169,11 +157,11 @@ export class AuthFlowService implements IAuthFlowService {
             specialization: (dto.specialization as string).trim(),
             phone: dto.phone,
             email: dto.email,
-            addressId: address.id,
+            addressId: null,
             accountId: account.id,
             slug: generateSlugFromName(dto.name),
             bio: dto.bio ?? null,
-            profilePhotoUrl: dto.profilePhotoUrl ?? null,
+            profilePhotoUrl: null,
             createdBy: null,
             hospitalId: null,
           },
@@ -291,8 +279,7 @@ export class AuthFlowService implements IAuthFlowService {
     if (roleNames.includes('hospital')) {
       const hospital = await this.hospitalService.findByAccountId(accountId);
       if (hospital) {
-        const address = await this.addressService.findById(hospital.addressId);
-        result.hospital = {
+        const hospitalMe: HospitalMeDto = {
           id: hospital.id,
           name: hospital.name,
           slug: hospital.slug,
@@ -300,7 +287,15 @@ export class AuthFlowService implements IAuthFlowService {
           email: hospital.email,
           coverPhotoUrl: hospital.coverPhotoUrl,
           isActive: hospital.isActive,
-          address: {
+          createdAt: hospital.createdAt,
+          updatedAt: hospital.updatedAt,
+        };
+
+        if (hospital.addressId) {
+          const address = await this.addressService.findById(
+            hospital.addressId,
+          );
+          hospitalMe.address = {
             id: address.id,
             addressLine1: address.addressLine1,
             addressLine2: address.addressLine2,
@@ -309,18 +304,17 @@ export class AuthFlowService implements IAuthFlowService {
             pincode: address.pincode,
             latitude: address.latitude,
             longitude: address.longitude,
-          },
-          createdAt: hospital.createdAt,
-          updatedAt: hospital.updatedAt,
-        };
+          };
+        }
+
+        result.hospital = hospitalMe;
       }
     }
 
     if (roleNames.includes('doctor')) {
       const doctor = await this.doctorProfileService.findByAccountId(accountId);
       if (doctor) {
-        const address = await this.addressService.findById(doctor.addressId);
-        result.doctor = {
+        const doctorMe: DoctorMeDto = {
           id: doctor.id,
           fullName: doctor.fullName,
           designation: doctor.designation,
@@ -331,7 +325,13 @@ export class AuthFlowService implements IAuthFlowService {
           bio: doctor.bio,
           profilePhotoUrl: doctor.profilePhotoUrl,
           hospitalId: doctor.hospitalId,
-          address: {
+          createdAt: doctor.createdAt,
+          updatedAt: doctor.updatedAt,
+        };
+
+        if (doctor.addressId) {
+          const address = await this.addressService.findById(doctor.addressId);
+          doctorMe.address = {
             id: address.id,
             addressLine1: address.addressLine1,
             addressLine2: address.addressLine2,
@@ -340,10 +340,10 @@ export class AuthFlowService implements IAuthFlowService {
             pincode: address.pincode,
             latitude: address.latitude,
             longitude: address.longitude,
-          },
-          createdAt: doctor.createdAt,
-          updatedAt: doctor.updatedAt,
-        };
+          };
+        }
+
+        result.doctor = doctorMe;
       }
     }
 

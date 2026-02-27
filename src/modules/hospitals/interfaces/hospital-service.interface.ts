@@ -6,7 +6,7 @@ export interface IHospitalService {
   create(
     data: {
       accountId: string;
-      addressId: string;
+      addressId?: string | null;
       name: string;
       slug: string;
       phone: string;

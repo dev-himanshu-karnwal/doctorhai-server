@@ -85,8 +85,8 @@ export class HospitalMeDto {
   @ApiProperty()
   isActive: boolean;
 
-  @ApiProperty({ type: AddressMeDto })
-  address: AddressMeDto;
+  @ApiPropertyOptional({ type: AddressMeDto })
+  address?: AddressMeDto | null;
 
   @ApiProperty()
   createdAt: Date;
@@ -126,8 +126,8 @@ export class DoctorMeDto {
   @ApiPropertyOptional({ description: 'Hospital ID if doctor is affiliated' })
   hospitalId: string | null;
 
-  @ApiProperty({ type: AddressMeDto })
-  address: AddressMeDto;
+  @ApiPropertyOptional({ type: AddressMeDto })
+  address?: AddressMeDto | null;
 
   @ApiProperty()
   createdAt: Date;

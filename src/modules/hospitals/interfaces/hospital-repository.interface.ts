@@ -3,7 +3,7 @@ import { HospitalEntity } from '../entities';
 
 export interface CreateHospitalInput {
   accountId: string;
-  addressId: string;
+  addressId?: string | null;
   name: string;
   slug: string;
   phone: string;

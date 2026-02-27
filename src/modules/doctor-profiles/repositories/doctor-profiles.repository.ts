@@ -58,7 +58,8 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
           specialization: data.specialization,
           phone: data.phone,
           email: data.email,
-          addressId: new Types.ObjectId(data.addressId),
+          addressId:
+            data.addressId != null ? new Types.ObjectId(data.addressId) : null,
           accountId: new Types.ObjectId(data.accountId),
           slug: data.slug,
           bio: data.bio ?? null,

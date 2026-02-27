@@ -59,7 +59,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Register',
     description:
-      'Register as hospital or doctor. Common: name, email, phone, address. Doctor must provide: username, designation, specialization.',
+      'Register as hospital or doctor. Common: name, email, phone. Doctor must provide: username, designation, specialization.',
   })
   @ApiCreatedResponse({ type: AuthResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed or username taken' })

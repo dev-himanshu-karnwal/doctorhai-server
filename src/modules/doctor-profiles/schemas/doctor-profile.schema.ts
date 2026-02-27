@@ -6,7 +6,7 @@ export interface DoctorProfileDocument extends Document {
   specialization: string;
   phone: string;
   email: string;
-  addressId: Types.ObjectId;
+  addressId: Types.ObjectId | null;
   accountId: Types.ObjectId;
   slug: string;
   bio: string | null;
@@ -28,7 +28,8 @@ export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
     addressId: {
       type: Schema.Types.ObjectId,
       ref: 'Address',
-      required: true,
+      required: false,
+      default: null,
     },
     accountId: {
       type: Schema.Types.ObjectId,
