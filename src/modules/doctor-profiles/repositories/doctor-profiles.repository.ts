@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 import { DoctorProfileDocument } from '../schemas';
 import { DoctorProfileEntity } from '../entities';
 import { DoctorProfileMapper } from '../mappers';
@@ -8,6 +8,15 @@ import type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
 } from '../interfaces';
+import type {
+  HospitalDoctorsQuery,
+  PaginatedDoctorProfiles,
+} from '../interfaces/doctor-profile-service.interface';
+import {
+  buildSort,
+  findWithPagination,
+} from '../../../common/mongoose/query-helpers';
+import type { PaginationOptions } from '../../../common/interfaces';
 
 @Injectable()
 export class DoctorProfilesRepository implements IDoctorProfileRepository {
@@ -76,5 +85,67 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       options,
     );
     return DoctorProfileMapper.toDomain(doc);
+  }
+
+  async findHospitalDoctors(
+    hospitalId: string,
+    query: HospitalDoctorsQuery,
+  ): Promise<PaginatedDoctorProfiles> {
+    if (!Types.ObjectId.isValid(hospitalId)) {
+      return {
+        doctors: [],
+        total: 0,
+        page: query.page,
+        limit: query.limit,
+      };
+    }
+
+    const filter: FilterQuery<DoctorProfileDocument> = {
+      ...this.notDeleted,
+      hospitalId: new Types.ObjectId(hospitalId),
+    };
+
+    if (query.specialization != null && query.specialization.trim() !== '') {
+      filter.specialization = new RegExp(query.specialization.trim(), 'i');
+    }
+
+    if (query.designation != null && query.designation.trim() !== '') {
+      filter.designation = new RegExp(query.designation.trim(), 'i');
+    }
+
+    if (query.search != null && query.search.trim() !== '') {
+      const searchRegex = new RegExp(query.search.trim(), 'i');
+      filter.$or = [
+        { fullName: searchRegex },
+        { specialization: searchRegex },
+        { designation: searchRegex },
+        { email: searchRegex },
+      ];
+    }
+
+    const sort = buildSort<NonNullable<HospitalDoctorsQuery['sortBy']>>(
+      { sortBy: query.sortBy, sortOrder: query.sortOrder },
+      'fullName',
+      ['fullName', 'createdAt'] as const,
+    );
+
+    const paginationOptions: PaginationOptions = {
+      page: query.page,
+      limit: query.limit,
+    };
+
+    const result = await findWithPagination(
+      this.doctorProfileModel,
+      filter,
+      paginationOptions,
+      sort,
+    );
+
+    return {
+      doctors: result.items.map((doc) => DoctorProfileMapper.toDomain(doc)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
   }
 }

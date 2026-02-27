@@ -14,6 +14,7 @@ import type { IRoleService } from '../interfaces/role-service.interface';
 import type { IAccountCreationService } from '../interfaces/account-creation-service.interface';
 import type { AccountEntity } from '../entities';
 import type { CreateAccountDto } from '../dto';
+import type { ClientSession } from 'mongoose';
 
 @Injectable()
 export class AccountCreationService implements IAccountCreationService {
@@ -42,6 +43,7 @@ export class AccountCreationService implements IAccountCreationService {
     email: string,
     plainPassword: string,
     roleName: string,
+    session?: ClientSession,
   ): Promise<AccountEntity> {
     const role = await this.roleService.findByName(roleName);
     if (!role) {
@@ -63,6 +65,6 @@ export class AccountCreationService implements IAccountCreationService {
       roles: [{ roleId: role.id }],
     };
 
-    return this.accountService.create(createAccountDto);
+    return this.accountService.create(createAccountDto, session);
   }
 }

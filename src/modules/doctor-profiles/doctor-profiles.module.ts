@@ -6,6 +6,7 @@ import {
 } from '../../common/constants';
 import { AddressesModule } from '../addresses';
 import { AuthModule } from '../auth/auth.module';
+import { HospitalsModule } from '../hospitals/hospitals.module';
 import { DoctorProfileSchema } from './schemas';
 import { DoctorProfilesController } from './controllers/doctor-profiles.controller';
 import { DoctorProfilesRepository } from './repositories';
@@ -18,6 +19,7 @@ import { DoctorProfilesService } from './services';
     ]),
     AddressesModule,
     forwardRef(() => AuthModule),
+    forwardRef(() => HospitalsModule),
   ],
   controllers: [DoctorProfilesController],
   providers: [

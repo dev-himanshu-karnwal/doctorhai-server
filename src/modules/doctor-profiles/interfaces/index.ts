@@ -5,4 +5,6 @@ export type {
 export type {
   IDoctorProfileService,
   CreateDoctorProfileData,
+  HospitalDoctorsQuery,
+  PaginatedDoctorProfiles,
 } from './doctor-profile-service.interface';

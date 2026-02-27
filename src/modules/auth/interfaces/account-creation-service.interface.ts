@@ -1,4 +1,5 @@
 import type { AccountEntity } from '../entities';
+import type { ClientSession } from 'mongoose';
 
 /**
  * Reusable auth helpers for creating username-based accounts.
@@ -19,5 +20,6 @@ export interface IAccountCreationService {
     email: string,
     plainPassword: string,
     roleName: string,
+    session?: ClientSession,
   ): Promise<AccountEntity>;
 }

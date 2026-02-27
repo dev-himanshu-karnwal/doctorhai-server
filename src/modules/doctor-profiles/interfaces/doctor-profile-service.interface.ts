@@ -17,6 +17,23 @@ export interface CreateDoctorProfileData {
   hospitalId?: string | null;
 }
 
+export interface HospitalDoctorsQuery {
+  page: number;
+  limit: number;
+  search?: string;
+  specialization?: string;
+  designation?: string;
+  sortBy?: 'fullName' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginatedDoctorProfiles {
+  doctors: DoctorProfileEntity[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface IDoctorProfileService {
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
   findByEmailAndHospitalId(
@@ -31,4 +48,8 @@ export interface IDoctorProfileService {
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
   ): Promise<DoctorProfileEntity>;
+  getDoctorsForHospital(
+    hospitalId: string,
+    query: HospitalDoctorsQuery,
+  ): Promise<PaginatedDoctorProfiles>;
 }

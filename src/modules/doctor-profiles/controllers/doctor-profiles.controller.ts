@@ -45,7 +45,7 @@ export class DoctorProfilesController {
   @ApiOperation({
     summary: 'Hospital creates doctor',
     description:
-      'Hospital creates a doctor account. Requires auth and permission hospital.doctor.create or super_admin.manage; createdBy is set from JWT. Same profile info as doctor self-registration; hospital chooses username.',
+      'Hospital (or a doctor associated with a hospital) creates a doctor account. Hospital context is derived from the current user; createdBy is set from JWT. Same profile info as doctor self-registration; hospital chooses username.',
   })
   @ApiCreatedResponse({ description: 'Created doctor profile' })
   @ApiBadRequestResponse({ description: 'Validation failed or username taken' })

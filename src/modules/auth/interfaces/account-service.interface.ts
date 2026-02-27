@@ -1,4 +1,5 @@
 import { AccountEntity } from '../entities';
+import type { ClientSession } from 'mongoose';
 import type {
   CreateAccountDto,
   UpdateAccountDto,
@@ -15,7 +16,10 @@ export interface IAccountService {
     loginType: string,
     loginValue: string,
   ): Promise<AccountEntity | null>;
-  create(data: CreateAccountDto): Promise<AccountEntity>;
+  create(
+    data: CreateAccountDto,
+    session?: ClientSession,
+  ): Promise<AccountEntity>;
   update(id: string, data: UpdateAccountDto): Promise<AccountEntity>;
   softDelete(id: string): Promise<void>;
   addRole(accountId: string, dto: AddRoleToAccountDto): Promise<AccountEntity>;
