@@ -32,7 +32,7 @@ export class NodemailerMailService implements IMailService {
           : undefined,
     };
     // External library returns a transporter typed on a helper info object; this is safe for our usage.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const transporter =
       nodemailer.createTransport<NodemailerSentMessageInfo>(transportOptions);
     const to = this.normalizeRecipient(message.to);
