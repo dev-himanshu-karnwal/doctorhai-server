@@ -9,13 +9,14 @@ import { HospitalSchema } from './schemas';
 import { HospitalsRepository } from './repositories';
 import { HospitalsService } from './services';
 import { HospitalsController } from './controllers/hospitals.controller';
+import { HospitalPublicController } from './controllers/hospitals-public.controller';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Hospital', schema: HospitalSchema }]),
     AddressesModule,
   ],
-  controllers: [HospitalsController],
+  controllers: [HospitalsController, HospitalPublicController],
   providers: [
     { provide: HOSPITAL_REPOSITORY_TOKEN, useClass: HospitalsRepository },
     { provide: HOSPITAL_SERVICE_TOKEN, useClass: HospitalsService },
