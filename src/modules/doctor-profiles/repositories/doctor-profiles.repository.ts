@@ -27,6 +27,13 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
 
   private readonly notDeleted = { deletedAt: null };
 
+  async findById(
+    id: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileRepository['findById']>>> {
+    const doc = await this.doctorProfileModel.findById(id).exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
+
   async findByAccountId(
     accountId: string,
   ): Promise<DoctorProfileEntity | null> {
@@ -63,8 +70,8 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       [
         {
           fullName: data.fullName,
-          designation: data.designation,
-          specialization: data.specialization,
+          designation: data.designation ?? null,
+          specialization: data.specialization ?? null,
           phone: data.phone,
           email: data.email,
           addressId:

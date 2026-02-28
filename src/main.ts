@@ -15,6 +15,13 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
   const config = app.get(AppConfigService);
 
+  app.enableCors({
+    origin: config.corsOrigins as string[],
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+  });
+
   app.setGlobalPrefix(config.apiPrefix);
   app.enableShutdownHooks();
   app.useGlobalPipes(
@@ -35,6 +42,7 @@ async function bootstrap(): Promise<void> {
     .setTitle('DoctorHai API')
     .setDescription('DoctorHai server API documentation')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);

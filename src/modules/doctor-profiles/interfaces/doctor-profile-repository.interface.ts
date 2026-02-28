@@ -7,8 +7,8 @@ import type {
 
 export interface CreateDoctorProfileInput {
   fullName: string;
-  designation: string;
-  specialization: string;
+  designation?: string | null;
+  specialization?: string | null;
   phone: string;
   email: string;
   addressId?: string | null;
@@ -21,6 +21,7 @@ export interface CreateDoctorProfileInput {
 }
 
 export interface IDoctorProfileRepository {
+  findById(id: string): Promise<DoctorProfileEntity | null>;
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
   findByEmailAndHospitalId(
     email: string,

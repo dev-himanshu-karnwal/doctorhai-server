@@ -7,11 +7,11 @@ export class HospitalDoctorListItemDto {
   @ApiProperty({ example: 'Dr. John Doe' })
   fullName: string;
 
-  @ApiProperty({ example: 'MD', description: 'Designation' })
-  designation: string;
+  @ApiProperty({ example: 'MD', description: 'Designation', nullable: true })
+  designation: string | null;
 
-  @ApiProperty({ example: 'Cardiology' })
-  specialization: string;
+  @ApiProperty({ example: 'Cardiology', nullable: true })
+  specialization: string | null;
 
   @ApiProperty({ example: '+1234567890' })
   phone: string;
