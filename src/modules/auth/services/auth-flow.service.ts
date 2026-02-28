@@ -369,42 +369,37 @@ export class AuthFlowService implements IAuthFlowService {
     return keys;
   }
 
-  private static readonly UPDATE_OWN_EMAIL_PERMISSIONS = [
-    'doctor.self.profile.update',
-    'hospital.manage',
-    'super_admin.manage',
-  ] as const;
-
-  private static readonly UPDATE_ANY_ACCOUNT_EMAIL_PERMISSION =
-    'super_admin.manage' as const;
-
   async updateEmail(
     requestedByAccountId: string,
     targetAccountId: string,
     newEmail: string,
   ): Promise<void> {
-    const permissions =
-      await this.getPermissionKeysForAccount(requestedByAccountId);
-
     if (targetAccountId !== requestedByAccountId) {
-      if (
-        !permissions.includes(
-          AuthFlowService.UPDATE_ANY_ACCOUNT_EMAIL_PERMISSION,
-        )
-      ) {
+      const permissions =
+        await this.getPermissionKeysForAccount(requestedByAccountId);
+      const isSuperAdmin = permissions.includes('super_admin.manage');
+      const canUpdateHospitalDoctor = permissions.includes(
+        'hospital.doctor.update',
+      );
+      if (!isSuperAdmin && !canUpdateHospitalDoctor) {
         throw new ForbiddenException(
-          'Only superadmin can update another account email',
+          'Not allowed to update this account email',
         );
       }
-    } else {
-      const hasOwnPermission =
-        AuthFlowService.UPDATE_OWN_EMAIL_PERMISSIONS.some((p) =>
-          permissions.includes(p),
-        );
-      if (!hasOwnPermission) {
-        throw new ForbiddenException(
-          'Insufficient permissions to update email',
-        );
+      if (canUpdateHospitalDoctor && !isSuperAdmin) {
+        const callerHospital =
+          await this.hospitalService.findByAccountId(requestedByAccountId);
+        const targetDoctor =
+          await this.doctorProfileService.findByAccountId(targetAccountId);
+        if (
+          !callerHospital ||
+          !targetDoctor ||
+          targetDoctor.hospitalId !== callerHospital.id
+        ) {
+          throw new ForbiddenException(
+            'Not allowed to update this account email',
+          );
+        }
       }
     }
 

@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, IsMongoId } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString } from 'class-validator';
 
 export class UpdateEmailDto {
   @ApiProperty({
@@ -9,13 +9,4 @@ export class UpdateEmailDto {
   @IsEmail()
   @IsString()
   newEmail: string;
-
-  @ApiPropertyOptional({
-    example: '507f1f77bcf86cd799439011',
-    description:
-      'Account ID to update (superadmin only). Omit to update own account.',
-  })
-  @IsOptional()
-  @IsMongoId()
-  accountId?: string;
 }

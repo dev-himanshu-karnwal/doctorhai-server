@@ -6,9 +6,11 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  Param,
   Patch,
   Post,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -21,7 +23,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CurrentUser, Public } from '../../common/decorators';
+import {
+  CurrentUser,
+  Public,
+  RequirePermissions,
+} from '../../common/decorators';
+import { PermissionsGuard } from './guards/permissions.guard';
 import { ApiResponse } from '../../common/classes';
 import type { DataKeyWrapper } from '../../common/interfaces';
 import {
@@ -103,30 +110,37 @@ export class AuthController {
     return ApiResponse.withDataKey('user', result);
   }
 
-  @Patch('email')
+  @Patch('accounts/:accountId/email')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({
+    permissions: [
+      'doctor.self.profile.update',
+      'hospital.manage',
+      'super_admin.manage',
+      'hospital.doctor.update',
+    ],
+  })
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update account email',
     description:
-      'Updates email for the account and related hospital/doctor profile. Use own account by default; superadmin may pass accountId to update another account. Requires permission: doctor.self.profile.update or hospital.manage (own), or super_admin.manage (any).',
+      "Updates email for the account and related hospital/doctor profile. Own account or hospital's doctor or superadmin.",
   })
   @ApiOkResponse({ description: 'Email updated successfully' })
   @ApiBadRequestResponse({
     description: 'Validation failed or email already in use',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  @ApiForbiddenResponse({
+    description: 'Not allowed to update this account email',
+  })
   async updateEmail(
     @CurrentUser() user: JwtPayload,
+    @Param('accountId') accountId: string,
     @Body() dto: UpdateEmailDto,
   ): Promise<DataKeyWrapper<'message'>> {
-    const targetAccountId = dto.accountId ?? user.sub;
-    await this.authFlowService.updateEmail(
-      user.sub,
-      targetAccountId,
-      dto.newEmail,
-    );
+    await this.authFlowService.updateEmail(user.sub, accountId, dto.newEmail);
     return ApiResponse.withDataKey('message', 'Email updated successfully');
   }
 
