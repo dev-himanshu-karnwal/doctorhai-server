@@ -22,23 +22,21 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
 
   async findByDoctorProfileId(
     doctorProfileId: string,
-  ): Promise<DoctorStatusEntity | null> {
+  ): ReturnType<IDoctorStatusRepository['findByDoctorProfileId']> {
     if (!Types.ObjectId.isValid(doctorProfileId)) return null;
-    const doc = await this.doctorStatusModel
+    const doc = (await this.doctorStatusModel
       .findOne({ doctorProfileId: new Types.ObjectId(doctorProfileId) })
       .lean()
-      .exec();
-    return doc
-      ? DoctorStatusMapper.toDomain(doc as unknown as DoctorStatusDocLike)
-      : null;
+      .exec()) as DoctorStatusDocLike | null;
+    return doc ? DoctorStatusMapper.toDomain(doc) : null;
   }
 
   async create(
     data: CreateDoctorStatusInput,
     session?: ClientSession,
-  ): Promise<DoctorStatusEntity> {
+  ): ReturnType<IDoctorStatusRepository['create']> {
     const options = session ? { session } : {};
-    const [doc] = await this.doctorStatusModel.create(
+    const created = (await this.doctorStatusModel.create(
       [
         {
           doctorProfileId: new Types.ObjectId(data.doctorProfileId),
@@ -50,12 +48,13 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
         },
       ],
       options,
-    );
-    return DoctorStatusMapper.toDomain(doc as unknown as DoctorStatusDocLike);
+    )) as unknown as [DoctorStatusDocLike];
+    const doc = created[0];
+    return DoctorStatusMapper.toDomain(doc);
   }
 
   async updateStatus(data: UpdateDoctorStatusDto): Promise<DoctorStatusEntity> {
-    const doc = await this.doctorStatusModel
+    const doc = (await this.doctorStatusModel
       .findOneAndUpdate(
         { doctorProfileId: data.doctorProfileId },
         {
@@ -70,7 +69,7 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
         { new: true },
       )
       .lean()
-      .exec();
+      .exec()) as DoctorStatusDocLike | null;
 
     if (!doc) {
       throw new Error(
@@ -78,6 +77,6 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
       );
     }
 
-    return DoctorStatusMapper.toDomain(doc as unknown as DoctorStatusDocLike);
+    return DoctorStatusMapper.toDomain(doc);
   }
 }
