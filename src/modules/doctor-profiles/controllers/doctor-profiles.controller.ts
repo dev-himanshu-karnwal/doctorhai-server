@@ -11,6 +11,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
@@ -67,6 +68,7 @@ export class DoctorProfilesController {
   }
 
   @Patch(':doctorProfileId/status')
+  @UseGuards(PermissionsGuard)
   @RequirePermissions({
     permissions: [
       'doctor.status.update',
@@ -82,7 +84,7 @@ export class DoctorProfilesController {
     description:
       'Updates the availability status of a doctor. Authorized for the doctor themselves, their parent hospital, or super admin.',
   })
-  @ApiCreatedResponse({ description: 'Status updated successfully' })
+  @ApiOkResponse({ description: 'Status updated successfully' })
   @ApiBadRequestResponse({ description: 'Validation failed' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })

@@ -41,7 +41,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
     private readonly accountCreationService: IAccountCreationService,
     @Inject(ADDRESS_SERVICE_TOKEN)
     private readonly addressService: IAddressService,
-    @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN)
+    @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN as symbol)
     private readonly doctorStatusRepo: IDoctorStatusRepository,
     @Inject(ROLE_SERVICE_TOKEN)
     private readonly roleService: IRoleService,
@@ -194,6 +194,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       `Updating status for doctor profile ${data.doctorProfileId} by account ${data.updatedByAccountId}`,
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- repository.findById return type obscured by DI token
     const doctorProfile = await this.doctorProfileRepo.findById(
       data.doctorProfileId!,
     );
