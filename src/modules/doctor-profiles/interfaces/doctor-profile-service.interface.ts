@@ -27,6 +27,10 @@ export interface HospitalDoctorsQuery {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface DoctorsQuery extends HospitalDoctorsQuery {
+  hospitalId?: string;
+}
+
 export interface PaginatedDoctorProfiles {
   doctors: DoctorProfileEntity[];
   total: number;
@@ -48,8 +52,5 @@ export interface IDoctorProfileService {
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
   ): Promise<DoctorProfileEntity>;
-  getDoctorsForHospital(
-    hospitalId: string,
-    query: HospitalDoctorsQuery,
-  ): Promise<PaginatedDoctorProfiles>;
+  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles>;
 }

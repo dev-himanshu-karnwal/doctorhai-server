@@ -16,7 +16,7 @@ import type {
   IDoctorProfileRepository,
   IDoctorProfileService,
   CreateDoctorProfileData,
-  HospitalDoctorsQuery,
+  DoctorsQuery,
   PaginatedDoctorProfiles,
 } from '../interfaces';
 import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
@@ -140,15 +140,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
     }
   }
 
-  async getDoctorsForHospital(
-    hospitalId: string,
-    query: HospitalDoctorsQuery,
-  ): Promise<PaginatedDoctorProfiles> {
-    this.logger.debug(
-      `Listing doctors for hospitalId: ${hospitalId} with query: ${JSON.stringify(
-        query,
-      )}`,
-    );
-    return this.doctorProfileRepo.findHospitalDoctors(hospitalId, query);
+  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
+    this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
+    return this.doctorProfileRepo.findDoctors(query);
   }
 }
