@@ -27,6 +27,13 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
 
   private readonly notDeleted = { deletedAt: null };
 
+  async findById(
+    id: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileRepository['findById']>>> {
+    const doc = await this.doctorProfileModel.findById(id).exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
+
   async findByAccountId(
     accountId: string,
   ): Promise<DoctorProfileEntity | null> {

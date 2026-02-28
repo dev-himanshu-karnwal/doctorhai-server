@@ -41,6 +41,7 @@ import type {
 import type { CreateAccountDto } from '../dto';
 import type { AccountEntity } from '../entities';
 import type { RegistrationType } from '../enums/registration-type.enum';
+import { AvailabilityStatus } from '../../doctor-profiles/enums/availability-status.enum';
 import { DoctorMeDto, HospitalMeDto } from '../dto/me-response.dto';
 
 @Injectable()
@@ -150,7 +151,7 @@ export class AuthFlowService implements IAuthFlowService {
           session,
         );
       } else {
-        await this.doctorProfileService.create(
+        const doctor = await this.doctorProfileService.create(
           {
             fullName: dto.name.trim(),
             designation: (dto.designation as string).trim(),
@@ -164,6 +165,15 @@ export class AuthFlowService implements IAuthFlowService {
             profilePhotoUrl: null,
             createdBy: null,
             hospitalId: null,
+          },
+          session,
+        );
+        await this.doctorProfileService.createInitialStatus(
+          {
+            doctorProfileId: doctor.id,
+            updatedByAccountId: account.id,
+            updatedByRoleId: role.id,
+            status: AvailabilityStatus.AVAILABLE,
           },
           session,
         );

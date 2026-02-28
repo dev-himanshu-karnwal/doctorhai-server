@@ -21,6 +21,7 @@ export interface CreateDoctorProfileInput {
 }
 
 export interface IDoctorProfileRepository {
+  findById(id: string): Promise<DoctorProfileEntity | null>;
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
   findByEmailAndHospitalId(
     email: string,
