@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { DoctorStatusDocument } from '../schemas';
 import { DoctorStatusEntity } from '../entities';
-import { DoctorStatusMapper } from '../mappers/doctor-status.mapper';
+import {
+  DoctorStatusMapper,
+  DoctorStatusDocLike,
+} from '../mappers/doctor-status.mapper';
 import type {
   IDoctorStatusRepository,
   CreateDoctorStatusInput,
@@ -25,7 +28,9 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
       .findOne({ doctorProfileId: new Types.ObjectId(doctorProfileId) })
       .lean()
       .exec();
-    return doc ? DoctorStatusMapper.toDomain(doc as any) : null;
+    return doc
+      ? DoctorStatusMapper.toDomain(doc as unknown as DoctorStatusDocLike)
+      : null;
   }
 
   async create(
@@ -46,7 +51,7 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
       ],
       options,
     );
-    return DoctorStatusMapper.toDomain(doc as any);
+    return DoctorStatusMapper.toDomain(doc as unknown as DoctorStatusDocLike);
   }
 
   async updateStatus(data: UpdateDoctorStatusDto): Promise<DoctorStatusEntity> {
@@ -73,6 +78,6 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
       );
     }
 
-    return DoctorStatusMapper.toDomain(doc as any);
+    return DoctorStatusMapper.toDomain(doc as unknown as DoctorStatusDocLike);
   }
 }
