@@ -37,6 +37,7 @@ import type { DoctorsQuery, IDoctorProfileService } from '../interfaces';
 import type { JwtPayload } from '../../auth/strategies/jwt.strategy';
 import { PermissionsGuard } from '../../auth/guards/permissions.guard';
 import { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
+import { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
 import { UpdateDoctorStatusDto } from '../dto/update-doctor-status.dto';
 import { GetDoctorsQueryDto } from '../dto/get-doctors-query.dto';
 import {
@@ -129,6 +130,40 @@ export class DoctorProfilesController {
   ): Promise<DataKeyWrapper<'doctor'>> {
     const doctor: DoctorProfileEntity =
       await this.doctorProfileService.createByHospital(dto, user.sub);
+    return ApiResponse.withDataKey('doctor', doctor);
+  }
+
+  @Patch(':doctorProfileId')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({
+    permissions: [
+      'doctor.self.profile.update',
+      'hospital.doctor.update',
+      'super_admin.manage',
+    ],
+    requireAll: false,
+  })
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update doctor profile',
+    description:
+      'Updates doctor details (fullName, designation, specialization, bio). FullName change updates slug. Authorized for the doctor themselves, their parent hospital, or super admin.',
+  })
+  @ApiOkResponse({ description: 'Doctor profile updated successfully' })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  async updateProfile(
+    @Param('doctorProfileId') doctorProfileId: string,
+    @Body() dto: UpdateDoctorProfileDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<DataKeyWrapper<'doctor'>> {
+    const doctor = await this.doctorProfileService.updateProfile(
+      doctorProfileId,
+      dto,
+      user.sub,
+    );
     return ApiResponse.withDataKey('doctor', doctor);
   }
 

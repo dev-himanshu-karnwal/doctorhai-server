@@ -1,6 +1,7 @@
 export type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
+  UpdateDoctorProfileInput,
 } from './doctor-profile-repository.interface';
 export type {
   IDoctorStatusRepository,
