@@ -8,9 +8,7 @@ import { AddressesModule } from './modules/addresses/addresses.module';
 import { HospitalsModule } from './modules/hospitals/hospitals.module';
 import { DoctorProfilesModule } from './modules/doctor-profiles/doctor-profiles.module';
 import { MailModule } from './infra/mail/mail.module';
-import dns from 'dns';
 
-dns.setServers(['8.8.8.8', '8.8.4.4']);
 @Module({
   imports: [
     ConfigModule,
