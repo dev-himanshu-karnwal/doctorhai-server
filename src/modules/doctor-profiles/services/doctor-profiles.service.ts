@@ -194,14 +194,13 @@ export class DoctorProfilesService implements IDoctorProfileService {
       `Updating status for doctor profile ${data.doctorProfileId} by account ${data.updatedByAccountId}`,
     );
 
-    // findById return type resolves as error in this module; result is used after null check
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- repository return type
     const doctorProfile = await this.doctorProfileRepo.findById(
       data.doctorProfileId!,
     );
     if (!doctorProfile) {
       throw new BusinessRuleViolationException('Doctor profile not found');
     }
+
     const account = await this.accountService.findById(
       data.updatedByAccountId!,
     );
