@@ -10,6 +10,7 @@ import { AuthModule } from '../auth/auth.module';
 import { HospitalsModule } from '../hospitals/hospitals.module';
 import { DoctorProfileSchema, DoctorStatusSchema } from './schemas';
 import { DoctorProfilesController } from './controllers/doctor-profiles.controller';
+import { DoctorsPublicController } from './controllers/doctors-public.controller';
 import {
   DoctorProfilesRepository,
   DoctorStatusesRepository,
@@ -27,7 +28,7 @@ import { DoctorProfilesService } from './services';
     forwardRef(() => AuthModule),
     forwardRef(() => HospitalsModule),
   ],
-  controllers: [DoctorProfilesController],
+  controllers: [DoctorProfilesController, DoctorsPublicController],
   providers: [
     {
       provide: DOCTOR_PROFILE_REPOSITORY_TOKEN,

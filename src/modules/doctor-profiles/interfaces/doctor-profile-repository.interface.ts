@@ -1,7 +1,7 @@
 import type { ClientSession } from 'mongoose';
 import { DoctorProfileEntity } from '../entities';
 import type {
-  HospitalDoctorsQuery,
+  DoctorsQuery,
   PaginatedDoctorProfiles,
 } from './doctor-profile-service.interface';
 
@@ -31,8 +31,5 @@ export interface IDoctorProfileRepository {
     data: CreateDoctorProfileInput,
     session?: ClientSession,
   ): Promise<DoctorProfileEntity>;
-  findHospitalDoctors(
-    hospitalId: string,
-    query: HospitalDoctorsQuery,
-  ): Promise<PaginatedDoctorProfiles>;
+  findDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles>;
 }

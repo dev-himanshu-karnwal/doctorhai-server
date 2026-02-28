@@ -9,7 +9,7 @@ import type {
   CreateDoctorProfileInput,
 } from '../interfaces';
 import type {
-  HospitalDoctorsQuery,
+  DoctorsQuery,
   PaginatedDoctorProfiles,
 } from '../interfaces/doctor-profile-service.interface';
 import {
@@ -94,23 +94,14 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     return DoctorProfileMapper.toDomain(doc);
   }
 
-  async findHospitalDoctors(
-    hospitalId: string,
-    query: HospitalDoctorsQuery,
-  ): Promise<PaginatedDoctorProfiles> {
-    if (!Types.ObjectId.isValid(hospitalId)) {
-      return {
-        doctors: [],
-        total: 0,
-        page: query.page,
-        limit: query.limit,
-      };
-    }
-
+  async findDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
     const filter: FilterQuery<DoctorProfileDocument> = {
       ...this.notDeleted,
-      hospitalId: new Types.ObjectId(hospitalId),
     };
+
+    if (query.hospitalId && Types.ObjectId.isValid(query.hospitalId)) {
+      filter.hospitalId = new Types.ObjectId(query.hospitalId);
+    }
 
     if (query.specialization != null && query.specialization.trim() !== '') {
       filter.specialization = new RegExp(query.specialization.trim(), 'i');
@@ -130,7 +121,7 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       ];
     }
 
-    const sort = buildSort<NonNullable<HospitalDoctorsQuery['sortBy']>>(
+    const sort = buildSort<NonNullable<DoctorsQuery['sortBy']>>(
       { sortBy: query.sortBy, sortOrder: query.sortOrder },
       'fullName',
       ['fullName', 'createdAt'] as const,
