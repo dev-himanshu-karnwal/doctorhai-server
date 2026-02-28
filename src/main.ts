@@ -15,6 +15,13 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
   const config = app.get(AppConfigService);
 
+  app.enableCors({
+    origin: config.corsOrigins,
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+  });
+
   app.setGlobalPrefix(config.apiPrefix);
   app.enableShutdownHooks();
   app.useGlobalPipes(
