@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  Patch,
   Post,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -40,6 +42,7 @@ import {
   AuthResponseDto,
   CheckUsernameResponseDto,
   MeResponseDto,
+  UpdateEmailDto,
 } from './dto';
 
 @ApiTags('auth')
@@ -98,6 +101,33 @@ export class AuthController {
   ): Promise<DataKeyWrapper<'user'>> {
     const result = await this.authFlowService.getMe(user.sub);
     return ApiResponse.withDataKey('user', result);
+  }
+
+  @Patch('email')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update account email',
+    description:
+      'Updates email for the account and related hospital/doctor profile. Use own account by default; superadmin may pass accountId to update another account. Requires permission: doctor.self.profile.update or hospital.manage (own), or super_admin.manage (any).',
+  })
+  @ApiOkResponse({ description: 'Email updated successfully' })
+  @ApiBadRequestResponse({
+    description: 'Validation failed or email already in use',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  async updateEmail(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateEmailDto,
+  ): Promise<DataKeyWrapper<'message'>> {
+    const targetAccountId = dto.accountId ?? user.sub;
+    await this.authFlowService.updateEmail(
+      user.sub,
+      targetAccountId,
+      dto.newEmail,
+    );
+    return ApiResponse.withDataKey('message', 'Email updated successfully');
   }
 
   @Post('check-username')

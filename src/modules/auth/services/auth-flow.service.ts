@@ -3,6 +3,7 @@ import {
   Logger,
   Inject,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AppConfigService } from '../../../config';
 import { InjectConnection } from '@nestjs/mongoose';
@@ -366,6 +367,96 @@ export class AuthFlowService implements IAuthFlowService {
       }
     }
     return keys;
+  }
+
+  private static readonly UPDATE_OWN_EMAIL_PERMISSIONS = [
+    'doctor.self.profile.update',
+    'hospital.manage',
+    'super_admin.manage',
+  ] as const;
+
+  private static readonly UPDATE_ANY_ACCOUNT_EMAIL_PERMISSION =
+    'super_admin.manage' as const;
+
+  async updateEmail(
+    requestedByAccountId: string,
+    targetAccountId: string,
+    newEmail: string,
+  ): Promise<void> {
+    const permissions =
+      await this.getPermissionKeysForAccount(requestedByAccountId);
+
+    if (targetAccountId !== requestedByAccountId) {
+      if (
+        !permissions.includes(
+          AuthFlowService.UPDATE_ANY_ACCOUNT_EMAIL_PERMISSION,
+        )
+      ) {
+        throw new ForbiddenException(
+          'Only superadmin can update another account email',
+        );
+      }
+    } else {
+      const hasOwnPermission =
+        AuthFlowService.UPDATE_OWN_EMAIL_PERMISSIONS.some((p) =>
+          permissions.includes(p),
+        );
+      if (!hasOwnPermission) {
+        throw new ForbiddenException(
+          'Insufficient permissions to update email',
+        );
+      }
+    }
+
+    const account = await this.accountRepo.findById(targetAccountId);
+    if (!account) {
+      throw new ResourceNotFoundException('Account', targetAccountId);
+    }
+
+    const normalizedEmail = newEmail.toLowerCase().trim();
+    if (normalizedEmail === account.email) {
+      return;
+    }
+
+    if (account.loginType === 'email') {
+      const existing = await this.accountRepo.findOneByLogin(
+        'email',
+        normalizedEmail,
+      );
+      if (existing && existing.id !== targetAccountId) {
+        throw new BusinessRuleViolationException(
+          `Email '${normalizedEmail}' is already used by another account`,
+        );
+      }
+    }
+
+    const doctorProfile =
+      await this.doctorProfileService.findByAccountId(targetAccountId);
+    if (doctorProfile) {
+      const conflict = await this.doctorProfileService.findByEmailAndHospitalId(
+        normalizedEmail,
+        doctorProfile.hospitalId,
+      );
+      if (conflict && conflict.id !== doctorProfile.id) {
+        throw new BusinessRuleViolationException(
+          `Email '${normalizedEmail}' is already used for this profile type`,
+        );
+      }
+    }
+
+    await this.accountRepo.update(targetAccountId, { email: normalizedEmail });
+    await this.hospitalService.updateEmailByAccountId(
+      targetAccountId,
+      normalizedEmail,
+    );
+    await this.doctorProfileService.updateEmailByAccountId(
+      targetAccountId,
+      normalizedEmail,
+    );
+
+    this.logger.log(
+      `Updated email for account ${targetAccountId} to ${normalizedEmail}`,
+    );
   }
 
   private registrationTypeToRoleName(

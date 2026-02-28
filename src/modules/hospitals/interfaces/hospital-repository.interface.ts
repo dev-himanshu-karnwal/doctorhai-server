@@ -22,4 +22,8 @@ export interface IHospitalRepository {
     session?: ClientSession,
   ): Promise<HospitalEntity>;
   findHospitals(query: HospitalsQuery): Promise<PaginatedHospitals>;
+  updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<HospitalEntity | null>;
 }

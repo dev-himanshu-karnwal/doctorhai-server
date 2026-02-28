@@ -61,4 +61,8 @@ export interface IDoctorProfileService {
     dto: UpdateDoctorProfileDto,
     updatedByAccountId: string,
   ): Promise<DoctorProfileEntity>;
+  updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null>;
 }

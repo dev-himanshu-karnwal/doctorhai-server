@@ -24,6 +24,14 @@ export class HospitalsService implements IHospitalService {
     return this.hospitalRepo.findByAccountId(accountId);
   }
 
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<Awaited<ReturnType<IHospitalService['updateEmailByAccountId']>>> {
+    this.logger.debug(`Updating hospital email by accountId: ${accountId}`);
+    return this.hospitalRepo.updateEmailByAccountId(accountId, email);
+  }
+
   async create(
     data: CreateHospitalInput,
     session?: ClientSession,

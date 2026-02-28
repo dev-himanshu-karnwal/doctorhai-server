@@ -101,4 +101,20 @@ export class HospitalsRepository implements IHospitalRepository {
       limit,
     };
   }
+
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<HospitalEntity | null> {
+    if (!Types.ObjectId.isValid(accountId)) return null;
+    const doc = await this.hospitalModel
+      .findOneAndUpdate(
+        { accountId: new Types.ObjectId(accountId), ...this.notDeleted },
+        { $set: { email: email.toLowerCase().trim(), updatedAt: new Date() } },
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return doc ? HospitalMapper.toDomain(doc) : null;
+  }
 }

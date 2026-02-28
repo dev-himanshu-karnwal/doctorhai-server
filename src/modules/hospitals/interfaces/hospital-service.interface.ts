@@ -20,6 +20,10 @@ export interface PaginatedHospitals {
 
 export interface IHospitalService {
   findByAccountId(accountId: string): Promise<HospitalEntity | null>;
+  updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<HospitalEntity | null>;
   create(
     data: {
       accountId: string;

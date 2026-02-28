@@ -10,4 +10,9 @@ export interface IAuthFlowService {
   checkUsernameAvailable(username: string): Promise<CheckUsernameResponseDto>;
   getMe(accountId: string): Promise<MeResponseDto>;
   getPermissionKeysForAccount(accountId: string): Promise<string[]>;
+  updateEmail(
+    requestedByAccountId: string,
+    targetAccountId: string,
+    newEmail: string,
+  ): Promise<void>;
 }

@@ -227,6 +227,18 @@ export class DoctorProfilesService implements IDoctorProfileService {
     });
   }
 
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<
+    Awaited<ReturnType<IDoctorProfileService['updateEmailByAccountId']>>
+  > {
+    this.logger.debug(
+      `Updating doctor profile email by accountId: ${accountId}`,
+    );
+    return this.doctorProfileRepo.updateEmailByAccountId(accountId, email);
+  }
+
   async updateProfile(
     doctorProfileId: string,
     dto: UpdateDoctorProfileDto,

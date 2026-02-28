@@ -175,4 +175,20 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
 
     return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
+
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(accountId)) return null;
+    const doc = await this.doctorProfileModel
+      .findOneAndUpdate(
+        { accountId: new Types.ObjectId(accountId), ...this.notDeleted },
+        { $set: { email: email.toLowerCase().trim(), updatedAt: new Date() } },
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
 }

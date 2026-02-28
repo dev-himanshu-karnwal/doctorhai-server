@@ -44,4 +44,8 @@ export interface IDoctorProfileRepository {
     id: string,
     data: UpdateDoctorProfileInput,
   ): Promise<DoctorProfileEntity | null>;
+  updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null>;
 }

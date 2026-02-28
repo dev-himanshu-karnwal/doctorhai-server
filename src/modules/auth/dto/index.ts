@@ -10,6 +10,7 @@ export {
   type LoginType,
 } from './create-account.dto';
 export { UpdateAccountDto } from './update-account.dto';
+export { UpdateEmailDto } from './update-email.dto';
 export { RegisterDto } from './register.dto';
 export { LoginDto } from './login.dto';
 export { ForgotPasswordRequestDto } from './forgot-password-request.dto';
