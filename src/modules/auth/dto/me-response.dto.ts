@@ -102,11 +102,11 @@ export class DoctorMeDto {
   @ApiProperty()
   fullName: string;
 
-  @ApiProperty()
-  designation: string;
+  @ApiProperty({ nullable: true })
+  designation: string | null;
 
-  @ApiProperty()
-  specialization: string;
+  @ApiProperty({ nullable: true })
+  specialization: string | null;
 
   @ApiProperty()
   phone: string;

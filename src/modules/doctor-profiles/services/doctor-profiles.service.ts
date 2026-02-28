@@ -1,10 +1,8 @@
 import { Injectable, Logger, Inject, ForbiddenException } from '@nestjs/common';
-import { AvailabilityStatus } from '../enums/availability-status.enum';
 import { InjectConnection } from '@nestjs/mongoose';
 import {
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
   ACCOUNT_CREATION_SERVICE_TOKEN,
-  ADDRESS_SERVICE_TOKEN,
   DOCTOR_STATUS_REPOSITORY_TOKEN,
   ROLE_SERVICE_TOKEN,
   ACCOUNT_SERVICE_TOKEN,
@@ -13,7 +11,6 @@ import {
 import { BusinessRuleViolationException } from '../../../common/exceptions';
 import { generateSlugFromName } from '../../../common/utils';
 import type { IAccountCreationService } from '../../auth/interfaces/account-creation-service.interface';
-import type { IAddressService } from '../../addresses/interfaces';
 import type { IRoleService } from '../../auth/interfaces/role-service.interface';
 import type { IAccountService } from '../../auth/interfaces/account-service.interface';
 import type { IHospitalService } from '../../hospitals/interfaces';
@@ -23,7 +20,6 @@ import type {
   IDoctorStatusRepository,
   IDoctorProfileService,
   CreateDoctorProfileData,
-  CreateDoctorStatusInput,
   DoctorsQuery,
   PaginatedDoctorProfiles,
 } from '../interfaces';
@@ -39,8 +35,6 @@ export class DoctorProfilesService implements IDoctorProfileService {
     private readonly doctorProfileRepo: IDoctorProfileRepository,
     @Inject(ACCOUNT_CREATION_SERVICE_TOKEN)
     private readonly accountCreationService: IAccountCreationService,
-    @Inject(ADDRESS_SERVICE_TOKEN)
-    private readonly addressService: IAddressService,
     @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN as symbol)
     private readonly doctorStatusRepo: IDoctorStatusRepository,
     @Inject(ROLE_SERVICE_TOKEN)
@@ -92,6 +86,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
     session.startTransaction();
     try {
       let hospitalId: string | null = null;
+      const email = dto.email.toLowerCase().trim();
 
       const hospital =
         await this.hospitalService.findByAccountId(createdByAccountId);
@@ -104,19 +99,16 @@ export class DoctorProfilesService implements IDoctorProfileService {
       }
 
       if (
-        await this.doctorProfileRepo.findByEmailAndHospitalId(
-          dto.email,
-          hospitalId,
-        )
+        await this.doctorProfileRepo.findByEmailAndHospitalId(email, hospitalId)
       ) {
         throw new BusinessRuleViolationException(
-          `Email '${dto.email}' is already used for a doctor profile at this hospital`,
+          `Email '${email}' is already used for a doctor profile at this hospital`,
         );
       }
 
       const account = await this.accountCreationService.createUsernameAccount(
         dto.username,
-        dto.email,
+        email,
         dto.password,
         'doctor',
         session,
@@ -124,34 +116,21 @@ export class DoctorProfilesService implements IDoctorProfileService {
 
       const doctor = await this.doctorProfileRepo.create(
         {
-          fullName: dto.fullName,
-          designation: dto.designation,
-          specialization: dto.specialization,
+          fullName: dto.fullName.trim(),
+          designation: null,
+          specialization: null,
           phone: dto.phone,
-          email: dto.email,
+          email,
           addressId: null,
           accountId: account.id,
-          slug: generateSlugFromName(dto.fullName),
-          bio: dto.bio ?? null,
+          slug: generateSlugFromName(dto.fullName.trim()),
+          bio: null,
           profilePhotoUrl: null,
           createdBy: createdByAccountId,
           hospitalId,
         },
         session,
       );
-
-      const hospitalRole = await this.roleService.findByName('hospital');
-      if (hospitalRole) {
-        await this.createInitialStatus(
-          {
-            doctorProfileId: doctor.id,
-            updatedByAccountId: hospitalId!,
-            updatedByRoleId: hospitalRole.id,
-            status: AvailabilityStatus.AVAILABLE,
-          },
-          session,
-        );
-      }
 
       await session.commitTransaction();
 
@@ -173,38 +152,28 @@ export class DoctorProfilesService implements IDoctorProfileService {
     return this.doctorProfileRepo.findDoctors(query);
   }
 
-  async createInitialStatus(
-    data: CreateDoctorStatusInput,
-    session?: ClientSession,
-  ): Promise<void> {
-    this.logger.debug(
-      `Creating initial status for doctor profile: ${data.doctorProfileId}`,
-    );
-    await this.doctorStatusRepo.create(
-      {
-        ...data,
-        status: AvailabilityStatus.AVAILABLE,
-      },
-      session,
-    );
-  }
-
   async updateStatus(data: UpdateDoctorStatusDto): Promise<void> {
     this.logger.debug(
       `Updating status for doctor profile ${data.doctorProfileId} by account ${data.updatedByAccountId}`,
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- repository.findById return type obscured by DI token
+    if (!data.doctorProfileId) {
+      throw new BusinessRuleViolationException('Doctor profile id is required');
+    }
+    if (!data.updatedByAccountId) {
+      throw new BusinessRuleViolationException(
+        'Updated by account id is required',
+      );
+    }
+
     const doctorProfile = await this.doctorProfileRepo.findById(
-      data.doctorProfileId!,
+      data.doctorProfileId,
     );
     if (!doctorProfile) {
       throw new BusinessRuleViolationException('Doctor profile not found');
     }
 
-    const account = await this.accountService.findById(
-      data.updatedByAccountId!,
-    );
+    const account = await this.accountService.findById(data.updatedByAccountId);
     const roleNames: string[] = [];
     for (const assignment of account.roles) {
       const role = await this.roleService.findById(assignment.roleId);
@@ -230,7 +199,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       }
     } else if (isHospital) {
       const hospital = await this.hospitalService.findByAccountId(
-        data.updatedByAccountId!,
+        data.updatedByAccountId,
       );
       if (
         hospital &&
@@ -251,8 +220,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
 
     await this.doctorStatusRepo.updateStatus({
       ...data,
-      doctorProfileId: data.doctorProfileId!,
-      updatedByAccountId: data.updatedByAccountId!,
+      doctorProfileId: data.doctorProfileId,
+      updatedByAccountId: data.updatedByAccountId,
       updatedByRoleId: updaterRoleId,
     });
   }

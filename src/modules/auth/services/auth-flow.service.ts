@@ -41,7 +41,6 @@ import type {
 import type { CreateAccountDto } from '../dto';
 import type { AccountEntity } from '../entities';
 import type { RegistrationType } from '../enums/registration-type.enum';
-import { AvailabilityStatus } from '../../doctor-profiles/enums/availability-status.enum';
 import { DoctorMeDto, HospitalMeDto } from '../dto/me-response.dto';
 
 @Injectable()
@@ -71,6 +70,7 @@ export class AuthFlowService implements IAuthFlowService {
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
     const roleName = this.registrationTypeToRoleName(dto.registrationType);
+    const email = dto.email.toLowerCase().trim();
 
     if (dto.registrationType === 'doctor') {
       if (!dto.username?.trim()) {
@@ -85,22 +85,10 @@ export class AuthFlowService implements IAuthFlowService {
 
     if (dto.registrationType === 'doctor') {
       if (
-        !dto.name?.trim() ||
-        !dto.designation?.trim() ||
-        !dto.specialization?.trim()
+        await this.doctorProfileService.findByEmailAndHospitalId(email, null)
       ) {
         throw new BusinessRuleViolationException(
-          'name, designation and specialization are required when registering as doctor',
-        );
-      }
-      if (
-        await this.doctorProfileService.findByEmailAndHospitalId(
-          dto.email,
-          null,
-        )
-      ) {
-        throw new BusinessRuleViolationException(
-          `Email '${dto.email}' is already used for an individual doctor profile`,
+          `Email '${email}' is already used for an individual doctor profile`,
         );
       }
     }
@@ -111,7 +99,6 @@ export class AuthFlowService implements IAuthFlowService {
     }
 
     const loginType = dto.registrationType === 'doctor' ? 'username' : 'email';
-    const email = dto.email.toLowerCase().trim();
     const username =
       dto.registrationType === 'doctor'
         ? (dto.username as string).trim()
@@ -145,35 +132,26 @@ export class AuthFlowService implements IAuthFlowService {
             name: dto.name,
             slug: generateSlugFromName(dto.name),
             phone: dto.phone,
-            email: dto.email,
+            email,
             coverPhotoUrl: null,
           },
           session,
         );
       } else {
-        const doctor = await this.doctorProfileService.create(
+        await this.doctorProfileService.create(
           {
-            fullName: dto.name.trim(),
-            designation: (dto.designation as string).trim(),
-            specialization: (dto.specialization as string).trim(),
-            phone: dto.phone,
-            email: dto.email,
-            addressId: null,
             accountId: account.id,
-            slug: generateSlugFromName(dto.name),
-            bio: dto.bio ?? null,
+            fullName: dto.name.trim(),
+            designation: null,
+            specialization: null,
+            phone: dto.phone,
+            email,
+            addressId: null,
+            slug: generateSlugFromName(dto.name.trim()),
+            bio: null,
             profilePhotoUrl: null,
             createdBy: null,
             hospitalId: null,
-          },
-          session,
-        );
-        await this.doctorProfileService.createInitialStatus(
-          {
-            doctorProfileId: doctor.id,
-            updatedByAccountId: account.id,
-            updatedByRoleId: role.id,
-            status: AvailabilityStatus.AVAILABLE,
           },
           session,
         );

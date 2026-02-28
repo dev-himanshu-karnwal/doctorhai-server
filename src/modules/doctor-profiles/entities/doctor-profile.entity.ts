@@ -2,8 +2,8 @@ export class DoctorProfileEntity {
   constructor(
     public readonly id: string,
     public readonly fullName: string,
-    public readonly designation: string,
-    public readonly specialization: string,
+    public readonly designation: string | null,
+    public readonly specialization: string | null,
     public readonly phone: string,
     public readonly email: string,
     public readonly addressId: string | null,

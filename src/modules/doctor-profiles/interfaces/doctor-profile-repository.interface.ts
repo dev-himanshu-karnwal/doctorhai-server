@@ -7,8 +7,8 @@ import type {
 
 export interface CreateDoctorProfileInput {
   fullName: string;
-  designation: string;
-  specialization: string;
+  designation?: string | null;
+  specialization?: string | null;
   phone: string;
   email: string;
   addressId?: string | null;

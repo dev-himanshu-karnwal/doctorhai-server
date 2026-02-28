@@ -70,8 +70,8 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       [
         {
           fullName: data.fullName,
-          designation: data.designation,
-          specialization: data.specialization,
+          designation: data.designation ?? null,
+          specialization: data.specialization ?? null,
           phone: data.phone,
           email: data.email,
           addressId:

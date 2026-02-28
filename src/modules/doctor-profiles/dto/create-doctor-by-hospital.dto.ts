@@ -1,12 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsEmail,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 /**
  * When a hospital creates a doctor: same profile info as doctor self-registration.
@@ -20,18 +14,6 @@ export class CreateDoctorByHospitalDto {
   @MaxLength(120)
   @Transform(({ value }: { value: string }) => value?.trim())
   fullName: string;
-
-  @ApiProperty({ example: 'MD', description: 'Designation' })
-  @IsString()
-  @MaxLength(120)
-  @Transform(({ value }: { value: string }) => value?.trim())
-  designation: string;
-
-  @ApiProperty({ example: 'Cardiology' })
-  @IsString()
-  @MaxLength(120)
-  @Transform(({ value }: { value: string }) => value?.trim())
-  specialization: string;
 
   @ApiProperty({ example: 'john@example.com' })
   @IsEmail()
@@ -60,10 +42,4 @@ export class CreateDoctorByHospitalDto {
   @MinLength(8)
   @MaxLength(72)
   password: string;
-
-  @ApiPropertyOptional({ description: 'Bio' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(2000)
-  bio?: string;
 }

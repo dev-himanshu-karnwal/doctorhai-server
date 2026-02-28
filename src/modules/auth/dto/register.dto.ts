@@ -3,7 +3,6 @@ import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
-  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -61,39 +60,4 @@ export class RegisterDto {
   @MaxLength(64)
   @Transform(({ value }: { value: string }) => value?.trim())
   username?: string;
-
-  /** Required when registrationType is doctor. Use name for doctor full name. */
-  @ApiProperty({
-    example: 'MD',
-    description:
-      'Required when registrationType is doctor. Designation (e.g. MD, MBBS)',
-  })
-  @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsString()
-  @MinLength(1)
-  @MaxLength(120)
-  @Transform(({ value }: { value: string }) => value?.trim())
-  designation?: string;
-
-  @ApiProperty({
-    example: 'Cardiology',
-    description:
-      'Required when registrationType is doctor. Medical specialization',
-  })
-  @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsString()
-  @MinLength(1)
-  @MaxLength(120)
-  @Transform(({ value }: { value: string }) => value?.trim())
-  specialization?: string;
-
-  @ApiPropertyOptional({
-    example: 'Experienced cardiologist with 15 years of practice.',
-    description: 'Doctor bio (optional)',
-  })
-  @ValidateIf((o: RegisterDto) => o.registrationType === 'doctor')
-  @IsOptional()
-  @IsString()
-  @MaxLength(2000)
-  bio?: string;
 }
