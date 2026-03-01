@@ -1,4 +1,4 @@
-import { DoctorStatusEntity } from '../entities';
+import { DoctorStatusEntity } from '../entities/doctor-status.entity';
 import { AvailabilityStatus } from '../enums/availability-status.enum';
 
 export interface DoctorStatusDocLike {

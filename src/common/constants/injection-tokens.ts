@@ -12,6 +12,7 @@ export const DOCTOR_PROFILE_REPOSITORY_TOKEN = Symbol(
 );
 export const DOCTOR_PROFILE_SERVICE_TOKEN = Symbol('IDoctorProfileService');
 export const DOCTOR_STATUS_REPOSITORY_TOKEN = Symbol('IDoctorStatusRepository');
+export const DOCTOR_STATUS_SERVICE_TOKEN = Symbol('IDoctorStatusService');
 
 // Auth module
 export const PERMISSION_REPOSITORY_TOKEN = Symbol('IPermissionRepository');

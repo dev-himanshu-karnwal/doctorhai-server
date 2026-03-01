@@ -1,5 +1,5 @@
 import type { ClientSession } from 'mongoose';
-import { DoctorStatusEntity } from '../entities';
+import { DoctorStatusEntity } from '../entities/doctor-status.entity';
 import { AvailabilityStatus } from '../enums/availability-status.enum';
 import { UpdateDoctorStatusDto } from '../dto/update-doctor-status.dto';
 

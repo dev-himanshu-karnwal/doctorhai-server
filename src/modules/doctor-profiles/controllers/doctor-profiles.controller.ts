@@ -4,12 +4,10 @@ import {
   Post,
   Body,
   Query,
-  Param,
-  Patch,
-  HttpCode,
-  HttpStatus,
   Inject,
   UseGuards,
+  HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,17 +25,13 @@ import {
   RequirePermissions,
 } from '../../../common/decorators';
 import { ApiResponse } from '../../../common/classes';
-import type {
-  ApiResponseBody,
-  DataKeyWrapper,
-} from '../../../common/interfaces';
+import type { DataKeyWrapper } from '../../../common/interfaces';
 import { DOCTOR_PROFILE_SERVICE_TOKEN } from '../../../common/constants';
 import type { DoctorProfileEntity } from '../entities';
 import type { DoctorsQuery, IDoctorProfileService } from '../interfaces';
 import type { JwtPayload } from '../../auth/strategies/jwt.strategy';
 import { PermissionsGuard } from '../../auth/guards/permissions.guard';
 import { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
-import { UpdateDoctorStatusDto } from '../dto/update-doctor-status.dto';
 import { GetDoctorsQueryDto } from '../dto/get-doctors-query.dto';
 import {
   HospitalDoctorListItemDto,
@@ -130,39 +124,5 @@ export class DoctorProfilesController {
     const doctor: DoctorProfileEntity =
       await this.doctorProfileService.createByHospital(dto, user.sub);
     return ApiResponse.withDataKey('doctor', doctor);
-  }
-
-  @Patch(':doctorProfileId/status')
-  @UseGuards(PermissionsGuard)
-  @RequirePermissions({
-    permissions: [
-      'doctor.status.update',
-      'hospital.doctor.update',
-      'super_admin.manage',
-    ],
-    requireAll: false,
-  })
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Update doctor availability status',
-    description:
-      'Updates the availability status of a doctor. Authorized for the doctor themselves, their parent hospital, or super admin.',
-  })
-  @ApiOkResponse({ description: 'Status updated successfully' })
-  @ApiBadRequestResponse({ description: 'Validation failed' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
-  async updateStatus(
-    @Param('doctorProfileId') doctorProfileId: string,
-    @Body() dto: UpdateDoctorStatusDto,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<ApiResponseBody<null>> {
-    await this.doctorProfileService.updateStatus({
-      ...dto,
-      doctorProfileId: doctorProfileId,
-      updatedByAccountId: user.sub,
-    });
-    return ApiResponse.success(null, 'Doctor status updated successfully');
   }
 }
