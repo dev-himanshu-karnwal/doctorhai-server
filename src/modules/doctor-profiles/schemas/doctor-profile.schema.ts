@@ -2,11 +2,11 @@ import { Schema, Document, Types } from 'mongoose';
 
 export interface DoctorProfileDocument extends Document {
   fullName: string;
-  designation: string;
-  specialization: string;
+  designation: string | null;
+  specialization: string | null;
   phone: string;
   email: string;
-  addressId: Types.ObjectId;
+  addressId: Types.ObjectId | null;
   accountId: Types.ObjectId;
   slug: string;
   bio: string | null;
@@ -21,14 +21,15 @@ export interface DoctorProfileDocument extends Document {
 export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
   {
     fullName: { type: String, required: true },
-    designation: { type: String, required: true },
-    specialization: { type: String, required: true },
+    designation: { type: String, required: false, default: null },
+    specialization: { type: String, required: false, default: null },
     phone: { type: String, required: true },
     email: { type: String, required: true },
     addressId: {
       type: Schema.Types.ObjectId,
       ref: 'Address',
-      required: true,
+      required: false,
+      default: null,
     },
     accountId: {
       type: Schema.Types.ObjectId,
@@ -37,7 +38,7 @@ export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
       unique: true,
     },
     slug: { type: String, required: true, unique: true },
-    bio: { type: String, default: null },
+    bio: { type: String, required: false, default: null },
     profilePhotoUrl: { type: String, default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'Account', default: null },
     hospitalId: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },

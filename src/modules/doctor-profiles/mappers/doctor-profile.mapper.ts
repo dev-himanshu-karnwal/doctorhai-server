@@ -3,11 +3,11 @@ import { DoctorProfileEntity } from '../entities';
 export interface DoctorProfileDocLike {
   _id: { toString(): string };
   fullName: string;
-  designation: string;
-  specialization: string;
+  designation?: string | null;
+  specialization?: string | null;
   phone: string;
   email: string;
-  addressId: { toString(): string };
+  addressId?: { toString(): string } | null;
   accountId: { toString(): string };
   slug: string;
   bio?: string | null;
@@ -24,11 +24,11 @@ export class DoctorProfileMapper {
     return new DoctorProfileEntity(
       doc._id.toString(),
       doc.fullName,
-      doc.designation,
-      doc.specialization,
+      doc.designation ?? null,
+      doc.specialization ?? null,
       doc.phone,
       doc.email,
-      doc.addressId.toString(),
+      doc.addressId != null ? doc.addressId.toString() : null,
       doc.accountId.toString(),
       doc.slug,
       doc.bio ?? null,

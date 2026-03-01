@@ -2,7 +2,7 @@ import { Schema, Document, Types } from 'mongoose';
 
 export interface HospitalDocument extends Document {
   accountId: Types.ObjectId;
-  addressId: Types.ObjectId;
+  addressId: Types.ObjectId | null;
   name: string;
   slug: string;
   phone: string;
@@ -25,7 +25,8 @@ export const HospitalSchema = new Schema<HospitalDocument>(
     addressId: {
       type: Schema.Types.ObjectId,
       ref: 'Address',
-      required: true,
+      required: false,
+      default: null,
     },
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },

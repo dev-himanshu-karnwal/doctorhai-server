@@ -2,7 +2,7 @@ export class HospitalEntity {
   constructor(
     public readonly id: string,
     public readonly accountId: string,
-    public readonly addressId: string,
+    public readonly addressId: string | null,
     public readonly name: string,
     public readonly slug: string,
     public readonly phone: string,

@@ -1,13 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 import { DoctorProfileDocument } from '../schemas';
 import { DoctorProfileEntity } from '../entities';
 import { DoctorProfileMapper } from '../mappers';
 import type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
+  UpdateDoctorProfileInput,
 } from '../interfaces';
+import type {
+  DoctorsQuery,
+  PaginatedDoctorProfiles,
+} from '../interfaces/doctor-profile-service.interface';
+import {
+  buildSort,
+  findWithPagination,
+} from '../../../common/mongoose/query-helpers';
+import type { PaginationOptions } from '../../../common/interfaces';
 
 @Injectable()
 export class DoctorProfilesRepository implements IDoctorProfileRepository {
@@ -17,6 +27,13 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
   ) {}
 
   private readonly notDeleted = { deletedAt: null };
+
+  async findById(
+    id: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileRepository['findById']>>> {
+    const doc = await this.doctorProfileModel.findById(id).exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
 
   async findByAccountId(
     accountId: string,
@@ -54,11 +71,12 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       [
         {
           fullName: data.fullName,
-          designation: data.designation,
-          specialization: data.specialization,
+          designation: data.designation ?? null,
+          specialization: data.specialization ?? null,
           phone: data.phone,
           email: data.email,
-          addressId: new Types.ObjectId(data.addressId),
+          addressId:
+            data.addressId != null ? new Types.ObjectId(data.addressId) : null,
           accountId: new Types.ObjectId(data.accountId),
           slug: data.slug,
           bio: data.bio ?? null,
@@ -75,5 +93,102 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       options,
     );
     return DoctorProfileMapper.toDomain(doc);
+  }
+
+  async findDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
+    const filter: FilterQuery<DoctorProfileDocument> = {
+      ...this.notDeleted,
+    };
+
+    if (query.hospitalId && Types.ObjectId.isValid(query.hospitalId)) {
+      filter.hospitalId = new Types.ObjectId(query.hospitalId);
+    }
+
+    if (query.specialization != null && query.specialization.trim() !== '') {
+      filter.specialization = new RegExp(query.specialization.trim(), 'i');
+    }
+
+    if (query.designation != null && query.designation.trim() !== '') {
+      filter.designation = new RegExp(query.designation.trim(), 'i');
+    }
+
+    if (query.search != null && query.search.trim() !== '') {
+      const searchRegex = new RegExp(query.search.trim(), 'i');
+      filter.$or = [
+        { fullName: searchRegex },
+        { specialization: searchRegex },
+        { designation: searchRegex },
+        { email: searchRegex },
+      ];
+    }
+
+    const sort = buildSort<NonNullable<DoctorsQuery['sortBy']>>(
+      { sortBy: query.sortBy, sortOrder: query.sortOrder },
+      'fullName',
+      ['fullName', 'createdAt'] as const,
+    );
+
+    const paginationOptions: PaginationOptions = {
+      page: query.page,
+      limit: query.limit,
+    };
+
+    const result = await findWithPagination(
+      this.doctorProfileModel,
+      filter,
+      paginationOptions,
+      sort,
+    );
+
+    return {
+      doctors: result.items.map((doc) => DoctorProfileMapper.toDomain(doc)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  async update(
+    id: string,
+    data: UpdateDoctorProfileInput,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const updatePayload: Record<string, unknown> = {};
+    if (data.fullName != null) updatePayload.fullName = data.fullName;
+    if (data.designation !== undefined)
+      updatePayload.designation = data.designation;
+    if (data.specialization !== undefined)
+      updatePayload.specialization = data.specialization;
+    if (data.bio !== undefined) updatePayload.bio = data.bio;
+    if (data.slug != null) updatePayload.slug = data.slug;
+
+    if (Object.keys(updatePayload).length === 0) return this.findById(id);
+
+    const doc = await this.doctorProfileModel
+      .findByIdAndUpdate(
+        id,
+        { $set: updatePayload },
+        { new: true, runValidators: true },
+      )
+      .lean()
+      .exec();
+
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
+
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(accountId)) return null;
+    const doc = await this.doctorProfileModel
+      .findOneAndUpdate(
+        { accountId: new Types.ObjectId(accountId), ...this.notDeleted },
+        { $set: { email: email.toLowerCase().trim(), updatedAt: new Date() } },
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
 }

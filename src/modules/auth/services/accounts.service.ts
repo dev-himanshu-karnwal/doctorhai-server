@@ -10,6 +10,7 @@ import type {
   UpdateAccountDto,
   AddRoleToAccountDto,
 } from '../dto';
+import type { ClientSession } from 'mongoose';
 
 @Injectable()
 export class AccountsService implements IAccountService {
@@ -47,6 +48,7 @@ export class AccountsService implements IAccountService {
 
   async create(
     data: CreateAccountDto,
+    session?: ClientSession,
   ): Promise<Awaited<ReturnType<IAccountService['create']>>> {
     const identifier =
       data.loginType === 'email' ? data.email : (data.username ?? '');
@@ -60,7 +62,7 @@ export class AccountsService implements IAccountService {
         `Account with login ${data.loginType}:${identifier} already exists`,
       );
     }
-    return this.accountRepo.create(data);
+    return this.accountRepo.create(data, session);
   }
 
   async update(

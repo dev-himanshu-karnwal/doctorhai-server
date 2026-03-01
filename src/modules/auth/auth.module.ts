@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { AppConfigService } from '../../config';
@@ -31,6 +31,8 @@ import {
 import {
   AccountsService,
   AuthFlowService,
+  AuthMeService,
+  AuthRegistrationService,
   PermissionsService,
   AccountCreationService,
   PasswordResetService,
@@ -63,7 +65,7 @@ import { HospitalsModule } from '../hospitals';
       inject: [AppConfigService],
     }),
     AddressesModule,
-    DoctorProfilesModule,
+    forwardRef(() => DoctorProfilesModule),
     HospitalsModule,
   ],
   controllers: [AuthController],
@@ -90,6 +92,8 @@ import { HospitalsModule } from '../hospitals';
       provide: OTP_SERVICE_TOKEN,
       useClass: OtpService,
     },
+    AuthMeService,
+    AuthRegistrationService,
     { provide: AUTH_FLOW_SERVICE_TOKEN, useClass: AuthFlowService },
     JwtStrategy,
     PermissionsGuard,

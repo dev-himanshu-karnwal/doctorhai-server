@@ -4,6 +4,7 @@ import type { UpdatePermissionDto } from '../dto';
 
 export interface IPermissionRepository {
   findById(id: string): Promise<PermissionEntity | null>;
+  findByIds(ids: string[]): Promise<PermissionEntity[]>;
   findByKey(key: string): Promise<PermissionEntity | null>;
   findAll(): Promise<PermissionEntity[]>;
   create(data: CreatePermissionDto): Promise<PermissionEntity>;

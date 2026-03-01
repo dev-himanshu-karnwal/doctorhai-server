@@ -21,6 +21,12 @@ export class AppConfigService {
     return this.config.get<string>('app.apiPrefix') ?? 'api/v1';
   }
 
+  get corsOrigins(): string | string[] {
+    const origins = this.config.get<string>('app.corsOrigins') ?? '*';
+    if (origins === '*') return '*';
+    return origins.split(',').map((o) => o.trim());
+  }
+
   get port(): number {
     return this.config.get<number>('app.port') ?? 3000;
   }

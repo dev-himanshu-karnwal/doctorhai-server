@@ -1,13 +1,17 @@
 import type { ClientSession } from 'mongoose';
 import { DoctorProfileEntity } from '../entities';
+import type {
+  DoctorsQuery,
+  PaginatedDoctorProfiles,
+} from './doctor-profile-service.interface';
 
 export interface CreateDoctorProfileInput {
   fullName: string;
-  designation: string;
-  specialization: string;
+  designation?: string | null;
+  specialization?: string | null;
   phone: string;
   email: string;
-  addressId: string;
+  addressId?: string | null;
   accountId: string;
   slug: string;
   bio?: string | null;
@@ -16,7 +20,16 @@ export interface CreateDoctorProfileInput {
   hospitalId?: string | null;
 }
 
+export interface UpdateDoctorProfileInput {
+  fullName?: string;
+  designation?: string | null;
+  specialization?: string | null;
+  bio?: string | null;
+  slug?: string;
+}
+
 export interface IDoctorProfileRepository {
+  findById(id: string): Promise<DoctorProfileEntity | null>;
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
   findByEmailAndHospitalId(
     email: string,
@@ -26,4 +39,13 @@ export interface IDoctorProfileRepository {
     data: CreateDoctorProfileInput,
     session?: ClientSession,
   ): Promise<DoctorProfileEntity>;
+  findDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles>;
+  update(
+    id: string,
+    data: UpdateDoctorProfileInput,
+  ): Promise<DoctorProfileEntity | null>;
+  updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null>;
 }
