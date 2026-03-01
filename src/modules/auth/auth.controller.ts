@@ -18,6 +18,7 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -28,6 +29,7 @@ import {
   Public,
   RequirePermissions,
 } from '../../common/decorators';
+import { ParseObjectIdPipe } from '../../common/pipes';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { ApiResponse } from '../../common/classes';
 import type { DataKeyWrapper } from '../../common/interfaces';
@@ -50,6 +52,7 @@ import {
   CheckUsernameResponseDto,
   MeResponseDto,
   UpdateEmailDto,
+  SetAccountVerifiedDto,
 } from './dto';
 
 @ApiTags('auth')
@@ -142,6 +145,32 @@ export class AuthController {
   ): Promise<DataKeyWrapper<'message'>> {
     await this.authFlowService.updateEmail(user.sub, accountId, dto.newEmail);
     return ApiResponse.withDataKey('message', 'Email updated successfully');
+  }
+
+  @Patch('accounts/:accountId/verify')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ permissions: ['super_admin.manage'] })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify or unverify account',
+    description:
+      'Superadmin only. Sets the account verification status (verified or unverified).',
+  })
+  @ApiOkResponse({ description: 'Account verification status updated' })
+  @ApiBadRequestResponse({ description: 'Invalid account ID' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'Superadmin permission required' })
+  async setAccountVerified(
+    @Param('accountId', ParseObjectIdPipe) accountId: string,
+    @Body() dto: SetAccountVerifiedDto,
+  ): Promise<DataKeyWrapper<'message'>> {
+    await this.authFlowService.setAccountVerified(accountId, dto.verified);
+    return ApiResponse.withDataKey(
+      'message',
+      dto.verified ? 'Account verified' : 'Account unverified',
+    );
   }
 
   @Post('check-username')

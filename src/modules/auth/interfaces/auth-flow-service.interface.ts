@@ -15,4 +15,5 @@ export interface IAuthFlowService {
     targetAccountId: string,
     newEmail: string,
   ): Promise<void>;
+  setAccountVerified(accountId: string, verified: boolean): Promise<void>;
 }

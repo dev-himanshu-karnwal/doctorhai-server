@@ -30,6 +30,14 @@ export class UpdateAccountDto {
   isActive?: boolean;
 
   @ApiPropertyOptional({
+    description: 'Whether the account is verified (superadmin only)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isVerified?: boolean;
+
+  @ApiPropertyOptional({
     description: 'Set when password was last updated (server-side)',
     example: '2025-01-15T10:00:00.000Z',
   })

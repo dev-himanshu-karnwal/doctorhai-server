@@ -454,6 +454,20 @@ export class AuthFlowService implements IAuthFlowService {
     );
   }
 
+  async setAccountVerified(
+    accountId: string,
+    verified: boolean,
+  ): Promise<void> {
+    const account = await this.accountRepo.findById(accountId);
+    if (!account) {
+      throw new ResourceNotFoundException('Account', accountId);
+    }
+    await this.accountRepo.update(accountId, { isVerified: verified });
+    this.logger.log(
+      `Account ${accountId} verification set to ${verified} by superadmin`,
+    );
+  }
+
   private registrationTypeToRoleName(
     registrationType: RegistrationType,
   ): string {

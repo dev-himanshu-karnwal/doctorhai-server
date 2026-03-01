@@ -96,6 +96,7 @@ export class AccountsRepository implements IAccountRepository {
     if (data.passwordHash !== undefined)
       update.passwordHash = data.passwordHash;
     if (data.isActive !== undefined) update.isActive = data.isActive;
+    if (data.isVerified !== undefined) update.isVerified = data.isVerified;
     if (data.passwordUpdatedAt !== undefined) {
       update.passwordUpdatedAt =
         typeof data.passwordUpdatedAt === 'string'

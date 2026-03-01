@@ -9,6 +9,7 @@ export class AccountEntity {
     /** Only present when loaded for auth (e.g. login); never expose in API responses */
     public readonly passwordHash: string | null,
     public readonly isActive: boolean,
+    public readonly isVerified: boolean,
     public readonly passwordUpdatedAt: Date | null,
     public readonly roles: AccountRoleAssignmentEntity[],
     public readonly createdAt: Date,
