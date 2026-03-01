@@ -24,6 +24,18 @@ export class PermissionsRepository implements IPermissionRepository {
     return doc ? PermissionMapper.toDomain(doc) : null;
   }
 
+  async findByIds(ids: string[]): Promise<PermissionEntity[]> {
+    const validIds = ids
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+    if (validIds.length === 0) return [];
+    const docs = await this.permissionModel
+      .find({ _id: { $in: validIds } })
+      .lean()
+      .exec();
+    return docs.map((d) => PermissionMapper.toDomain(d));
+  }
+
   async findByKey(key: string): Promise<PermissionEntity | null> {
     const doc = await this.permissionModel.findOne({ key }).lean().exec();
     return doc ? PermissionMapper.toDomain(doc) : null;

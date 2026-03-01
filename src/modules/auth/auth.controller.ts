@@ -36,6 +36,13 @@ import type { DataKeyWrapper } from '../../common/interfaces';
 import {
   AUTH_FLOW_SERVICE_TOKEN,
   PASSWORD_RESET_SERVICE_TOKEN,
+  THROTTLE_AUTH_LOGIN_LIMIT,
+  THROTTLE_AUTH_LOGIN_TTL_MS,
+  THROTTLE_AUTH_CHECK_USERNAME_LIMIT,
+  THROTTLE_AUTH_CHECK_USERNAME_TTL_MS,
+  THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+  THROTTLE_AUTH_FORGOT_PASSWORD_REQUEST_LIMIT,
+  THROTTLE_AUTH_FORGOT_PASSWORD_VERIFY_LIMIT,
 } from '../../common/constants';
 import type { IAuthFlowService } from './interfaces/auth-flow-service.interface';
 import type { IPasswordResetService } from './interfaces/password-reset-service.interface';
@@ -67,7 +74,12 @@ export class AuthController {
 
   @Post('register')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_LOGIN_LIMIT,
+      ttl: THROTTLE_AUTH_LOGIN_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register',
@@ -83,7 +95,12 @@ export class AuthController {
 
   @Post('login')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_LOGIN_LIMIT,
+      ttl: THROTTLE_AUTH_LOGIN_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login',
@@ -175,7 +192,12 @@ export class AuthController {
 
   @Post('check-username')
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_CHECK_USERNAME_LIMIT,
+      ttl: THROTTLE_AUTH_CHECK_USERNAME_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Check username availability',
@@ -195,7 +217,12 @@ export class AuthController {
 
   @Post('forgot-password/request')
   @Public()
-  @Throttle({ default: { limit: 3, ttl: 600000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_FORGOT_PASSWORD_REQUEST_LIMIT,
+      ttl: THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset OTP',
@@ -218,7 +245,12 @@ export class AuthController {
 
   @Post('forgot-password/verify')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 600000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_FORGOT_PASSWORD_VERIFY_LIMIT,
+      ttl: THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify password reset OTP',
@@ -237,7 +269,12 @@ export class AuthController {
 
   @Post('forgot-password/reset')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 600000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_FORGOT_PASSWORD_VERIFY_LIMIT,
+      ttl: THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reset password using reset token',

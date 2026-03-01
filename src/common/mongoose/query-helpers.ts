@@ -1,4 +1,5 @@
 import type { FilterQuery, Model } from 'mongoose';
+import { DEFAULT_PAGE_LIMIT } from '../constants';
 import type {
   PaginationOptions,
   PaginatedResult,
@@ -8,7 +9,7 @@ import type {
 
 export function buildPagination({ page, limit }: PaginationOptions) {
   const safePage = page && page > 0 ? page : 1;
-  const safeLimit = limit && limit > 0 ? limit : 20;
+  const safeLimit = limit && limit > 0 ? limit : DEFAULT_PAGE_LIMIT;
 
   return {
     skip: (safePage - 1) * safeLimit,
