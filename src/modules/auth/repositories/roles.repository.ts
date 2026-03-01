@@ -24,6 +24,18 @@ export class RolesRepository implements IRoleRepository {
     return doc ? RoleMapper.toDomain(doc) : null;
   }
 
+  async findByIds(ids: string[]): Promise<RoleEntity[]> {
+    const validIds = ids
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+    if (validIds.length === 0) return [];
+    const docs = await this.roleModel
+      .find({ _id: { $in: validIds } })
+      .lean()
+      .exec();
+    return docs.map((d) => RoleMapper.toDomain(d));
+  }
+
   async findByName(name: string): Promise<RoleEntity | null> {
     const doc = await this.roleModel.findOne({ name }).lean().exec();
     return doc ? RoleMapper.toDomain(doc) : null;

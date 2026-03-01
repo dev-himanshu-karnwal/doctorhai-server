@@ -1,5 +1,9 @@
 import type { ClientSession } from 'mongoose';
 import { HospitalEntity } from '../entities';
+import type {
+  HospitalsQuery,
+  PaginatedHospitals,
+} from './hospital-service.interface';
 
 export interface CreateHospitalInput {
   accountId: string;
@@ -17,4 +21,9 @@ export interface IHospitalRepository {
     data: CreateHospitalInput,
     session?: ClientSession,
   ): Promise<HospitalEntity>;
+  findHospitals(query: HospitalsQuery): Promise<PaginatedHospitals>;
+  updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<HospitalEntity | null>;
 }

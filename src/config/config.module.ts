@@ -6,6 +6,7 @@ import { databaseConfig } from './database.config';
 import { jwtConfig } from './jwt.config';
 import { mailConfig } from './mail.config';
 import { AppConfigService } from './app-config.service';
+import { envValidationSchema } from './env.validation';
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 
@@ -16,6 +17,12 @@ const nodeEnv = process.env.NODE_ENV || 'development';
       isGlobal: true,
       envFilePath: ['.env', `.env.${nodeEnv}`],
       load: [appConfig, authConfig, databaseConfig, jwtConfig, mailConfig],
+
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        abortEarly: false,
+        allowUnknown: true,
+      },
     }),
   ],
   providers: [AppConfigService],

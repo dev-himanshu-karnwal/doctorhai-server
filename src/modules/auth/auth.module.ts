@@ -31,6 +31,8 @@ import {
 import {
   AccountsService,
   AuthFlowService,
+  AuthMeService,
+  AuthRegistrationService,
   PermissionsService,
   AccountCreationService,
   PasswordResetService,
@@ -90,6 +92,8 @@ import { HospitalsModule } from '../hospitals';
       provide: OTP_SERVICE_TOKEN,
       useClass: OtpService,
     },
+    AuthMeService,
+    AuthRegistrationService,
     { provide: AUTH_FLOW_SERVICE_TOKEN, useClass: AuthFlowService },
     JwtStrategy,
     PermissionsGuard,

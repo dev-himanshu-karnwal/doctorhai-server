@@ -4,6 +4,7 @@ import type { UpdateRoleDto } from '../dto';
 
 export interface IRoleRepository {
   findById(id: string): Promise<RoleEntity | null>;
+  findByIds(ids: string[]): Promise<RoleEntity[]>;
   findByName(name: string): Promise<RoleEntity | null>;
   findAll(): Promise<RoleEntity[]>;
   create(data: CreateRoleDto): Promise<RoleEntity>;

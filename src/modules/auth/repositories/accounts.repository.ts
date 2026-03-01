@@ -91,9 +91,12 @@ export class AccountsRepository implements IAccountRepository {
 
   async update(id: string, data: UpdateAccountDto): Promise<AccountEntity> {
     const update: Record<string, unknown> = { updatedAt: new Date() };
+    if (data.email !== undefined)
+      update.email = data.email.toLowerCase().trim();
     if (data.passwordHash !== undefined)
       update.passwordHash = data.passwordHash;
     if (data.isActive !== undefined) update.isActive = data.isActive;
+    if (data.isVerified !== undefined) update.isVerified = data.isVerified;
     if (data.passwordUpdatedAt !== undefined) {
       update.passwordUpdatedAt =
         typeof data.passwordUpdatedAt === 'string'

@@ -1,6 +1,7 @@
 import type { ClientSession } from 'mongoose';
 import { DoctorProfileEntity } from '../entities';
 import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
+import type { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
 
 export interface CreateDoctorProfileData {
   fullName: string;
@@ -53,4 +54,13 @@ export interface IDoctorProfileService {
     createdByAccountId: string,
   ): Promise<DoctorProfileEntity>;
   getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles>;
+  updateProfile(
+    doctorProfileId: string,
+    dto: UpdateDoctorProfileDto,
+    updatedByAccountId: string,
+  ): Promise<DoctorProfileEntity>;
+  updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null>;
 }

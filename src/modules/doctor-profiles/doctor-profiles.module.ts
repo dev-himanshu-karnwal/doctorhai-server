@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module, forwardRef, type Provider } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
@@ -9,7 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 import { HospitalsModule } from '../hospitals/hospitals.module';
 import { DoctorProfileSchema } from './schemas';
 import { DoctorProfilesController } from './controllers/doctor-profiles.controller';
-import { DoctorProfilesRepository } from './repositories';
+import { DoctorProfilesRepository } from './repositories/doctor-profiles.repository';
 import { DoctorProfilesService } from './services';
 
 @Module({
@@ -20,15 +20,17 @@ import { DoctorProfilesService } from './services';
     AddressesModule,
     HospitalsModule,
     forwardRef(() => AuthModule),
-    forwardRef(() => HospitalsModule),
   ],
   controllers: [DoctorProfilesController],
   providers: [
     {
       provide: DOCTOR_PROFILE_REPOSITORY_TOKEN,
       useClass: DoctorProfilesRepository,
-    },
-    { provide: DOCTOR_PROFILE_SERVICE_TOKEN, useClass: DoctorProfilesService },
+    } as Provider,
+    {
+      provide: DOCTOR_PROFILE_SERVICE_TOKEN,
+      useClass: DoctorProfilesService,
+    } as Provider,
   ],
   exports: [DOCTOR_PROFILE_SERVICE_TOKEN, DOCTOR_PROFILE_REPOSITORY_TOKEN],
 })

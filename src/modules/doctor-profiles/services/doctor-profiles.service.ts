@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger, Inject, ForbiddenException } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import {
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
@@ -22,6 +22,7 @@ import type {
   PaginatedDoctorProfiles,
 } from '../interfaces';
 import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
+import type { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
 
 @Injectable()
 export class DoctorProfilesService implements IDoctorProfileService {
@@ -141,5 +142,94 @@ export class DoctorProfilesService implements IDoctorProfileService {
   getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
     this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
     return this.doctorProfileRepo.findDoctors(query);
+  }
+
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<
+    Awaited<ReturnType<IDoctorProfileService['updateEmailByAccountId']>>
+  > {
+    this.logger.debug(
+      `Updating doctor profile email by accountId: ${accountId}`,
+    );
+    return this.doctorProfileRepo.updateEmailByAccountId(accountId, email);
+  }
+
+  async updateProfile(
+    doctorProfileId: string,
+    dto: UpdateDoctorProfileDto,
+    updatedByAccountId: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileService['updateProfile']>>> {
+    this.logger.debug(
+      `Updating profile for doctor ${doctorProfileId} by account ${updatedByAccountId}`,
+    );
+
+    const doctorProfile =
+      await this.doctorProfileRepo.findById(doctorProfileId);
+    if (!doctorProfile) {
+      throw new BusinessRuleViolationException('Doctor profile not found');
+    }
+
+    const account = await this.accountService.findById(updatedByAccountId);
+    const roleNames: string[] = [];
+    for (const assignment of account.roles) {
+      const role = await this.roleService.findById(assignment.roleId);
+      roleNames.push(role.name);
+    }
+
+    const isSuperAdmin = roleNames.includes('super_admin');
+    const isDoctor = roleNames.includes('doctor');
+    const isHospital = roleNames.includes('hospital');
+
+    let isAuthorized = false;
+    if (isSuperAdmin) {
+      isAuthorized = true;
+    } else if (isDoctor && doctorProfile.accountId === updatedByAccountId) {
+      isAuthorized = true;
+    } else if (isHospital) {
+      const hospital =
+        await this.hospitalService.findByAccountId(updatedByAccountId);
+      if (
+        hospital &&
+        (doctorProfile.hospitalId === hospital.id ||
+          doctorProfile.hospitalId === hospital.accountId)
+      ) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      throw new ForbiddenException(
+        'You are not authorized to update this doctor profile',
+      );
+    }
+
+    const updateData: {
+      fullName?: string;
+      designation?: string | null;
+      specialization?: string | null;
+      bio?: string | null;
+      slug?: string;
+    } = {};
+
+    if (dto.fullName != null) {
+      updateData.fullName = dto.fullName;
+      updateData.slug = generateSlugFromName(dto.fullName);
+    }
+    if (dto.designation !== undefined)
+      updateData.designation = dto.designation?.trim() || null;
+    if (dto.specialization !== undefined)
+      updateData.specialization = dto.specialization?.trim() || null;
+    if (dto.bio !== undefined) updateData.bio = dto.bio?.trim() || null;
+
+    const updated = await this.doctorProfileRepo.update(
+      doctorProfileId,
+      updateData,
+    );
+    if (!updated) {
+      throw new BusinessRuleViolationException('Doctor profile not found');
+    }
+    return updated;
   }
 }

@@ -6,25 +6,43 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  Param,
+  Patch,
   Post,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CurrentUser, Public } from '../../common/decorators';
+import {
+  CurrentUser,
+  Public,
+  RequirePermissions,
+} from '../../common/decorators';
+import { ParseObjectIdPipe } from '../../common/pipes';
+import { PermissionsGuard } from './guards/permissions.guard';
 import { ApiResponse } from '../../common/classes';
 import type { DataKeyWrapper } from '../../common/interfaces';
 import {
   AUTH_FLOW_SERVICE_TOKEN,
   PASSWORD_RESET_SERVICE_TOKEN,
+  THROTTLE_AUTH_LOGIN_LIMIT,
+  THROTTLE_AUTH_LOGIN_TTL_MS,
+  THROTTLE_AUTH_CHECK_USERNAME_LIMIT,
+  THROTTLE_AUTH_CHECK_USERNAME_TTL_MS,
+  THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+  THROTTLE_AUTH_FORGOT_PASSWORD_REQUEST_LIMIT,
+  THROTTLE_AUTH_FORGOT_PASSWORD_VERIFY_LIMIT,
 } from '../../common/constants';
 import type { IAuthFlowService } from './interfaces/auth-flow-service.interface';
 import type { IPasswordResetService } from './interfaces/password-reset-service.interface';
@@ -40,6 +58,8 @@ import {
   AuthResponseDto,
   CheckUsernameResponseDto,
   MeResponseDto,
+  UpdateEmailDto,
+  SetAccountVerifiedDto,
 } from './dto';
 
 @ApiTags('auth')
@@ -54,7 +74,12 @@ export class AuthController {
 
   @Post('register')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_LOGIN_LIMIT,
+      ttl: THROTTLE_AUTH_LOGIN_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register',
@@ -70,7 +95,12 @@ export class AuthController {
 
   @Post('login')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_LOGIN_LIMIT,
+      ttl: THROTTLE_AUTH_LOGIN_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login',
@@ -100,9 +130,74 @@ export class AuthController {
     return ApiResponse.withDataKey('user', result);
   }
 
+  @Patch('accounts/:accountId/email')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({
+    permissions: [
+      'doctor.self.profile.update',
+      'hospital.manage',
+      'super_admin.manage',
+      'hospital.doctor.update',
+    ],
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update account email',
+    description:
+      "Updates email for the account and related hospital/doctor profile. Own account or hospital's doctor or superadmin.",
+  })
+  @ApiOkResponse({ description: 'Email updated successfully' })
+  @ApiBadRequestResponse({
+    description: 'Validation failed or email already in use',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({
+    description: 'Not allowed to update this account email',
+  })
+  async updateEmail(
+    @CurrentUser() user: JwtPayload,
+    @Param('accountId') accountId: string,
+    @Body() dto: UpdateEmailDto,
+  ): Promise<DataKeyWrapper<'message'>> {
+    await this.authFlowService.updateEmail(user.sub, accountId, dto.newEmail);
+    return ApiResponse.withDataKey('message', 'Email updated successfully');
+  }
+
+  @Patch('accounts/:accountId/verify')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ permissions: ['super_admin.manage'] })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify or unverify account',
+    description:
+      'Superadmin only. Sets the account verification status (verified or unverified).',
+  })
+  @ApiOkResponse({ description: 'Account verification status updated' })
+  @ApiBadRequestResponse({ description: 'Invalid account ID' })
+  @ApiNotFoundResponse({ description: 'Account not found' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'Superadmin permission required' })
+  async setAccountVerified(
+    @Param('accountId', ParseObjectIdPipe) accountId: string,
+    @Body() dto: SetAccountVerifiedDto,
+  ): Promise<DataKeyWrapper<'message'>> {
+    await this.authFlowService.setAccountVerified(accountId, dto.verified);
+    return ApiResponse.withDataKey(
+      'message',
+      dto.verified ? 'Account verified' : 'Account unverified',
+    );
+  }
+
   @Post('check-username')
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_CHECK_USERNAME_LIMIT,
+      ttl: THROTTLE_AUTH_CHECK_USERNAME_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Check username availability',
@@ -122,7 +217,12 @@ export class AuthController {
 
   @Post('forgot-password/request')
   @Public()
-  @Throttle({ default: { limit: 3, ttl: 600000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_FORGOT_PASSWORD_REQUEST_LIMIT,
+      ttl: THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset OTP',
@@ -145,7 +245,12 @@ export class AuthController {
 
   @Post('forgot-password/verify')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 600000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_FORGOT_PASSWORD_VERIFY_LIMIT,
+      ttl: THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify password reset OTP',
@@ -164,7 +269,12 @@ export class AuthController {
 
   @Post('forgot-password/reset')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 600000 } })
+  @Throttle({
+    default: {
+      limit: THROTTLE_AUTH_FORGOT_PASSWORD_VERIFY_LIMIT,
+      ttl: THROTTLE_AUTH_FORGOT_PASSWORD_TTL_MS,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reset password using reset token',

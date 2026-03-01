@@ -7,6 +7,7 @@ import { DoctorProfileMapper } from '../mappers';
 import type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
+  UpdateDoctorProfileInput,
 } from '../interfaces';
 import type {
   DoctorsQuery,
@@ -145,5 +146,49 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  async update(
+    id: string,
+    data: UpdateDoctorProfileInput,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const updatePayload: Record<string, unknown> = {};
+    if (data.fullName != null) updatePayload.fullName = data.fullName;
+    if (data.designation !== undefined)
+      updatePayload.designation = data.designation;
+    if (data.specialization !== undefined)
+      updatePayload.specialization = data.specialization;
+    if (data.bio !== undefined) updatePayload.bio = data.bio;
+    if (data.slug != null) updatePayload.slug = data.slug;
+
+    if (Object.keys(updatePayload).length === 0) return this.findById(id);
+
+    const doc = await this.doctorProfileModel
+      .findByIdAndUpdate(
+        id,
+        { $set: updatePayload },
+        { new: true, runValidators: true },
+      )
+      .lean()
+      .exec();
+
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
+
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(accountId)) return null;
+    const doc = await this.doctorProfileModel
+      .findOneAndUpdate(
+        { accountId: new Types.ObjectId(accountId), ...this.notDeleted },
+        { $set: { email: email.toLowerCase().trim(), updatedAt: new Date() } },
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
 }

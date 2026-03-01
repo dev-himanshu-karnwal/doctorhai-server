@@ -1,6 +1,10 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { HOSPITAL_REPOSITORY_TOKEN } from '../../../common/constants';
-import type { IHospitalRepository, IHospitalService } from '../interfaces';
+import type {
+  IHospitalRepository,
+  IHospitalService,
+  HospitalsQuery,
+} from '../interfaces';
 import type { CreateHospitalInput } from '../interfaces';
 import type { ClientSession } from 'mongoose';
 
@@ -20,11 +24,28 @@ export class HospitalsService implements IHospitalService {
     return this.hospitalRepo.findByAccountId(accountId);
   }
 
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<Awaited<ReturnType<IHospitalService['updateEmailByAccountId']>>> {
+    this.logger.debug(`Updating hospital email by accountId: ${accountId}`);
+    return this.hospitalRepo.updateEmailByAccountId(accountId, email);
+  }
+
   async create(
     data: CreateHospitalInput,
     session?: ClientSession,
   ): Promise<Awaited<ReturnType<IHospitalService['create']>>> {
     this.logger.debug(`Creating hospital for account: ${data.accountId}`);
     return this.hospitalRepo.create(data, session);
+  }
+
+  async getHospitals(
+    query: HospitalsQuery,
+  ): Promise<Awaited<ReturnType<IHospitalService['getHospitals']>>> {
+    this.logger.debug(
+      `Fetching hospitals with query: ${JSON.stringify(query)}`,
+    );
+    return this.hospitalRepo.findHospitals(query);
   }
 }
