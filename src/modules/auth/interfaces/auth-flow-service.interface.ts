@@ -9,10 +9,11 @@ import type {
   VerifyPasswordResponseDto,
   ActionResultDto,
 } from '../dto';
+import type { Response } from 'express';
 
 export interface IAuthFlowService {
-  register(dto: RegisterDto): Promise<AuthResponseDto>;
-  login(dto: LoginDto): Promise<AuthResponseDto>;
+  register(dto: RegisterDto, response?: Response): Promise<AuthResponseDto>;
+  login(dto: LoginDto, response?: Response): Promise<AuthResponseDto>;
   checkUsernameAvailable(username: string): Promise<CheckUsernameResponseDto>;
   getMe(accountId: string): Promise<MeResponseDto>;
   getPermissionKeysForAccount(accountId: string): Promise<string[]>;

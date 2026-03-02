@@ -11,7 +11,9 @@ import {
   Post,
   UnauthorizedException,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
@@ -92,8 +94,11 @@ export class AuthController {
   })
   @ApiCreatedResponse({ type: AuthResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed or username taken' })
-  async register(@Body() dto: RegisterDto): Promise<DataKeyWrapper<'auth'>> {
-    const result = await this.authFlowService.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<DataKeyWrapper<'auth'>> {
+    const result = await this.authFlowService.register(dto, response);
     return ApiResponse.withDataKey('auth', result);
   }
 
@@ -113,8 +118,11 @@ export class AuthController {
   })
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
-  async login(@Body() dto: LoginDto): Promise<DataKeyWrapper<'auth'>> {
-    const result = await this.authFlowService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<DataKeyWrapper<'auth'>> {
+    const result = await this.authFlowService.login(dto, response);
     return ApiResponse.withDataKey('auth', result);
   }
 

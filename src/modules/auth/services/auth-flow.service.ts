@@ -29,6 +29,7 @@ import type {
 } from '../dto';
 import { AuthMeService } from './auth-me.service';
 import { AuthRegistrationService } from './auth-registration.service';
+import type { Response } from 'express';
 
 @Injectable()
 export class AuthFlowService implements IAuthFlowService {
@@ -51,12 +52,15 @@ export class AuthFlowService implements IAuthFlowService {
     private readonly authRegistrationService: AuthRegistrationService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResponseDto> {
-    return this.authRegistrationService.register(dto);
+  async register(
+    dto: RegisterDto,
+    response?: Response,
+  ): Promise<AuthResponseDto> {
+    return this.authRegistrationService.register(dto, response);
   }
 
-  async login(dto: LoginDto): Promise<AuthResponseDto> {
-    return this.authRegistrationService.login(dto);
+  async login(dto: LoginDto, response?: Response): Promise<AuthResponseDto> {
+    return this.authRegistrationService.login(dto, response);
   }
 
   async checkUsernameAvailable(
