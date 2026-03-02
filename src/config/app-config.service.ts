@@ -58,6 +58,18 @@ export class AppConfigService {
     return this.config.get<string>('jwt.expiresIn') ?? '15m';
   }
 
+  get cookieName(): string {
+    return this.config.get<string>('COOKIE_NAME') ?? 'access_token';
+  }
+
+  get cookieMaxAge(): number {
+    return this.config.get<number>('COOKIE_MAX_AGE') ?? 1036800000;
+  }
+
+  get cookieSecure(): boolean {
+    return this.config.get<boolean>('COOKIE_SECURE') ?? false;
+  }
+
   get mailProvider(): MailProvider {
     return (
       this.config.get<MailProvider>('mail.provider') ?? MailProvider.NODEMAILER

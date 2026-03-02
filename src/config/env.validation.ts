@@ -32,4 +32,7 @@ export const envValidationSchema = Joi.object({
   MAIL_SMTP_SECURE: Joi.string().valid('true', 'false', '').default('false'),
   MAIL_SMTP_USER: Joi.string().allow('').default(''),
   MAIL_SMTP_PASS: Joi.string().allow('').default(''),
+  COOKIE_NAME: Joi.string().default('access_token'),
+  COOKIE_MAX_AGE: Joi.number().default(1036800000), // 12 days in ms
+  COOKIE_SECURE: Joi.boolean().default(false),
 });

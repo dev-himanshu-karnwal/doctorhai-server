@@ -1,6 +1,8 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import type { Connection } from 'mongoose';
+import type { Response } from 'express';
+import { AppConfigService } from '../../../config';
 import {
   ACCOUNT_REPOSITORY_TOKEN,
   ROLE_SERVICE_TOKEN,
@@ -54,11 +56,15 @@ export class AuthRegistrationService {
     private readonly credentialService: ICredentialService,
     @Inject(TOKEN_SERVICE_TOKEN)
     private readonly tokenService: ITokenService,
+    private readonly config: AppConfigService,
     @InjectConnection()
     private readonly connection: Connection,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResponseDto> {
+  async register(
+    dto: RegisterDto,
+    response?: Response,
+  ): Promise<AuthResponseDto> {
     const roleName = this.registrationTypeToRoleName(dto.registrationType);
     const email = dto.email.toLowerCase().trim();
 
@@ -149,7 +155,11 @@ export class AuthRegistrationService {
       this.logger.log(
         `Registered account ${account.id} as ${dto.registrationType} (${account.loginType}:${identifier})`,
       );
-      return this.tokenService.signAuthPayload(account);
+      const result = this.tokenService.signAuthPayload(account);
+      if (response) {
+        this.setAuthCookie(response, result.accessToken);
+      }
+      return result;
     } catch (err) {
       await session.abortTransaction();
       throw err;
@@ -158,7 +168,7 @@ export class AuthRegistrationService {
     }
   }
 
-  async login(dto: LoginDto): Promise<AuthResponseDto> {
+  async login(dto: LoginDto, response?: Response): Promise<AuthResponseDto> {
     const loginValue = dto.loginType === 'email' ? dto.email : dto.username;
     if (!loginValue) {
       throw new BusinessRuleViolationException(
@@ -178,7 +188,11 @@ export class AuthRegistrationService {
       `Logged in account ${account.id} (${dto.loginType}:${loginValue})`,
     );
 
-    return this.tokenService.signAuthPayload(account);
+    const result = this.tokenService.signAuthPayload(account);
+    if (response) {
+      this.setAuthCookie(response, result.accessToken);
+    }
+    return result;
   }
 
   async checkUsernameAvailable(
@@ -190,6 +204,15 @@ export class AuthRegistrationService {
       username,
       available,
     };
+  }
+
+  private setAuthCookie(response: Response, token: string): void {
+    response.cookie(this.config.cookieName, token, {
+      httpOnly: true,
+      secure: this.config.cookieSecure,
+      sameSite: 'lax',
+      maxAge: this.config.cookieMaxAge,
+    });
   }
 
   private registrationTypeToRoleName(
