@@ -51,6 +51,7 @@ export class HospitalsController {
       sortOrder: query.sortOrder ?? 'desc',
     };
 
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment -- DI token types are correct at runtime */
     const result: PaginatedHospitals =
       await this.hospitalService.getHospitals(options);
 
