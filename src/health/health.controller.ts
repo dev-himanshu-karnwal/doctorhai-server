@@ -4,6 +4,7 @@ import {
   MongooseHealthIndicator,
   MemoryHealthIndicator,
   HealthCheck,
+  HealthCheckResult,
 } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../common/decorators';
@@ -20,7 +21,7 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
-  check() {
+  check(): Promise<HealthCheckResult> {
     return this.health.check([
       () => this.mongoose.pingCheck('mongodb'),
       () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
-import { DoctorStatusDocument } from '../schemas';
-import { DoctorStatusEntity } from '../entities';
+import { DoctorStatusDocument } from '../schemas/doctor-status.schema';
+import { DoctorStatusEntity } from '../entities/doctor-status.entity';
 import {
   DoctorStatusMapper,
   DoctorStatusDocLike,
