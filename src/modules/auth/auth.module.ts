@@ -15,6 +15,10 @@ import {
   PASSWORD_RESET_SERVICE_TOKEN,
   ACCOUNT_CREATION_SERVICE_TOKEN,
   AUTH_FLOW_SERVICE_TOKEN,
+  PASSWORD_SERVICE_TOKEN,
+  IDENTITY_SERVICE_TOKEN,
+  CREDENTIAL_SERVICE_TOKEN,
+  TOKEN_SERVICE_TOKEN,
 } from '../../common/constants';
 import {
   AccountSchema,
@@ -37,6 +41,10 @@ import {
   AccountCreationService,
   PasswordResetService,
   RolesService,
+  PasswordService,
+  IdentityService,
+  CredentialService,
+  TokenService,
 } from './services';
 import { OtpService } from '../../common/classes';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -92,6 +100,10 @@ import { HospitalsModule } from '../hospitals';
       provide: OTP_SERVICE_TOKEN,
       useClass: OtpService,
     },
+    { provide: PASSWORD_SERVICE_TOKEN, useClass: PasswordService },
+    { provide: IDENTITY_SERVICE_TOKEN, useClass: IdentityService },
+    { provide: CREDENTIAL_SERVICE_TOKEN, useClass: CredentialService },
+    { provide: TOKEN_SERVICE_TOKEN, useClass: TokenService },
     AuthMeService,
     AuthRegistrationService,
     { provide: AUTH_FLOW_SERVICE_TOKEN, useClass: AuthFlowService },

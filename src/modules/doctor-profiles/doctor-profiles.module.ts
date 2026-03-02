@@ -3,6 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
+  PROFILE_PERMISSION_SERVICE_TOKEN,
+  PROFILE_CORE_SERVICE_TOKEN,
 } from '../../common/constants';
 import { AddressesModule } from '../addresses';
 import { AuthModule } from '../auth/auth.module';
@@ -10,7 +12,11 @@ import { HospitalsModule } from '../hospitals/hospitals.module';
 import { DoctorProfileSchema } from './schemas';
 import { DoctorProfilesController } from './controllers/doctor-profiles.controller';
 import { DoctorProfilesRepository } from './repositories/doctor-profiles.repository';
-import { DoctorProfilesService } from './services';
+import {
+  DoctorProfilesService,
+  ProfilePermissionService,
+  ProfileCoreService,
+} from './services';
 
 @Module({
   imports: [
@@ -31,7 +37,20 @@ import { DoctorProfilesService } from './services';
       provide: DOCTOR_PROFILE_SERVICE_TOKEN,
       useClass: DoctorProfilesService,
     } as Provider,
+    {
+      provide: PROFILE_PERMISSION_SERVICE_TOKEN,
+      useClass: ProfilePermissionService,
+    } as Provider,
+    {
+      provide: PROFILE_CORE_SERVICE_TOKEN,
+      useClass: ProfileCoreService,
+    } as Provider,
   ],
-  exports: [DOCTOR_PROFILE_SERVICE_TOKEN, DOCTOR_PROFILE_REPOSITORY_TOKEN],
+  exports: [
+    DOCTOR_PROFILE_SERVICE_TOKEN,
+    DOCTOR_PROFILE_REPOSITORY_TOKEN,
+    PROFILE_PERMISSION_SERVICE_TOKEN,
+    PROFILE_CORE_SERVICE_TOKEN,
+  ],
 })
 export class DoctorProfilesModule {}
