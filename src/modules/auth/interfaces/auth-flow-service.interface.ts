@@ -3,6 +3,12 @@ import type { LoginDto } from '../dto/login.dto';
 import type { AuthResponseDto } from '../dto/auth-response.dto';
 import type { CheckUsernameResponseDto } from '../dto/check-username-response.dto';
 import type { MeResponseDto } from '../dto/me-response.dto';
+import type {
+  ChangePasswordDto,
+  VerifyPasswordDto,
+  VerifyPasswordResponseDto,
+  ActionResultDto,
+} from '../dto';
 
 export interface IAuthFlowService {
   register(dto: RegisterDto): Promise<AuthResponseDto>;
@@ -16,4 +22,13 @@ export interface IAuthFlowService {
     newEmail: string,
   ): Promise<void>;
   setAccountVerified(accountId: string, verified: boolean): Promise<void>;
+  changePassword(
+    requestedByAccountId: string,
+    targetAccountId: string,
+    dto: ChangePasswordDto,
+  ): Promise<ActionResultDto>;
+  verifyPassword(
+    accountId: string,
+    dto: VerifyPasswordDto,
+  ): Promise<VerifyPasswordResponseDto>;
 }

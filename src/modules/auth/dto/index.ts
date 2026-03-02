@@ -22,3 +22,7 @@ export { CheckUsernameDto } from './check-username.dto';
 export { CheckUsernameResponseDto } from './check-username-response.dto';
 export { AuthResponseDto } from './auth-response.dto';
 export { MeResponseDto } from './me-response.dto';
+export { ChangePasswordDto } from './change-password.dto';
+export { VerifyPasswordDto } from './verify-password.dto';
+export { VerifyPasswordResponseDto } from './verify-password-response.dto';
+export { ActionResultDto } from './action-result.dto';
