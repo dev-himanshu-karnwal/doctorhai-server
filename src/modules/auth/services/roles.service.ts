@@ -25,6 +25,14 @@ export class RolesService implements IRoleService {
     return entity;
   }
 
+  async findByIds(
+    ids: string[],
+  ): Promise<Awaited<ReturnType<IRoleService['findByIds']>>> {
+    if (ids.length === 0) return [];
+    this.logger.debug(`Finding roles by ids (${ids.length})`);
+    return this.roleRepo.findByIds(ids);
+  }
+
   async findByName(
     name: string,
   ): Promise<Awaited<ReturnType<IRoleService['findByName']>>> {

@@ -11,6 +11,14 @@ import { Type } from 'class-transformer';
 import { AccountRoleAssignmentDto } from './account-role-assignment.dto';
 
 export class UpdateAccountDto {
+  @ApiPropertyOptional({
+    description: 'Primary email for the account',
+    example: 'user@example.com',
+  })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
   @ApiPropertyOptional({ description: 'Hashed password' })
   @IsOptional()
   @IsString()
@@ -20,6 +28,14 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the account is verified (superadmin only)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isVerified?: boolean;
 
   @ApiPropertyOptional({
     description: 'Set when password was last updated (server-side)',

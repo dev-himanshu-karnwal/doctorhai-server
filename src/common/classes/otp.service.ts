@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { OTP_EXPIRY_MS, OTP_MAX_ATTEMPTS } from '../constants';
 import type { IOtpService } from '../interfaces';
-
-const MAX_OTP_ATTEMPTS = 5;
-const OTP_EXPIRY_MS = 10 * 60 * 1000;
 
 @Injectable()
 export class OtpService implements IOtpService {
@@ -21,7 +19,7 @@ export class OtpService implements IOtpService {
   }
 
   hasExceededMaxAttempts(attempts: number): boolean {
-    return attempts >= MAX_OTP_ATTEMPTS;
+    return attempts >= OTP_MAX_ATTEMPTS;
   }
 
   async compareOtp(plainOtp: string, otpHash: string): Promise<boolean> {

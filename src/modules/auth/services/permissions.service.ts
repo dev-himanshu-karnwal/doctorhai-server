@@ -25,6 +25,14 @@ export class PermissionsService implements IPermissionService {
     return entity;
   }
 
+  async findByIds(
+    ids: string[],
+  ): Promise<Awaited<ReturnType<IPermissionService['findByIds']>>> {
+    if (ids.length === 0) return [];
+    this.logger.debug(`Finding permissions by ids (${ids.length})`);
+    return this.permissionRepo.findByIds(ids);
+  }
+
   async findByKey(
     key: string,
   ): Promise<Awaited<ReturnType<IPermissionService['findByKey']>>> {

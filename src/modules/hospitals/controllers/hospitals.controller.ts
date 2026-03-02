@@ -1,78 +1,82 @@
-import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { DOCTOR_PROFILE_SERVICE_TOKEN } from '../../../common/constants';
+import { HOSPITAL_SERVICE_TOKEN } from '../../../common/constants';
 import { ApiResponse } from '../../../common/classes';
 import type { DataKeyWrapper } from '../../../common/interfaces';
 import { Public } from '../../../common/decorators';
-import { ParseObjectIdPipe } from '../../../common/pipes';
 import type {
-  HospitalDoctorsQuery,
-  IDoctorProfileService,
-} from '../../doctor-profiles/interfaces';
-import { GetHospitalDoctorsQueryDto } from '../../doctor-profiles/dto/get-hospital-doctors-query.dto';
+  IHospitalService,
+  HospitalsQuery,
+  PaginatedHospitals,
+} from '../interfaces';
+import type { HospitalEntity } from '../entities';
+import { GetHospitalsQueryDto } from '../dto/hospital-query.dto';
 import {
-  HospitalDoctorListItemDto,
-  HospitalDoctorsPaginatedResponseDto,
-} from '../../doctor-profiles/dto/hospital-doctors-response.dto';
+  HospitalListItemDto,
+  HospitalPaginatedResponseDto,
+} from '../dto/hospital.response';
 
 @ApiTags('hospitals')
 @Controller('hospitals')
 export class HospitalsController {
   constructor(
-    @Inject(DOCTOR_PROFILE_SERVICE_TOKEN)
-    private readonly doctorProfileService: IDoctorProfileService,
+    @Inject(HOSPITAL_SERVICE_TOKEN)
+    private readonly hospitalService: IHospitalService,
   ) {}
 
-  @Get(':hospitalId/doctors')
+  @Get()
   @Public()
   @ApiOperation({
-    summary: 'Get all doctors in a hospital (public)',
+    summary: 'Get Hospitals (public)',
     description:
-      'Returns a paginated list of doctors belonging to the given hospital. Supports filtering, sorting and searching.',
+      'Returns a paginated list of hospitals with optional filters and sorting.',
   })
-  @ApiOkResponse({ type: HospitalDoctorsPaginatedResponseDto })
+  @ApiOkResponse({ type: HospitalPaginatedResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed' })
-  async getHospitalDoctors(
-    @Param('hospitalId', ParseObjectIdPipe) hospitalId: string,
-    @Query() query: GetHospitalDoctorsQueryDto,
-  ): Promise<DataKeyWrapper<'doctors'>> {
-    const options: HospitalDoctorsQuery = {
+  async getHospitals(
+    @Query() query: GetHospitalsQueryDto,
+  ): Promise<DataKeyWrapper<'hospitals'>> {
+    const options: HospitalsQuery = {
       page: query.page,
       limit: query.limit,
       search: query.search,
-      specialization: query.specialization,
-      designation: query.designation,
-      sortBy: query.sortBy ?? 'fullName',
-      sortOrder: query.sortOrder ?? 'asc',
+      name: query.name,
+      isActive: query.isActive,
+      sortBy: query.sortBy ?? 'createdAt',
+      sortOrder: query.sortOrder ?? 'desc',
     };
 
-    const result = await this.doctorProfileService.getDoctorsForHospital(
-      hospitalId,
-      options,
-    );
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment -- DI token types are correct at runtime */
+    const result: PaginatedHospitals =
+      await this.hospitalService.getHospitals(options);
 
-    const items: HospitalDoctorListItemDto[] = result.doctors.map((doctor) => ({
-      id: doctor.id,
-      fullName: doctor.fullName,
-      designation: doctor.designation,
-      specialization: doctor.specialization,
-      phone: doctor.phone,
-      email: doctor.email,
-      slug: doctor.slug,
-      profilePhotoUrl: doctor.profilePhotoUrl,
-    }));
+    const items: HospitalListItemDto[] = result.hospitals.map(
+      (hospital: HospitalEntity) => ({
+        id: hospital.id,
+        accountId: hospital.accountId,
+        addressId: hospital.addressId,
+        name: hospital.name,
+        slug: hospital.slug,
+        phone: hospital.phone,
+        email: hospital.email,
+        coverPhotoUrl: hospital.coverPhotoUrl,
+        isActive: hospital.isActive,
+        createdAt: hospital.createdAt,
+        updatedAt: hospital.updatedAt,
+      }),
+    );
 
     const totalPages =
       result.limit > 0
         ? Math.max(1, Math.ceil(result.total / result.limit))
         : 1;
 
-    const response: HospitalDoctorsPaginatedResponseDto = {
+    const response: HospitalPaginatedResponseDto = {
       items,
       meta: {
         total: result.total,
@@ -82,6 +86,6 @@ export class HospitalsController {
       },
     };
 
-    return ApiResponse.withDataKey('doctors', response);
+    return ApiResponse.withDataKey('hospitals', response);
   }
 }

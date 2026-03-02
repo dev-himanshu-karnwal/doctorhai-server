@@ -13,6 +13,7 @@ export interface AccountDocLike {
   username?: string | null;
   passwordHash?: string | null;
   isActive?: boolean;
+  isVerified?: boolean;
   passwordUpdatedAt?: Date | null;
   roles?: AccountRoleAssignmentDocLike[];
   createdAt: Date;
@@ -40,6 +41,7 @@ export class AccountMapper {
       doc.username ?? null,
       doc.passwordHash ?? null,
       doc.isActive ?? true,
+      doc.isVerified ?? false,
       doc.passwordUpdatedAt ?? null,
       roles,
       doc.createdAt,

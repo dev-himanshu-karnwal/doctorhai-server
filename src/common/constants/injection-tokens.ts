@@ -6,11 +6,15 @@ export const ADDRESS_SERVICE_TOKEN = Symbol('IAddressService');
 export const HOSPITAL_REPOSITORY_TOKEN = Symbol('IHospitalRepository');
 export const HOSPITAL_SERVICE_TOKEN = Symbol('IHospitalService');
 
+//Hospital-profile module
+export const HOSPITAL_PROFILE_SERVICE_TOKEN = Symbol('IHospitalService');
+
 // Doctor-profiles module
 export const DOCTOR_PROFILE_REPOSITORY_TOKEN = Symbol(
   'IDoctorProfileRepository',
 );
 export const DOCTOR_PROFILE_SERVICE_TOKEN = Symbol('IDoctorProfileService');
+export const DOCTOR_STATUS_REPOSITORY_TOKEN = Symbol('IDoctorStatusRepository');
 
 // Auth module
 export const PERMISSION_REPOSITORY_TOKEN = Symbol('IPermissionRepository');

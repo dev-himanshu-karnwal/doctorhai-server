@@ -1,6 +1,8 @@
 export { AccountCreationService } from './account-creation.service';
 export { AccountsService } from './accounts.service';
 export { AuthFlowService } from './auth-flow.service';
+export { AuthMeService } from './auth-me.service';
+export { AuthRegistrationService } from './auth-registration.service';
 export { PermissionsService } from './permissions.service';
 export { RolesService } from './roles.service';
 export { PasswordResetService } from './password-reset.service';

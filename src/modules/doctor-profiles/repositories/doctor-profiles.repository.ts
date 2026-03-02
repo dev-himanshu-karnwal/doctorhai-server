@@ -7,9 +7,10 @@ import { DoctorProfileMapper } from '../mappers';
 import type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
+  UpdateDoctorProfileInput,
 } from '../interfaces';
 import type {
-  HospitalDoctorsQuery,
+  DoctorsQuery,
   PaginatedDoctorProfiles,
 } from '../interfaces/doctor-profile-service.interface';
 import {
@@ -26,6 +27,13 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
   ) {}
 
   private readonly notDeleted = { deletedAt: null };
+
+  async findById(
+    id: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileRepository['findById']>>> {
+    const doc = await this.doctorProfileModel.findById(id).exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
 
   async findByAccountId(
     accountId: string,
@@ -63,8 +71,8 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       [
         {
           fullName: data.fullName,
-          designation: data.designation,
-          specialization: data.specialization,
+          designation: data.designation ?? null,
+          specialization: data.specialization ?? null,
           phone: data.phone,
           email: data.email,
           addressId:
@@ -87,23 +95,14 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     return DoctorProfileMapper.toDomain(doc);
   }
 
-  async findHospitalDoctors(
-    hospitalId: string,
-    query: HospitalDoctorsQuery,
-  ): Promise<PaginatedDoctorProfiles> {
-    if (!Types.ObjectId.isValid(hospitalId)) {
-      return {
-        doctors: [],
-        total: 0,
-        page: query.page,
-        limit: query.limit,
-      };
-    }
-
+  async findDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
     const filter: FilterQuery<DoctorProfileDocument> = {
       ...this.notDeleted,
-      hospitalId: new Types.ObjectId(hospitalId),
     };
+
+    if (query.hospitalId && Types.ObjectId.isValid(query.hospitalId)) {
+      filter.hospitalId = new Types.ObjectId(query.hospitalId);
+    }
 
     if (query.specialization != null && query.specialization.trim() !== '') {
       filter.specialization = new RegExp(query.specialization.trim(), 'i');
@@ -123,7 +122,7 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       ];
     }
 
-    const sort = buildSort<NonNullable<HospitalDoctorsQuery['sortBy']>>(
+    const sort = buildSort<NonNullable<DoctorsQuery['sortBy']>>(
       { sortBy: query.sortBy, sortOrder: query.sortOrder },
       'fullName',
       ['fullName', 'createdAt'] as const,
@@ -147,5 +146,49 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  async update(
+    id: string,
+    data: UpdateDoctorProfileInput,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const updatePayload: Record<string, unknown> = {};
+    if (data.fullName != null) updatePayload.fullName = data.fullName;
+    if (data.designation !== undefined)
+      updatePayload.designation = data.designation;
+    if (data.specialization !== undefined)
+      updatePayload.specialization = data.specialization;
+    if (data.bio !== undefined) updatePayload.bio = data.bio;
+    if (data.slug != null) updatePayload.slug = data.slug;
+
+    if (Object.keys(updatePayload).length === 0) return this.findById(id);
+
+    const doc = await this.doctorProfileModel
+      .findByIdAndUpdate(
+        id,
+        { $set: updatePayload },
+        { new: true, runValidators: true },
+      )
+      .lean()
+      .exec();
+
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
+
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(accountId)) return null;
+    const doc = await this.doctorProfileModel
+      .findOneAndUpdate(
+        { accountId: new Types.ObjectId(accountId), ...this.notDeleted },
+        { $set: { email: email.toLowerCase().trim(), updatedAt: new Date() } },
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
 }

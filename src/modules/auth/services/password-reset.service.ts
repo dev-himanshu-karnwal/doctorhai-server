@@ -14,6 +14,7 @@ import {
   PASSWORD_RESET_REPOSITORY_TOKEN,
   OTP_SERVICE_TOKEN,
   MAIL_SERVICE_TOKEN,
+  PASSWORD_RESET_REQUEST_WINDOW_MS,
 } from '../../../common/constants';
 import { ResourceNotFoundException } from '../../../common/exceptions';
 import type { IOtpService } from '../../../common/interfaces';
@@ -43,8 +44,6 @@ interface ResetTokenPayload {
   purpose: 'password_reset';
 }
 
-const REQUEST_WINDOW_MS = 60 * 1000;
-
 @Injectable()
 export class PasswordResetService implements IPasswordResetService {
   private readonly logger = new Logger(PasswordResetService.name);
@@ -73,11 +72,12 @@ export class PasswordResetService implements IPasswordResetService {
       await this.passwordResetRepo.findLatestActiveByEmail(email);
     if (
       recentReset &&
-      recentReset.createdAt.getTime() > Date.now() - REQUEST_WINDOW_MS
+      recentReset.createdAt.getTime() >
+        Date.now() - PASSWORD_RESET_REQUEST_WINDOW_MS
     ) {
       this.logger.warn(`Password reset rate limit hit for email: ${email}.`);
       throw new BadRequestException(
-        `Password reset rate limit hit. Try again in ${Math.floor((REQUEST_WINDOW_MS - (Date.now() - recentReset.createdAt.getTime())) / 1000)} seconds.`,
+        `Password reset rate limit hit. Try again in ${Math.floor((PASSWORD_RESET_REQUEST_WINDOW_MS - (Date.now() - recentReset.createdAt.getTime())) / 1000)} seconds.`,
       );
     }
 

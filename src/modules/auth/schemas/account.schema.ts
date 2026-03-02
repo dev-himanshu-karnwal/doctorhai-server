@@ -13,6 +13,7 @@ export interface AccountDocument extends Document {
   username: string | null;
   passwordHash: string | null;
   isActive: boolean;
+  isVerified: boolean;
   passwordUpdatedAt: Date | null;
   roles: AccountRoleAssignmentDocument[];
   createdAt: Date;
@@ -36,6 +37,7 @@ export const AccountSchema = new Schema<AccountDocument>(
     username: { type: String, default: null },
     passwordHash: { type: String, default: null },
     isActive: { type: Boolean, default: true },
+    isVerified: { type: Boolean, required: false, default: false },
     passwordUpdatedAt: { type: Date, default: null },
     roles: { type: [AccountRoleAssignmentSchema], default: [] },
     deletedAt: { type: Date, default: null },

@@ -1,25 +1,31 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger, Inject, ForbiddenException } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import {
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
   ACCOUNT_CREATION_SERVICE_TOKEN,
-  ADDRESS_SERVICE_TOKEN,
+  DOCTOR_STATUS_REPOSITORY_TOKEN,
+  ROLE_SERVICE_TOKEN,
+  ACCOUNT_SERVICE_TOKEN,
   HOSPITAL_SERVICE_TOKEN,
 } from '../../../common/constants';
 import { BusinessRuleViolationException } from '../../../common/exceptions';
 import { generateSlugFromName } from '../../../common/utils';
 import type { IAccountCreationService } from '../../auth/interfaces/account-creation-service.interface';
-import type { IAddressService } from '../../addresses/interfaces';
+import type { IRoleService } from '../../auth/interfaces/role-service.interface';
+import type { IAccountService } from '../../auth/interfaces/account-service.interface';
 import type { IHospitalService } from '../../hospitals/interfaces';
 import type { ClientSession, Connection } from 'mongoose';
 import type {
   IDoctorProfileRepository,
+  IDoctorStatusRepository,
   IDoctorProfileService,
   CreateDoctorProfileData,
-  HospitalDoctorsQuery,
+  DoctorsQuery,
   PaginatedDoctorProfiles,
 } from '../interfaces';
 import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
+import type { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
+import { UpdateDoctorStatusDto } from '../dto/update-doctor-status.dto';
 
 @Injectable()
 export class DoctorProfilesService implements IDoctorProfileService {
@@ -30,8 +36,12 @@ export class DoctorProfilesService implements IDoctorProfileService {
     private readonly doctorProfileRepo: IDoctorProfileRepository,
     @Inject(ACCOUNT_CREATION_SERVICE_TOKEN)
     private readonly accountCreationService: IAccountCreationService,
-    @Inject(ADDRESS_SERVICE_TOKEN)
-    private readonly addressService: IAddressService,
+    @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN as symbol)
+    private readonly doctorStatusRepo: IDoctorStatusRepository,
+    @Inject(ROLE_SERVICE_TOKEN)
+    private readonly roleService: IRoleService,
+    @Inject(ACCOUNT_SERVICE_TOKEN)
+    private readonly accountService: IAccountService,
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
     @InjectConnection()
@@ -77,6 +87,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
     session.startTransaction();
     try {
       let hospitalId: string | null = null;
+      const email = dto.email.toLowerCase().trim();
 
       const hospital =
         await this.hospitalService.findByAccountId(createdByAccountId);
@@ -89,19 +100,16 @@ export class DoctorProfilesService implements IDoctorProfileService {
       }
 
       if (
-        await this.doctorProfileRepo.findByEmailAndHospitalId(
-          dto.email,
-          hospitalId,
-        )
+        await this.doctorProfileRepo.findByEmailAndHospitalId(email, hospitalId)
       ) {
         throw new BusinessRuleViolationException(
-          `Email '${dto.email}' is already used for a doctor profile at this hospital`,
+          `Email '${email}' is already used for a doctor profile at this hospital`,
         );
       }
 
       const account = await this.accountCreationService.createUsernameAccount(
         dto.username,
-        dto.email,
+        email,
         dto.password,
         'doctor',
         session,
@@ -109,15 +117,15 @@ export class DoctorProfilesService implements IDoctorProfileService {
 
       const doctor = await this.doctorProfileRepo.create(
         {
-          fullName: dto.fullName,
-          designation: dto.designation,
-          specialization: dto.specialization,
+          fullName: dto.fullName.trim(),
+          designation: null,
+          specialization: null,
           phone: dto.phone,
-          email: dto.email,
+          email,
           addressId: null,
           accountId: account.id,
-          slug: generateSlugFromName(dto.fullName),
-          bio: dto.bio ?? null,
+          slug: generateSlugFromName(dto.fullName.trim()),
+          bio: null,
           profilePhotoUrl: null,
           createdBy: createdByAccountId,
           hospitalId,
@@ -140,15 +148,171 @@ export class DoctorProfilesService implements IDoctorProfileService {
     }
   }
 
-  async getDoctorsForHospital(
-    hospitalId: string,
-    query: HospitalDoctorsQuery,
-  ): Promise<PaginatedDoctorProfiles> {
+  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
+    this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
+    return this.doctorProfileRepo.findDoctors(query);
+  }
+
+  async updateStatus(data: UpdateDoctorStatusDto): Promise<void> {
     this.logger.debug(
-      `Listing doctors for hospitalId: ${hospitalId} with query: ${JSON.stringify(
-        query,
-      )}`,
+      `Updating status for doctor profile ${data.doctorProfileId} by account ${data.updatedByAccountId}`,
     );
-    return this.doctorProfileRepo.findHospitalDoctors(hospitalId, query);
+
+    if (!data.doctorProfileId) {
+      throw new BusinessRuleViolationException('Doctor profile id is required');
+    }
+    if (!data.updatedByAccountId) {
+      throw new BusinessRuleViolationException(
+        'Updated by account id is required',
+      );
+    }
+
+    const doctorProfile = await this.doctorProfileRepo.findById(
+      data.doctorProfileId,
+    );
+    if (!doctorProfile) {
+      throw new BusinessRuleViolationException('Doctor profile not found');
+    }
+
+    const account = await this.accountService.findById(data.updatedByAccountId);
+    const roleNames: string[] = [];
+    for (const assignment of account.roles) {
+      const role = await this.roleService.findById(assignment.roleId);
+      roleNames.push(role.name);
+    }
+
+    const isSuperAdmin = roleNames.includes('super_admin');
+    const isDoctor = roleNames.includes('doctor');
+    const isHospital = roleNames.includes('hospital');
+
+    let isAuthorized = false;
+    let updaterRoleId = '';
+
+    if (isSuperAdmin) {
+      isAuthorized = true;
+      const saIndex = roleNames.indexOf('super_admin');
+      updaterRoleId = account.roles[saIndex].roleId;
+    } else if (isDoctor) {
+      if (doctorProfile.accountId === data.updatedByAccountId) {
+        isAuthorized = true;
+        const doctorIndex = roleNames.indexOf('doctor');
+        updaterRoleId = account.roles[doctorIndex].roleId;
+      }
+    } else if (isHospital) {
+      const hospital = await this.hospitalService.findByAccountId(
+        data.updatedByAccountId,
+      );
+      if (
+        hospital &&
+        (doctorProfile.hospitalId === hospital.id ||
+          doctorProfile.hospitalId === hospital.accountId)
+      ) {
+        isAuthorized = true;
+        const hospitalIndex = roleNames.indexOf('hospital');
+        updaterRoleId = account.roles[hospitalIndex].roleId;
+      }
+    }
+
+    if (!isAuthorized) {
+      throw new ForbiddenException(
+        'You are not authorized to update this doctor status',
+      );
+    }
+
+    await this.doctorStatusRepo.updateStatus({
+      ...data,
+      doctorProfileId: data.doctorProfileId,
+      updatedByAccountId: data.updatedByAccountId,
+      updatedByRoleId: updaterRoleId,
+    });
+  }
+
+  async updateEmailByAccountId(
+    accountId: string,
+    email: string,
+  ): Promise<
+    Awaited<ReturnType<IDoctorProfileService['updateEmailByAccountId']>>
+  > {
+    this.logger.debug(
+      `Updating doctor profile email by accountId: ${accountId}`,
+    );
+    return this.doctorProfileRepo.updateEmailByAccountId(accountId, email);
+  }
+
+  async updateProfile(
+    doctorProfileId: string,
+    dto: UpdateDoctorProfileDto,
+    updatedByAccountId: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileService['updateProfile']>>> {
+    this.logger.debug(
+      `Updating profile for doctor ${doctorProfileId} by account ${updatedByAccountId}`,
+    );
+
+    const doctorProfile =
+      await this.doctorProfileRepo.findById(doctorProfileId);
+    if (!doctorProfile) {
+      throw new BusinessRuleViolationException('Doctor profile not found');
+    }
+
+    const account = await this.accountService.findById(updatedByAccountId);
+    const roleNames: string[] = [];
+    for (const assignment of account.roles) {
+      const role = await this.roleService.findById(assignment.roleId);
+      roleNames.push(role.name);
+    }
+
+    const isSuperAdmin = roleNames.includes('super_admin');
+    const isDoctor = roleNames.includes('doctor');
+    const isHospital = roleNames.includes('hospital');
+
+    let isAuthorized = false;
+    if (isSuperAdmin) {
+      isAuthorized = true;
+    } else if (isDoctor && doctorProfile.accountId === updatedByAccountId) {
+      isAuthorized = true;
+    } else if (isHospital) {
+      const hospital =
+        await this.hospitalService.findByAccountId(updatedByAccountId);
+      if (
+        hospital &&
+        (doctorProfile.hospitalId === hospital.id ||
+          doctorProfile.hospitalId === hospital.accountId)
+      ) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      throw new ForbiddenException(
+        'You are not authorized to update this doctor profile',
+      );
+    }
+
+    const updateData: {
+      fullName?: string;
+      designation?: string | null;
+      specialization?: string | null;
+      bio?: string | null;
+      slug?: string;
+    } = {};
+
+    if (dto.fullName != null) {
+      updateData.fullName = dto.fullName;
+      updateData.slug = generateSlugFromName(dto.fullName);
+    }
+    if (dto.designation !== undefined)
+      updateData.designation = dto.designation?.trim() || null;
+    if (dto.specialization !== undefined)
+      updateData.specialization = dto.specialization?.trim() || null;
+    if (dto.bio !== undefined) updateData.bio = dto.bio?.trim() || null;
+
+    const updated = await this.doctorProfileRepo.update(
+      doctorProfileId,
+      updateData,
+    );
+    if (!updated) {
+      throw new BusinessRuleViolationException('Doctor profile not found');
+    }
+    return updated;
   }
 }
