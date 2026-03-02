@@ -6,7 +6,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
 import {
   ACCOUNT_SERVICE_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
@@ -15,10 +14,11 @@ import {
   OTP_SERVICE_TOKEN,
   MAIL_SERVICE_TOKEN,
   PASSWORD_RESET_REQUEST_WINDOW_MS,
+  PASSWORD_SERVICE_TOKEN,
 } from '../../../common/constants';
 import { ResourceNotFoundException } from '../../../common/exceptions';
 import type { IOtpService } from '../../../common/interfaces';
-import type { IAccountService } from '../interfaces';
+import type { IAccountService, IPasswordService } from '../interfaces';
 import type {
   IPasswordResetRepository,
   CreatePasswordResetInput,
@@ -61,6 +61,8 @@ export class PasswordResetService implements IPasswordResetService {
     private readonly hospitalService: IHospitalService,
     @Inject(MAIL_SERVICE_TOKEN)
     private readonly mailService: IMailService,
+    @Inject(PASSWORD_SERVICE_TOKEN)
+    private readonly passwordService: IPasswordService,
     private readonly jwtService: JwtService,
     private readonly appConfig: AppConfigService,
   ) {}
@@ -187,7 +189,7 @@ export class PasswordResetService implements IPasswordResetService {
 
     const account = await this.accountService.findById(dto.accountId);
 
-    const passwordHash = (await bcrypt.hash(dto.newPassword, 12)) as string;
+    const passwordHash = await this.passwordService.hash(dto.newPassword);
     await this.accountService.update(account.id, {
       passwordHash,
       passwordUpdatedAt: new Date().toISOString(),

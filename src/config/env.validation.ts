@@ -4,7 +4,7 @@ import * as Joi from 'joi';
  * Schema for required env vars. App will NOT start if any required var is missing or invalid.
  * Optional vars have defaults; required vars must be set in .env (or environment).
  */
-export const envValidationSchema: Joi.ObjectSchema = Joi.object({
+export const envValidationSchema = Joi.object({
   // --- Required (no safe default) ---
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')

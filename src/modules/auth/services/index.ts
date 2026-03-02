@@ -6,3 +6,7 @@ export { AuthRegistrationService } from './auth-registration.service';
 export { PermissionsService } from './permissions.service';
 export { RolesService } from './roles.service';
 export { PasswordResetService } from './password-reset.service';
+export { PasswordService } from './password.service';
+export { TokenService } from './token.service';
+export { IdentityService } from './identity.service';
+export { CredentialService } from './credential.service';

@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { HospitalsModule } from './modules/hospitals/hospitals.module';
 import { DoctorProfilesModule } from './modules/doctor-profiles/doctor-profiles.module';
+import { DoctorStatusesModule } from './modules/doctor-statuses/doctor-statuses.module';
 import { MailModule } from './infra/mail/mail.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { MailModule } from './infra/mail/mail.module';
     AddressesModule,
     HospitalsModule,
     DoctorProfilesModule,
+    DoctorStatusesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
