@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Joi schema builder API */
 import * as Joi from 'joi';
 
 /**
