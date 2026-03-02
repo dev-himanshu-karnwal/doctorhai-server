@@ -3,6 +3,7 @@ import {
   ACCOUNT_REPOSITORY_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
   HOSPITAL_SERVICE_TOKEN,
+  IDENTITY_SERVICE_TOKEN,
 } from '../../../common/constants';
 import {
   BusinessRuleViolationException,
@@ -10,6 +11,7 @@ import {
 } from '../../../common/exceptions';
 import type { IAccountRepository } from '../interfaces/account-repository.interface';
 import type { IAuthFlowService } from '../interfaces/auth-flow-service.interface';
+import type { IIdentityService } from '../interfaces/identity-service.interface';
 import type { IDoctorProfileService } from '../../doctor-profiles/interfaces';
 import type { IHospitalService } from '../../hospitals/interfaces';
 import type {
@@ -33,6 +35,8 @@ export class AuthFlowService implements IAuthFlowService {
     private readonly doctorProfileService: IDoctorProfileService,
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
+    @Inject(IDENTITY_SERVICE_TOKEN)
+    private readonly identityService: IIdentityService,
     private readonly authMeService: AuthMeService,
     private readonly authRegistrationService: AuthRegistrationService,
   ) {}
@@ -104,7 +108,7 @@ export class AuthFlowService implements IAuthFlowService {
     }
 
     if (account.loginType === 'email') {
-      const existing = await this.accountRepo.findOneByLogin(
+      const existing = await this.identityService.findOneByLogin(
         'email',
         normalizedEmail,
       );
