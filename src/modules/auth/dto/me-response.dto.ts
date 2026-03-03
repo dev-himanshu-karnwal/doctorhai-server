@@ -53,6 +53,9 @@ export class AccountMeDto {
   })
   roles: string[];
 
+  @ApiProperty({ description: 'Whether account is verified' })
+  isVerified: boolean;
+
   @ApiProperty({ description: 'Whether account is active' })
   isActive: boolean;
 

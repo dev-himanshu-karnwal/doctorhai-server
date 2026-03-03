@@ -53,6 +53,7 @@ export class AuthMeService {
       username: account.username,
       roles: roleNames,
       isActive: account.isActive,
+      isVerified: account.isVerified,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
     };

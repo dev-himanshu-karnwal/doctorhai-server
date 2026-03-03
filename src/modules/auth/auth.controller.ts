@@ -11,7 +11,9 @@ import {
   Post,
   UnauthorizedException,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
@@ -60,6 +62,10 @@ import {
   MeResponseDto,
   UpdateEmailDto,
   SetAccountVerifiedDto,
+  ChangePasswordDto,
+  VerifyPasswordDto,
+  VerifyPasswordResponseDto,
+  ActionResultDto,
 } from './dto';
 
 @ApiTags('auth')
@@ -88,8 +94,11 @@ export class AuthController {
   })
   @ApiCreatedResponse({ type: AuthResponseDto })
   @ApiBadRequestResponse({ description: 'Validation failed or username taken' })
-  async register(@Body() dto: RegisterDto): Promise<DataKeyWrapper<'auth'>> {
-    const result = await this.authFlowService.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<DataKeyWrapper<'auth'>> {
+    const result = await this.authFlowService.register(dto, response);
     return ApiResponse.withDataKey('auth', result);
   }
 
@@ -109,8 +118,11 @@ export class AuthController {
   })
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
-  async login(@Body() dto: LoginDto): Promise<DataKeyWrapper<'auth'>> {
-    const result = await this.authFlowService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<DataKeyWrapper<'auth'>> {
+    const result = await this.authFlowService.login(dto, response);
     return ApiResponse.withDataKey('auth', result);
   }
 
@@ -293,6 +305,73 @@ export class AuthController {
     const token = this.extractBearerToken(authorization);
     await this.passwordResetService.resetPassword(token, dto);
     return ApiResponse.withDataKey('message', 'Password updated successfully');
+  }
+
+  @Patch('accounts/:accountId/password')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({
+    permissions: [
+      'doctor.self.profile.update',
+      'hospital.manage',
+      'super_admin.manage',
+      'hospital.doctor.update',
+    ],
+  })
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Change account password',
+    description:
+      "Changes password for the account. Own account or hospital's doctor or superadmin. Checks old password and ensures new password is different.",
+  })
+  @ApiOkResponse({
+    description: 'Password changed successfully',
+    type: ActionResultDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed or new password same as old',
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid old password' })
+  @ApiForbiddenResponse({
+    description: 'Not authorized to change this account password',
+  })
+  async changePassword(
+    @CurrentUser() user: JwtPayload,
+    @Param('accountId') accountId: string,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<DataKeyWrapper<'message'>> {
+    const result = await this.authFlowService.changePassword(
+      user.sub,
+      accountId,
+      dto,
+    );
+    if (!result.success) {
+      return ApiResponse.fail(
+        result.message,
+      ) as unknown as DataKeyWrapper<'message'>;
+    }
+    return ApiResponse.withDataKey('message', result.message);
+  }
+
+  @Post('verify-password')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify current account password',
+    description:
+      'Verifies if the provided password matches the current logged-in account password.',
+  })
+  @ApiOkResponse({
+    description: 'Password verification result',
+    type: VerifyPasswordResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid password' })
+  async verifyPassword(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: VerifyPasswordDto,
+  ): Promise<DataKeyWrapper<'verification'>> {
+    const result = await this.authFlowService.verifyPassword(user.sub, dto);
+    return ApiResponse.withDataKey('verification', result);
   }
 
   private extractBearerToken(authorizationHeader: string | undefined): string {
