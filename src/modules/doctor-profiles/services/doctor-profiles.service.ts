@@ -125,7 +125,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         {
           fullName: dto.fullName.trim(),
           designation: null,
-          specialization: null,
+          specialization: dto.specialization ?? null,
           phone: dto.phone,
           email,
           addressId: null,
@@ -224,5 +224,25 @@ export class DoctorProfilesService implements IDoctorProfileService {
       throw new BusinessRuleViolationException('Doctor profile not found');
     }
     return updated;
+  }
+
+  async getSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<Map<string, string[]>> {
+    const rawData =
+      await this.doctorProfileRepo.findSpecializationsByHospitalIds(
+        hospitalIds,
+      );
+    const map = new Map<string, string[]>();
+
+    for (const item of rawData) {
+      const existing = map.get(item.hospitalId) || [];
+      if (!existing.includes(item.specialization)) {
+        existing.push(item.specialization);
+      }
+      map.set(item.hospitalId, existing);
+    }
+
+    return map;
   }
 }

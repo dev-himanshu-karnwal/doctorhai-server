@@ -48,4 +48,7 @@ export interface IDoctorProfileRepository {
     accountId: string,
     email: string,
   ): Promise<DoctorProfileEntity | null>;
+  findSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<{ hospitalId: string; specialization: string }[]>;
 }

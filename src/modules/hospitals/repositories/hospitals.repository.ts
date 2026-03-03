@@ -19,6 +19,15 @@ export class HospitalsRepository implements IHospitalRepository {
 
   private readonly notDeleted = { deletedAt: null };
 
+  async findById(id: string): Promise<HospitalEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const doc = await this.hospitalModel
+      .findOne({ _id: new Types.ObjectId(id), ...this.notDeleted })
+      .lean()
+      .exec();
+    return doc ? HospitalMapper.toDomain(doc) : null;
+  }
+
   async findByAccountId(accountId: string): Promise<HospitalEntity | null> {
     if (!Types.ObjectId.isValid(accountId)) return null;
     const doc = await this.hospitalModel
@@ -115,6 +124,37 @@ export class HospitalsRepository implements IHospitalRepository {
       )
       .lean()
       .exec();
+    return doc ? HospitalMapper.toDomain(doc) : null;
+  }
+
+  async update(
+    id: string,
+    data: Partial<Omit<CreateHospitalInput, 'accountId'>>,
+    session?: ClientSession,
+  ): Promise<HospitalEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+
+    const op = session ? { session, new: true } : { new: true };
+    const updateData: Record<string, unknown> = {
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    // Handle string to ObjectId conversion for addressId
+    if (data.addressId !== undefined) {
+      updateData['addressId'] =
+        data.addressId != null ? new Types.ObjectId(data.addressId) : null;
+    }
+
+    const doc = await this.hospitalModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(id), ...this.notDeleted },
+        { $set: updateData },
+        op,
+      )
+      .lean()
+      .exec();
+
     return doc ? HospitalMapper.toDomain(doc) : null;
   }
 }

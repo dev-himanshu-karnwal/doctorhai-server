@@ -9,6 +9,19 @@ export interface HospitalDocument extends Document {
   email: string;
   coverPhotoUrl: string | null;
   isActive: boolean;
+  location?: {
+    latitude: number;
+    longitude: number;
+  } | null;
+  type?: string | null;
+  timeline?:
+    | {
+        day: string;
+        opentime: string;
+        closetime: string;
+      }[]
+    | null;
+  facilities?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -34,6 +47,19 @@ export const HospitalSchema = new Schema<HospitalDocument>(
     email: { type: String, required: true },
     coverPhotoUrl: { type: String, default: null },
     isActive: { type: Boolean, default: true },
+    location: {
+      latitude: { type: Number, required: false },
+      longitude: { type: Number, required: false },
+    },
+    type: { type: String, required: false },
+    timeline: [
+      {
+        day: { type: String, required: false },
+        opentime: { type: String, required: false },
+        closetime: { type: String, required: false },
+      },
+    ],
+    facilities: { type: [String], default: [] },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true, collection: 'hospitals' },

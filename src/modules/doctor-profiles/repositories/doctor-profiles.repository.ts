@@ -191,4 +191,37 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       .exec();
     return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
+
+  async findSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<{ hospitalId: string; specialization: string }[]> {
+    const validIds = hospitalIds
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => String(id));
+
+    if (validIds.length === 0) return [];
+
+    const results = (await this.doctorProfileModel
+      .aggregate([
+        {
+          $match: {
+            hospitalId: { $in: validIds },
+            specialization: { $exists: true, $ne: null },
+            ...this.notDeleted,
+          },
+        },
+        {
+          $project: {
+            hospitalId: 1,
+            specialization: 1,
+          },
+        },
+      ])
+      .exec()) as { hospitalId: Types.ObjectId; specialization: string }[];
+
+    return results.map((res) => ({
+      hospitalId: res.hospitalId.toString(),
+      specialization: res.specialization,
+    }));
+  }
 }

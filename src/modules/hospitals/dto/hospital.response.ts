@@ -38,6 +38,21 @@ export class HospitalListItemDto {
   isActive: boolean;
 
   @ApiProperty({
+    example: { latitude: 28.6139, longitude: 77.209 },
+    nullable: true,
+  })
+  location?: { latitude: number; longitude: number } | null;
+
+  @ApiProperty({ example: 'Multispeciality', nullable: true })
+  type?: string | null;
+
+  @ApiProperty({ example: ['Emergency', 'ICU'], nullable: true })
+  facilities?: string[] | null;
+
+  @ApiProperty({ example: ['Cardiology', 'Neurology'] })
+  specialist: string[];
+
+  @ApiProperty({
     example: '2026-01-01T10:00:00.000Z',
   })
   createdAt: Date;
