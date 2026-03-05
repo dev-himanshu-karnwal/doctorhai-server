@@ -11,7 +11,8 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class GetHospitalsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
-    description: 'Free-text search across name, email, phone',
+    description:
+      'Free-text search across name, type, and specialist (doctor specialization)',
     example: 'city care',
   })
   @IsOptional()
