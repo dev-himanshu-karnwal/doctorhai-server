@@ -1,11 +1,25 @@
-import { Controller, Get, Inject, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Inject,
+  Query,
+  forwardRef,
+  Patch,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Param,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { HOSPITAL_SERVICE_TOKEN } from '../../../common/constants';
+import {
+  HOSPITAL_SERVICE_TOKEN,
+  DOCTOR_PROFILE_SERVICE_TOKEN,
+} from '../../../common/constants';
 import { ApiResponse } from '../../../common/classes';
 import type { DataKeyWrapper } from '../../../common/interfaces';
 import { Public } from '../../../common/decorators';
@@ -14,8 +28,9 @@ import type {
   HospitalsQuery,
   PaginatedHospitals,
 } from '../interfaces';
+import type { IDoctorProfileService } from '../../doctor-profiles/interfaces';
 import type { HospitalEntity } from '../entities';
-import { GetHospitalsQueryDto } from '../dto/hospital-query.dto';
+import { GetHospitalsQueryDto, UpdateHospitalDto } from '../dto';
 import {
   HospitalListItemDto,
   HospitalPaginatedResponseDto,
@@ -27,6 +42,8 @@ export class HospitalsController {
   constructor(
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
+    @Inject(forwardRef(() => DOCTOR_PROFILE_SERVICE_TOKEN))
+    private readonly doctorProfileService: IDoctorProfileService,
   ) {}
 
   @Get()
@@ -54,6 +71,12 @@ export class HospitalsController {
     const result: PaginatedHospitals =
       await this.hospitalService.getHospitals(options);
 
+    const hospitalIds = result.hospitals.map((h) => h.id);
+    const specialistsMap =
+      await this.doctorProfileService.getSpecializationsByHospitalIds(
+        hospitalIds,
+      );
+
     const items: HospitalListItemDto[] = result.hospitals.map(
       (hospital: HospitalEntity) => ({
         id: hospital.id,
@@ -65,6 +88,10 @@ export class HospitalsController {
         email: hospital.email,
         coverPhotoUrl: hospital.coverPhotoUrl,
         isActive: hospital.isActive,
+        location: hospital.location,
+        type: hospital.type,
+        specialist: specialistsMap.get(hospital.id) ?? [],
+        facilities: hospital.facilities,
         createdAt: hospital.createdAt,
         updatedAt: hospital.updatedAt,
       }),
@@ -86,5 +113,23 @@ export class HospitalsController {
     };
 
     return ApiResponse.withDataKey('hospitals', response);
+  }
+
+  @Patch(':id')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update hospital by ID',
+    description:
+      'Updates hospital details by ID. Name change updates slug. (Public for testing)',
+  })
+  @ApiOkResponse({ description: 'Hospital updated successfully' })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateHospitalDto,
+  ): Promise<DataKeyWrapper<'hospital'>> {
+    const hospital = await this.hospitalService.update(id, dto);
+    return ApiResponse.withDataKey('hospital', hospital);
   }
 }

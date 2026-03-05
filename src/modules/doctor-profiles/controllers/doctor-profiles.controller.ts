@@ -104,13 +104,13 @@ export class DoctorProfilesController {
   }
 
   @Post('by-hospital')
-  @UseGuards(PermissionsGuard)
-  @RequirePermissions({
-    permissions: ['hospital.doctor.create', 'super_admin.manage'],
-    requireAll: false,
-  })
+  // @UseGuards(PermissionsGuard)
+  // @RequirePermissions({
+  //   permissions: ['hospital.doctor.create', 'super_admin.manage'],
+  //   requireAll: false,
+  // })
   @HttpCode(HttpStatus.CREATED)
-  @ApiBearerAuth()
+  // @ApiBearerAuth()
   @ApiOperation({
     summary: 'Hospital creates doctor',
     description:

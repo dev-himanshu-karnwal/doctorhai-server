@@ -13,9 +13,15 @@ export interface CreateHospitalInput {
   phone: string;
   email: string;
   coverPhotoUrl?: string | null;
+  location?: { latitude: number; longitude: number } | null;
+  type?: string | null;
+  timeline?: { day: string; opentime: string; closetime: string }[] | null;
+  facilities?: string[] | null;
+  isActive?: boolean;
 }
 
 export interface IHospitalRepository {
+  findById(id: string): Promise<HospitalEntity | null>;
   findByAccountId(accountId: string): Promise<HospitalEntity | null>;
   create(
     data: CreateHospitalInput,
@@ -25,5 +31,10 @@ export interface IHospitalRepository {
   updateEmailByAccountId(
     accountId: string,
     email: string,
+  ): Promise<HospitalEntity | null>;
+  update(
+    id: string,
+    data: Partial<Omit<CreateHospitalInput, 'accountId'>>,
+    session?: ClientSession,
   ): Promise<HospitalEntity | null>;
 }

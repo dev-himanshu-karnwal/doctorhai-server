@@ -63,4 +63,7 @@ export interface IDoctorProfileService {
     accountId: string,
     email: string,
   ): Promise<DoctorProfileEntity | null>;
+  getSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<Map<string, string[]>>;
 }
