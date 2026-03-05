@@ -59,15 +59,15 @@ export class AppConfigService {
   }
 
   get cookieName(): string {
-    return this.config.get<string>('COOKIE_NAME') ?? 'access_token';
+    return this.config.get<string>('cookie.name') ?? 'access_token';
   }
 
   get cookieMaxAge(): number {
-    return this.config.get<number>('COOKIE_MAX_AGE') ?? 1036800000;
+    return this.config.get<number>('cookie.maxAge') ?? 1036800000;
   }
 
   get cookieSecure(): boolean {
-    return this.config.get<boolean>('COOKIE_SECURE') ?? false;
+    return this.config.get<boolean>('cookie.secure') ?? false;
   }
 
   get mailProvider(): MailProvider {
