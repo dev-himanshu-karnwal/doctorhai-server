@@ -22,6 +22,6 @@ import { HospitalsController } from './controllers/hospitals.controller';
     { provide: HOSPITAL_REPOSITORY_TOKEN, useClass: HospitalsRepository },
     { provide: HOSPITAL_SERVICE_TOKEN, useClass: HospitalsService },
   ],
-  exports: [HOSPITAL_SERVICE_TOKEN],
+  exports: [HOSPITAL_SERVICE_TOKEN, HOSPITAL_REPOSITORY_TOKEN],
 })
 export class HospitalsModule {}

@@ -14,6 +14,7 @@ export interface DoctorProfileDocLike {
   profilePhotoUrl?: string | null;
   createdBy?: { toString(): string } | null;
   hospitalId?: { toString(): string } | null;
+  hasExperience?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
@@ -35,6 +36,7 @@ export class DoctorProfileMapper {
       doc.profilePhotoUrl ?? null,
       doc.createdBy != null ? doc.createdBy.toString() : null,
       doc.hospitalId != null ? doc.hospitalId.toString() : null,
+      doc.hasExperience ?? null,
       doc.createdAt,
       doc.updatedAt,
       doc.deletedAt ?? null,

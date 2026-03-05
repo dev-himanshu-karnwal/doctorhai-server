@@ -13,6 +13,7 @@ export interface DoctorProfileDocument extends Document {
   profilePhotoUrl: string | null;
   createdBy: Types.ObjectId | null;
   hospitalId: Types.ObjectId | null;
+  hasExperience: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -42,6 +43,7 @@ export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
     profilePhotoUrl: { type: String, default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'Account', default: null },
     hospitalId: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
+    hasExperience: { type: String, required: false, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true, collection: 'doctor_profiles' },

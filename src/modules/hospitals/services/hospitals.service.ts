@@ -58,6 +58,7 @@ export class HospitalsService implements IHospitalService {
       data.slug = generateSlugFromName(data.name);
     }
 
-    return this.hospitalRepo.update(id, data);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this.hospitalRepo.update(id, data);
   }
 }
