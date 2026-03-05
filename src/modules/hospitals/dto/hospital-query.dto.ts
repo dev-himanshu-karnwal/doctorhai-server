@@ -40,6 +40,14 @@ export class GetHospitalsQueryDto extends PaginationQueryDto {
   isActive?: string;
 
   @ApiPropertyOptional({
+    description: 'Filter by account verification status',
+    example: 'true',
+  })
+  @IsOptional()
+  @IsBooleanString()
+  isVerified?: string;
+
+  @ApiPropertyOptional({
     description: 'Sort field',
     enum: ['name', 'createdAt'],
     default: 'createdAt',

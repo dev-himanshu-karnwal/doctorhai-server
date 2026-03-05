@@ -64,6 +64,7 @@ export class HospitalsController {
       search: query.search,
       name: query.name,
       isActive: query.isActive,
+      isVerified: query.isVerified,
       sortBy: query.sortBy ?? 'createdAt',
       sortOrder: query.sortOrder ?? 'desc',
     };
