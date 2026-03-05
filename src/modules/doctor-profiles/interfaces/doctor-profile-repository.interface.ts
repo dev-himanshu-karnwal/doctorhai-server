@@ -26,6 +26,7 @@ export interface UpdateDoctorProfileInput {
   specialization?: string | null;
   bio?: string | null;
   slug?: string;
+  hasExperience?: string | null;
 }
 
 export interface IDoctorProfileRepository {

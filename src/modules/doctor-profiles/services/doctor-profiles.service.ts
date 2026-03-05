@@ -176,6 +176,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         email: doctor.email,
         slug: doctor.slug,
         profilePhotoUrl: doctor.profilePhotoUrl,
+        hasExperience: doctor.hasExperience,
       }),
     );
 
@@ -211,6 +212,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       email: doctor.email,
       slug: doctor.slug,
       profilePhotoUrl: doctor.profilePhotoUrl,
+      hasExperience: doctor.hasExperience,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
@@ -270,6 +272,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       specialization?: string | null;
       bio?: string | null;
       slug?: string;
+      hasExperience?: string | null;
     } = {};
 
     // Map DTO to update object and regenerate slug if name changes
@@ -282,6 +285,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
     if (dto.specialization !== undefined)
       updateData.specialization = dto.specialization?.trim() || null;
     if (dto.bio !== undefined) updateData.bio = dto.bio?.trim() || null;
+    if (dto.hasExperience !== undefined)
+      updateData.hasExperience = dto.hasExperience ?? null;
 
     const updated = await this.doctorProfileRepo.update(
       doctorProfileId,

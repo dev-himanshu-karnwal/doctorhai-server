@@ -40,6 +40,13 @@ export class DoctorProfileResponseDto {
   @ApiPropertyOptional({ example: 'https://example.com/photo.jpg' })
   profilePhotoUrl: string | null;
 
+  @ApiPropertyOptional({
+    example: true,
+    description:
+      'Whether the doctor has experience. Null until explicitly set.',
+  })
+  hasExperience: string | null;
+
   @ApiPropertyOptional({ type: DoctorStatusResponseDto })
   status?: DoctorStatusResponseDto | null;
 }

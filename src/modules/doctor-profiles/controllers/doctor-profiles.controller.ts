@@ -75,6 +75,7 @@ export class DoctorProfilesController {
       sortBy: query.sortBy ?? 'fullName',
       sortOrder: query.sortOrder ?? 'asc',
       hospitalId: query.hospitalId,
+      isVerified: query.isVerified,
     };
 
     return this.doctorProfileService.getDoctors(options);
