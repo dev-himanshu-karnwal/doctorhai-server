@@ -42,7 +42,6 @@ export const DoctorStatusSchema = new Schema<DoctorStatusDocument>(
   { timestamps: true, collection: 'doctor_statuses' },
 );
 
-DoctorStatusSchema.index({ doctorProfileId: 1 });
 DoctorStatusSchema.index({ status: 1 });
 DoctorStatusSchema.index({ updatedByAccountId: 1 });
 DoctorStatusSchema.index({ updatedByRoleId: 1 });
