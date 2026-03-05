@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiResponse as SwaggerResponse,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
@@ -37,9 +38,9 @@ import { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto'
 import { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
 import { GetDoctorsQueryDto } from '../dto/get-doctors-query.dto';
 import {
-  HospitalDoctorListItemDto,
-  HospitalDoctorsPaginatedResponseDto,
-} from '../dto/hospital-doctors-response.dto';
+  DoctorProfileResponseDto,
+  PaginatedDoctorsResponseDto,
+} from '../dto/doctor-profile-response.dto';
 
 @ApiTags('doctor-profiles')
 @Controller('doctor-profiles')
@@ -56,11 +57,15 @@ export class DoctorProfilesController {
     description:
       'Returns a paginated list of doctors. Optionally filter by hospitalId query param.',
   })
-  @ApiOkResponse({ type: HospitalDoctorsPaginatedResponseDto })
+  @SwaggerResponse({
+    status: HttpStatus.OK,
+    type: DoctorProfileResponseDto,
+    isArray: true,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed' })
   async getDoctors(
     @Query() query: GetDoctorsQueryDto,
-  ): Promise<DataKeyWrapper<'doctors'>> {
+  ): Promise<PaginatedDoctorsResponseDto> {
     const options: DoctorsQuery = {
       page: query.page,
       limit: query.limit,
@@ -72,35 +77,18 @@ export class DoctorProfilesController {
       hospitalId: query.hospitalId,
     };
 
-    const result = await this.doctorProfileService.getDoctors(options);
+    return this.doctorProfileService.getDoctors(options);
+  }
 
-    const items: HospitalDoctorListItemDto[] = result.doctors.map((doctor) => ({
-      id: doctor.id,
-      fullName: doctor.fullName,
-      designation: doctor.designation,
-      specialization: doctor.specialization,
-      phone: doctor.phone,
-      email: doctor.email,
-      slug: doctor.slug,
-      profilePhotoUrl: doctor.profilePhotoUrl,
-    }));
-
-    const totalPages =
-      result.limit > 0
-        ? Math.max(1, Math.ceil(result.total / result.limit))
-        : 1;
-
-    const response: HospitalDoctorsPaginatedResponseDto = {
-      items,
-      meta: {
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-        totalPages,
-      },
-    };
-
-    return ApiResponse.withDataKey('doctors', response);
+  @Get(':id')
+  @Public()
+  @ApiOperation({ summary: 'Get doctor by ID' })
+  @SwaggerResponse({ status: HttpStatus.OK, type: DoctorProfileResponseDto })
+  async getDoctorById(
+    @Param('id') id: string,
+  ): Promise<DataKeyWrapper<'doctor'>> {
+    const doctor = await this.doctorProfileService.getDoctorById(id);
+    return ApiResponse.withDataKey('doctor', doctor);
   }
 
   @Post('by-hospital')

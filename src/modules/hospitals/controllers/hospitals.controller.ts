@@ -23,13 +23,10 @@ import {
 import { ApiResponse } from '../../../common/classes';
 import type { DataKeyWrapper } from '../../../common/interfaces';
 import { Public } from '../../../common/decorators';
-import type {
-  IHospitalService,
-  HospitalsQuery,
-  PaginatedHospitals,
-} from '../interfaces';
+import { HospitalsQuery, PaginatedHospitals } from '../interfaces';
+import type { IHospitalService } from '../interfaces';
 import type { IDoctorProfileService } from '../../doctor-profiles/interfaces';
-import type { HospitalEntity } from '../entities';
+import { HospitalEntity } from '../entities';
 import { GetHospitalsQueryDto, UpdateHospitalDto } from '../dto';
 import {
   HospitalListItemDto,
@@ -88,9 +85,12 @@ export class HospitalsController {
         email: hospital.email,
         coverPhotoUrl: hospital.coverPhotoUrl,
         isActive: hospital.isActive,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         location: hospital.location,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         type: hospital.type,
         specialist: specialistsMap.get(hospital.id) ?? [],
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         facilities: hospital.facilities,
         createdAt: hospital.createdAt,
         updatedAt: hospital.updatedAt,
@@ -129,6 +129,7 @@ export class HospitalsController {
     @Param('id') id: string,
     @Body() dto: UpdateHospitalDto,
   ): Promise<DataKeyWrapper<'hospital'>> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const hospital = await this.hospitalService.update(id, dto);
     return ApiResponse.withDataKey('hospital', hospital);
   }
