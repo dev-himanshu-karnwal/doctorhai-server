@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   HOSPITAL_REPOSITORY_TOKEN,
   HOSPITAL_SERVICE_TOKEN,
 } from '../../common/constants';
 import { AddressesModule } from '../addresses';
+import { DoctorProfilesModule } from '../doctor-profiles/doctor-profiles.module';
 import { HospitalSchema } from './schemas';
 import { HospitalsRepository } from './repositories';
 import { HospitalsService } from './services';
@@ -14,6 +15,7 @@ import { HospitalsController } from './controllers/hospitals.controller';
   imports: [
     MongooseModule.forFeature([{ name: 'Hospital', schema: HospitalSchema }]),
     AddressesModule,
+    forwardRef(() => DoctorProfilesModule),
   ],
   controllers: [HospitalsController],
   providers: [
