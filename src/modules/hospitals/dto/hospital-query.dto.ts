@@ -11,7 +11,8 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class GetHospitalsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
-    description: 'Free-text search across name, email, phone',
+    description:
+      'Free-text search across name, type, and specialist (doctor specialization)',
     example: 'city care',
   })
   @IsOptional()
@@ -37,6 +38,14 @@ export class GetHospitalsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsBooleanString()
   isActive?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by account verification status',
+    example: 'true',
+  })
+  @IsOptional()
+  @IsBooleanString()
+  isVerified?: string;
 
   @ApiPropertyOptional({
     description: 'Sort field',

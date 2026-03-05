@@ -61,6 +61,7 @@ export class HospitalsController {
       search: query.search,
       name: query.name,
       isActive: query.isActive,
+      isVerified: query.isVerified,
       sortBy: query.sortBy ?? 'createdAt',
       sortOrder: query.sortOrder ?? 'desc',
     };
@@ -81,8 +82,6 @@ export class HospitalsController {
         addressId: hospital.addressId,
         name: hospital.name,
         slug: hospital.slug,
-        phone: hospital.phone,
-        email: hospital.email,
         coverPhotoUrl: hospital.coverPhotoUrl,
         isActive: hospital.isActive,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -90,10 +89,13 @@ export class HospitalsController {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         type: hospital.type,
         specialist: specialistsMap.get(hospital.id) ?? [],
+<<<<<<< api/get_all
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         facilities: hospital.facilities,
         createdAt: hospital.createdAt,
         updatedAt: hospital.updatedAt,
+=======
+>>>>>>> dev
       }),
     );
 
