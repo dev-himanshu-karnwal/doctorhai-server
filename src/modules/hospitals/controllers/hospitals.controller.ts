@@ -64,6 +64,7 @@ export class HospitalsController {
       search: query.search,
       name: query.name,
       isActive: query.isActive,
+      isVerified: query.isVerified,
       sortBy: query.sortBy ?? 'createdAt',
       sortOrder: query.sortOrder ?? 'desc',
     };
@@ -84,16 +85,11 @@ export class HospitalsController {
         addressId: hospital.addressId,
         name: hospital.name,
         slug: hospital.slug,
-        // phone: hospital.phone,
-        // email: hospital.email,
         coverPhotoUrl: hospital.coverPhotoUrl,
         isActive: hospital.isActive,
         location: hospital.location,
         type: hospital.type,
         specialist: specialistsMap.get(hospital.id) ?? [],
-        // facilities: hospital.facilities,
-        // createdAt: hospital.createdAt,
-        // updatedAt: hospital.updatedAt,
       }),
     );
 
