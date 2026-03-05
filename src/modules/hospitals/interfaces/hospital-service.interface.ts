@@ -7,6 +7,7 @@ export interface HospitalsQuery {
   search?: string;
   name?: string;
   isActive?: string;
+  isVerified?: string;
   sortBy?: 'name' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
 }
