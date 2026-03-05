@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types, FilterQuery } from 'mongoose';
+import {
+  ClientSession,
+  Model,
+  Types,
+  FilterQuery,
+  PipelineStage,
+} from 'mongoose';
 import { HospitalDocument } from '../schemas';
 import { HospitalEntity } from '../entities';
 import { HospitalMapper } from '../mappers';
@@ -77,11 +83,8 @@ export class HospitalsRepository implements IHospitalRepository {
     const filter: FilterQuery<HospitalDocument> = { ...this.notDeleted };
 
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } },
-      ];
+      // name and type search will be handled in the pipeline after lookup
+      // so we don't set filter.$or here to allow matching on specialists too
     }
 
     if (name) {
@@ -92,16 +95,64 @@ export class HospitalsRepository implements IHospitalRepository {
       filter.isActive = isActive === 'true';
     }
 
-    const [docs, total] = await Promise.all([
-      this.hospitalModel
-        .find(filter)
-        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean()
-        .exec(),
-      this.hospitalModel.countDocuments(filter).exec(),
-    ]);
+    const pipeline: PipelineStage[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'accountId',
+          foreignField: '_id',
+          as: 'account',
+        },
+      },
+      { $unwind: '$account' },
+      { $match: { 'account.isVerified': true } },
+      {
+        $lookup: {
+          from: 'doctor_profiles',
+          localField: '_id',
+          foreignField: 'hospitalId',
+          as: 'doctors',
+        },
+      },
+    ];
+
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { type: { $regex: search, $options: 'i' } },
+            { 'doctors.specialization': { $regex: search, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    const sortStage: PipelineStage.Sort = {
+      $sort: {
+        [sortBy === 'createdAt' ? 'createdAt' : sortBy]:
+          sortOrder === 'asc' ? 1 : -1,
+      },
+    };
+
+    const [result] = await this.hospitalModel
+      .aggregate<{
+        data: HospitalDocument[];
+        total: { count: number }[];
+      }>([
+        ...pipeline,
+        {
+          $facet: {
+            data: [sortStage, { $skip: skip }, { $limit: limit }],
+            total: [{ $count: 'count' }],
+          },
+        },
+      ])
+      .exec();
+
+    const docs = result?.data ?? [];
+    const total = result?.total?.[0]?.count ?? 0;
 
     return {
       hospitals: docs.map((doc) => HospitalMapper.toDomain(doc)),
