@@ -84,16 +84,11 @@ export class HospitalsController {
         addressId: hospital.addressId,
         name: hospital.name,
         slug: hospital.slug,
-        // phone: hospital.phone,
-        // email: hospital.email,
         coverPhotoUrl: hospital.coverPhotoUrl,
         isActive: hospital.isActive,
         location: hospital.location,
         type: hospital.type,
         specialist: specialistsMap.get(hospital.id) ?? [],
-        // facilities: hospital.facilities,
-        // createdAt: hospital.createdAt,
-        // updatedAt: hospital.updatedAt,
       }),
     );
 
