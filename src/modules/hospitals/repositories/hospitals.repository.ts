@@ -82,11 +82,6 @@ export class HospitalsRepository implements IHospitalRepository {
     const skip = (page - 1) * limit;
     const filter: FilterQuery<HospitalDocument> = { ...this.notDeleted };
 
-    if (search) {
-      // name and type search will be handled in the pipeline after lookup
-      // so we don't set filter.$or here to allow matching on specialists too
-    }
-
     if (name) {
       filter.name = { $regex: name, $options: 'i' };
     }
