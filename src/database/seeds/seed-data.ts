@@ -65,7 +65,7 @@ export const ROLES = [
     ],
   },
   {
-    name: 'superadmin',
+    name: 'super_admin',
     description: 'Super administrator',
     isSystem: true,
     permissionKeys: [
