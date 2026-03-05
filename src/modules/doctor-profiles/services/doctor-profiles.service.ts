@@ -132,7 +132,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         {
           fullName: dto.fullName.trim(),
           designation: null,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           specialization: dto.specialization ? dto.specialization : null,
           phone: dto.phone,
           email,
@@ -177,6 +177,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         slug: doctor.slug,
         profilePhotoUrl: doctor.profilePhotoUrl,
         hasExperience: doctor.hasExperience,
+        bio: doctor.bio,
       }),
     );
 
@@ -213,6 +214,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       slug: doctor.slug,
       profilePhotoUrl: doctor.profilePhotoUrl,
       hasExperience: doctor.hasExperience,
+      bio: doctor.bio,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
