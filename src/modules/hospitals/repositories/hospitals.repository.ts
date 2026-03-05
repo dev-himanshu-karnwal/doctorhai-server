@@ -75,6 +75,7 @@ export class HospitalsRepository implements IHospitalRepository {
       search,
       name,
       isActive,
+      isVerified,
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
@@ -101,16 +102,22 @@ export class HospitalsRepository implements IHospitalRepository {
         },
       },
       { $unwind: '$account' },
-      { $match: { 'account.isVerified': true } },
-      {
-        $lookup: {
-          from: 'doctor_profiles',
-          localField: '_id',
-          foreignField: 'hospitalId',
-          as: 'doctors',
-        },
-      },
     ];
+
+    if (isVerified !== undefined) {
+      pipeline.push({
+        $match: { 'account.isVerified': isVerified === 'true' },
+      });
+    }
+
+    pipeline.push({
+      $lookup: {
+        from: 'doctor_profiles',
+        localField: '_id',
+        foreignField: 'hospitalId',
+        as: 'doctors',
+      },
+    });
 
     if (search) {
       pipeline.push({
