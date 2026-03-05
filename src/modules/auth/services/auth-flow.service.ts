@@ -42,10 +42,10 @@ export class AuthFlowService implements IAuthFlowService {
     private readonly doctorProfileService: IDoctorProfileService,
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     @Inject(IDENTITY_SERVICE_TOKEN)
     private readonly identityService: IIdentityService,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     @Inject(PASSWORD_SERVICE_TOKEN)
     private readonly passwordService: IPasswordService,
     private readonly authMeService: AuthMeService,
