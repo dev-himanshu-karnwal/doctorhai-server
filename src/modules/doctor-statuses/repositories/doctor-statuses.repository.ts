@@ -31,6 +31,23 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
     return doc ? DoctorStatusMapper.toDomain(doc) : null;
   }
 
+  async findByDoctorProfileIds(
+    doctorProfileIds: string[],
+  ): Promise<DoctorStatusEntity[]> {
+    const validIds = doctorProfileIds
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    if (validIds.length === 0) return [];
+
+    const docs = (await this.doctorStatusModel
+      .find({ doctorProfileId: { $in: validIds } })
+      .lean()
+      .exec()) as DoctorStatusDocLike[];
+
+    return docs.map((doc) => DoctorStatusMapper.toDomain(doc));
+  }
+
   async create(
     data: CreateDoctorStatusInput,
     session?: ClientSession,

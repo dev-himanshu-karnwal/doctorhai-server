@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class HospitalListItemDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011' })
@@ -64,6 +64,8 @@ export class HospitalDetailAddressDto {
   pincode: string;
 }
 
+import { DoctorStatusResponseDto } from '../../doctor-profiles/dto/doctor-profile-response.dto';
+
 export class HospitalDoctorDetailDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011' })
   id: string;
@@ -85,6 +87,35 @@ export class HospitalDoctorDetailDto {
     nullable: true,
   })
   profilePhotoUrl: string | null;
+
+  @ApiProperty({ nullable: true })
+  bio: string | null;
+
+  @ApiPropertyOptional({ type: DoctorStatusResponseDto })
+  status?: DoctorStatusResponseDto | null;
+
+  @ApiPropertyOptional({ example: '10 years' })
+  hasExperience?: string | null;
+}
+
+export class HospitalDoctorsPaginatedDto {
+  @ApiProperty({ type: [HospitalDoctorDetailDto] })
+  items: HospitalDoctorDetailDto[];
+
+  @ApiProperty({
+    example: {
+      total: 10,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    },
+  })
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 export class HospitalDetailDto {
@@ -136,8 +167,8 @@ export class HospitalDetailDto {
   @ApiProperty({ type: HospitalDetailAddressDto, nullable: true })
   address: HospitalDetailAddressDto | null;
 
-  @ApiProperty({ type: [HospitalDoctorDetailDto] })
-  doctors: HospitalDoctorDetailDto[];
+  @ApiProperty({ type: HospitalDoctorsPaginatedDto })
+  doctors: HospitalDoctorsPaginatedDto;
 
   @ApiProperty()
   createdAt: Date;
