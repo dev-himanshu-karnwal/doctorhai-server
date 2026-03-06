@@ -5,6 +5,7 @@ import { authConfig } from './auth.config';
 import { databaseConfig } from './database.config';
 import { jwtConfig } from './jwt.config';
 import { mailConfig } from './mail.config';
+import { cookieConfig } from './cookie.config';
 import { AppConfigService } from './app-config.service';
 import { envValidationSchema } from './env.validation';
 
@@ -16,7 +17,14 @@ const nodeEnv = process.env.NODE_ENV || 'development';
     NestConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', `.env.${nodeEnv}`],
-      load: [appConfig, authConfig, databaseConfig, jwtConfig, mailConfig],
+      load: [
+        appConfig,
+        authConfig,
+        databaseConfig,
+        jwtConfig,
+        mailConfig,
+        cookieConfig,
+      ],
 
       validationSchema: envValidationSchema,
       validationOptions: {

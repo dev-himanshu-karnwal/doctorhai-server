@@ -186,6 +186,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         profilePhotoUrl: doctor.profilePhotoUrl,
         hasExperience: doctor.hasExperience,
         bio: doctor.bio,
+        hospitalId: doctor.hospitalId,
         status: s
           ? {
               status: s.status,
@@ -231,6 +232,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       profilePhotoUrl: doctor.profilePhotoUrl,
       hasExperience: doctor.hasExperience,
       bio: doctor.bio,
+      hospitalId: doctor.hospitalId,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
