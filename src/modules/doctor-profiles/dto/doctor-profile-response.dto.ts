@@ -28,6 +28,9 @@ export class DoctorProfileResponseDto {
   @ApiPropertyOptional({ example: 'Cardiology' })
   specialization: string | null;
 
+  @ApiPropertyOptional({ example: 'Experienced cardiologist with 15 years...' })
+  bio: string | null;
+
   @ApiProperty({ example: '+1234567890' })
   phone: string;
 

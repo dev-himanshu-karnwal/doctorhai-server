@@ -58,7 +58,13 @@ export class HospitalsService implements IHospitalService {
       data.slug = generateSlugFromName(data.name);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await this.hospitalRepo.update(id, data);
+  }
+
+  async findById(
+    id: string,
+  ): Promise<Awaited<ReturnType<IHospitalService['findById']>>> {
+    this.logger.debug(`Finding hospital by id: ${id}`);
+    return this.hospitalRepo.findById(id);
   }
 }

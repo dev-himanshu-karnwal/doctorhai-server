@@ -18,6 +18,7 @@ import {
   findWithPagination,
 } from '../../../common/mongoose/query-helpers';
 import type { PaginationOptions } from '../../../common/interfaces';
+import console from 'console';
 
 @Injectable()
 export class DoctorProfilesRepository implements IDoctorProfileRepository {
@@ -100,8 +101,14 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       ...this.notDeleted,
     };
 
-    if (query.hospitalId && Types.ObjectId.isValid(query.hospitalId)) {
-      baseFilter.hospitalId = new Types.ObjectId(query.hospitalId);
+    if (query.hospitalId) {
+      if (Types.ObjectId.isValid(query.hospitalId)) {
+        // Match both ObjectId and its string representation to be safe
+        // because some records might have it stored as a string.
+        baseFilter.hospitalId = query.hospitalId;
+      } else {
+        baseFilter.hospitalId = String(query.hospitalId);
+      }
     }
 
     if (query.specialization != null && query.specialization.trim() !== '') {

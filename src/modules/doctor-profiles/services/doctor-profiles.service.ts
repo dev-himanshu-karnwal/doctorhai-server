@@ -132,7 +132,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         {
           fullName: dto.fullName.trim(),
           designation: null,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           specialization: dto.specialization ? dto.specialization : null,
           phone: dto.phone,
           email,
@@ -166,8 +166,16 @@ export class DoctorProfilesService implements IDoctorProfileService {
     this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
     const result = await this.doctorProfileRepo.findDoctors(query);
 
-    const doctors: DoctorProfileResponseDto[] = result.doctors.map(
-      (doctor) => ({
+    const doctorIds = result.doctors.map((d) => d.id);
+    const statuses =
+      await this.doctorStatusRepo.findByDoctorProfileIds(doctorIds);
+    const statusMap = new Map(
+      statuses.map((s) => [s.doctorProfileId.toString(), s]),
+    );
+
+    const doctors: DoctorProfileResponseDto[] = result.doctors.map((doctor) => {
+      const s = statusMap.get(doctor.id);
+      return {
         id: doctor.id,
         fullName: doctor.fullName,
         designation: doctor.designation,
@@ -177,8 +185,17 @@ export class DoctorProfilesService implements IDoctorProfileService {
         slug: doctor.slug,
         profilePhotoUrl: doctor.profilePhotoUrl,
         hasExperience: doctor.hasExperience,
-      }),
-    );
+        bio: doctor.bio,
+        status: s
+          ? {
+              status: s.status,
+              expectedAt: s.expectedAt,
+              expectedAtNote: s.expectedAtNote,
+              updatedAt: s.updatedAt,
+            }
+          : null,
+      };
+    });
 
     const totalPages =
       result.limit > 0
@@ -213,6 +230,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       slug: doctor.slug,
       profilePhotoUrl: doctor.profilePhotoUrl,
       hasExperience: doctor.hasExperience,
+      bio: doctor.bio,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);

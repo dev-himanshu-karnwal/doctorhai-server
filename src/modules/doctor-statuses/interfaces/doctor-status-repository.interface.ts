@@ -16,6 +16,9 @@ export interface IDoctorStatusRepository {
   findByDoctorProfileId(
     doctorProfileId: string,
   ): Promise<DoctorStatusEntity | null>;
+  findByDoctorProfileIds(
+    doctorProfileIds: string[],
+  ): Promise<DoctorStatusEntity[]>;
   create(
     data: CreateDoctorStatusInput,
     session?: ClientSession,

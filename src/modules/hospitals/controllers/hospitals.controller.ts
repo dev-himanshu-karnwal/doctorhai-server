@@ -19,6 +19,7 @@ import {
 import {
   HOSPITAL_SERVICE_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
+  ADDRESS_SERVICE_TOKEN,
 } from '../../../common/constants';
 import { ApiResponse } from '../../../common/classes';
 import type { DataKeyWrapper } from '../../../common/interfaces';
@@ -31,7 +32,12 @@ import { GetHospitalsQueryDto, UpdateHospitalDto } from '../dto';
 import {
   HospitalListItemDto,
   HospitalPaginatedResponseDto,
+  HospitalDetailDto,
 } from '../dto/hospital.response';
+import { ResourceNotFoundException } from '../../../common/exceptions';
+import type { IAddressService } from '../../addresses/interfaces';
+import { AddressEntity } from '../../addresses/entities';
+import { GetHospitalDoctorsQueryDto } from '../../doctor-profiles/dto/get-hospital-doctors-query.dto';
 
 @ApiTags('hospitals')
 @Controller('hospitals')
@@ -41,7 +47,94 @@ export class HospitalsController {
     private readonly hospitalService: IHospitalService,
     @Inject(forwardRef(() => DOCTOR_PROFILE_SERVICE_TOKEN))
     private readonly doctorProfileService: IDoctorProfileService,
+    @Inject(ADDRESS_SERVICE_TOKEN)
+    private readonly addressService: IAddressService,
   ) {}
+
+  @Get(':id')
+  @Public()
+  @ApiOperation({
+    summary: 'Get hospital by ID',
+    description: 'Returns all hospital data, address, and associated doctors.',
+  })
+  @ApiOkResponse({ type: HospitalDetailDto })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
+  async getHospitalById(
+    @Param('id') id: string,
+    @Query() query: GetHospitalDoctorsQueryDto,
+  ): Promise<DataKeyWrapper<'hospital'>> {
+    const hospital = await this.hospitalService.findById(id);
+    if (!hospital) {
+      throw new ResourceNotFoundException('Hospital', id);
+    }
+
+    // Fetch address if it exists
+    let address: AddressEntity | null = null;
+    if (hospital.addressId) {
+      try {
+        address = await this.addressService.findById(
+          hospital.addressId.toString(),
+        );
+      } catch {
+        // Silently fail if address not found or keep it null
+      }
+    }
+
+    // Fetch doctors associated with this hospital id with pagination and filters
+    const doctorsResult = await this.doctorProfileService.getDoctors({
+      hospitalId: id,
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      specialization: query.specialization,
+      designation: query.designation,
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
+    });
+
+    const response: HospitalDetailDto = {
+      id: hospital.id,
+      accountId: hospital.accountId.toString(),
+      name: hospital.name,
+      slug: hospital.slug,
+      phone: hospital.phone,
+      email: hospital.email,
+      coverPhotoUrl: hospital.coverPhotoUrl,
+      isActive: hospital.isActive,
+      location: hospital.location,
+      type: hospital.type,
+      timeline: hospital.timeline,
+      facilities: hospital.facilities,
+      createdAt: hospital.createdAt,
+      updatedAt: hospital.updatedAt,
+      address: address
+        ? {
+            id: address.id,
+            addressLine1: address.addressLine1,
+            addressLine2: address.addressLine2,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+          }
+        : null,
+      doctors: {
+        items: doctorsResult.doctors.map((d) => ({
+          id: d.id,
+          fullName: d.fullName,
+          designation: d.designation,
+          specialization: d.specialization,
+          bio: d.bio,
+          slug: d.slug,
+          profilePhotoUrl: d.profilePhotoUrl,
+          status: d.status,
+          hasExperience: d.hasExperience,
+        })),
+        meta: doctorsResult.paginatedmetadata,
+      },
+    };
+
+    return ApiResponse.withDataKey('hospital', response);
+  }
 
   @Get()
   @Public()
@@ -84,12 +177,12 @@ export class HospitalsController {
         slug: hospital.slug,
         coverPhotoUrl: hospital.coverPhotoUrl,
         isActive: hospital.isActive,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         location: hospital.location,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         type: hospital.type,
         specialist: specialistsMap.get(hospital.id) ?? [],
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         facilities: hospital.facilities,
         createdAt: hospital.createdAt,
         updatedAt: hospital.updatedAt,
@@ -128,7 +221,6 @@ export class HospitalsController {
     @Param('id') id: string,
     @Body() dto: UpdateHospitalDto,
   ): Promise<DataKeyWrapper<'hospital'>> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const hospital = await this.hospitalService.update(id, dto);
     return ApiResponse.withDataKey('hospital', hospital);
   }
