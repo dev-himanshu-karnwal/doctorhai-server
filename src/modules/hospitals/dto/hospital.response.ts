@@ -22,12 +22,6 @@ export class HospitalListItemDto {
   })
   slug: string;
 
-  @ApiProperty({ example: '+1234567890' })
-  phone: string;
-
-  @ApiProperty({ example: 'info@citycare.com' })
-  email: string;
-
   @ApiProperty({
     example: 'https://example.com/images/cover.jpg',
     nullable: true,
@@ -38,14 +32,16 @@ export class HospitalListItemDto {
   isActive: boolean;
 
   @ApiProperty({
-    example: '2026-01-01T10:00:00.000Z',
+    example: { latitude: 28.6139, longitude: 77.209 },
+    nullable: true,
   })
-  createdAt: Date;
+  location?: { latitude: number; longitude: number } | null;
 
-  @ApiProperty({
-    example: '2026-01-02T12:00:00.000Z',
-  })
-  updatedAt: Date;
+  @ApiProperty({ example: 'Multispeciality', nullable: true })
+  type?: string | null;
+
+  @ApiProperty({ example: ['Cardiology', 'Neurology'] })
+  specialist: string[];
 }
 
 export class HospitalPaginatedResponseDto {

@@ -1,5 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { HOSPITAL_REPOSITORY_TOKEN } from '../../../common/constants';
+import { generateSlugFromName } from '../../../common/utils';
 import type {
   IHospitalRepository,
   IHospitalService,
@@ -47,5 +48,17 @@ export class HospitalsService implements IHospitalService {
       `Fetching hospitals with query: ${JSON.stringify(query)}`,
     );
     return this.hospitalRepo.findHospitals(query);
+  }
+
+  async update(
+    id: string,
+    data: Partial<Omit<CreateHospitalInput, 'accountId'>>,
+  ): Promise<Awaited<ReturnType<IHospitalService['update']>>> {
+    if (data.name) {
+      data.slug = generateSlugFromName(data.name);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this.hospitalRepo.update(id, data);
   }
 }

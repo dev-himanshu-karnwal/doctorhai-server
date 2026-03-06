@@ -8,24 +8,29 @@ import {
   HOSPITAL_SERVICE_TOKEN,
   PROFILE_PERMISSION_SERVICE_TOKEN,
   PROFILE_CORE_SERVICE_TOKEN,
+  DOCTOR_STATUS_REPOSITORY_TOKEN,
 } from '../../../common/constants';
 import { BusinessRuleViolationException } from '../../../common/exceptions';
 import type { IAccountCreationService } from '../../auth/interfaces/account-creation-service.interface';
 import type { IRoleService } from '../../auth/interfaces/role-service.interface';
 import type { IAccountService } from '../../auth/interfaces/account-service.interface';
 import type { IHospitalService } from '../../hospitals/interfaces';
+import type { IDoctorStatusRepository } from '../../doctor-statuses/interfaces';
 import type { ClientSession, Connection } from 'mongoose';
 import type {
   IDoctorProfileRepository,
   IDoctorProfileService,
   CreateDoctorProfileData,
   DoctorsQuery,
-  PaginatedDoctorProfiles,
   IProfilePermissionService,
   IProfileCoreService,
 } from '../interfaces';
-import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
+import { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
 import type { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
+import {
+  DoctorProfileResponseDto,
+  PaginatedDoctorsResponseDto,
+} from '../dto/doctor-profile-response.dto';
 
 /**
  * Service for managing doctor profiles.
@@ -38,6 +43,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
   constructor(
     @Inject(DOCTOR_PROFILE_REPOSITORY_TOKEN)
     private readonly doctorProfileRepo: IDoctorProfileRepository,
+    @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN)
+    private readonly doctorStatusRepo: IDoctorStatusRepository,
     @Inject(ACCOUNT_CREATION_SERVICE_TOKEN)
     private readonly accountCreationService: IAccountCreationService,
     @Inject(ROLE_SERVICE_TOKEN)
@@ -125,7 +132,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
         {
           fullName: dto.fullName.trim(),
           designation: null,
-          specialization: null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          specialization: dto.specialization ? dto.specialization : null,
           phone: dto.phone,
           email,
           addressId: null,
@@ -154,9 +162,70 @@ export class DoctorProfilesService implements IDoctorProfileService {
     }
   }
 
-  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
+  async getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorsResponseDto> {
     this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
-    return this.doctorProfileRepo.findDoctors(query);
+    const result = await this.doctorProfileRepo.findDoctors(query);
+
+    const doctors: DoctorProfileResponseDto[] = result.doctors.map(
+      (doctor) => ({
+        id: doctor.id,
+        fullName: doctor.fullName,
+        designation: doctor.designation,
+        specialization: doctor.specialization,
+        phone: doctor.phone,
+        email: doctor.email,
+        slug: doctor.slug,
+        profilePhotoUrl: doctor.profilePhotoUrl,
+        hasExperience: doctor.hasExperience,
+      }),
+    );
+
+    const totalPages =
+      result.limit > 0
+        ? Math.max(1, Math.ceil(result.total / result.limit))
+        : 1;
+
+    return {
+      doctors,
+      paginatedmetadata: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages,
+      },
+    };
+  }
+
+  async getDoctorById(id: string): Promise<DoctorProfileResponseDto> {
+    this.logger.debug(`Getting doctor profile by id: ${id}`);
+    const doctor = await this.doctorProfileRepo.findById(id);
+    if (!doctor) {
+      throw new BusinessRuleViolationException('Doctor profile not found');
+    }
+
+    const response: DoctorProfileResponseDto = {
+      id: doctor.id,
+      fullName: doctor.fullName,
+      designation: doctor.designation,
+      specialization: doctor.specialization,
+      phone: doctor.phone,
+      email: doctor.email,
+      slug: doctor.slug,
+      profilePhotoUrl: doctor.profilePhotoUrl,
+      hasExperience: doctor.hasExperience,
+    };
+
+    const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
+    if (status) {
+      response.status = {
+        status: status.status,
+        expectedAt: status.expectedAt,
+        expectedAtNote: status.expectedAtNote,
+        updatedAt: status.updatedAt,
+      };
+    }
+
+    return response;
   }
 
   async updateEmailByAccountId(
@@ -203,6 +272,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       specialization?: string | null;
       bio?: string | null;
       slug?: string;
+      hasExperience?: string | null;
     } = {};
 
     // Map DTO to update object and regenerate slug if name changes
@@ -215,6 +285,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
     if (dto.specialization !== undefined)
       updateData.specialization = dto.specialization?.trim() || null;
     if (dto.bio !== undefined) updateData.bio = dto.bio?.trim() || null;
+    if (dto.hasExperience !== undefined)
+      updateData.hasExperience = dto.hasExperience ?? null;
 
     const updated = await this.doctorProfileRepo.update(
       doctorProfileId,
@@ -224,5 +296,25 @@ export class DoctorProfilesService implements IDoctorProfileService {
       throw new BusinessRuleViolationException('Doctor profile not found');
     }
     return updated;
+  }
+
+  async getSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<Map<string, string[]>> {
+    const rawData =
+      await this.doctorProfileRepo.findSpecializationsByHospitalIds(
+        hospitalIds,
+      );
+    const map = new Map<string, string[]>();
+
+    for (const item of rawData) {
+      const existing = map.get(item.hospitalId) || [];
+      if (!existing.includes(item.specialization)) {
+        existing.push(item.specialization);
+      }
+      map.set(item.hospitalId, existing);
+    }
+
+    return map;
   }
 }

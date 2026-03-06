@@ -96,25 +96,25 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
   }
 
   async findDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
-    const filter: FilterQuery<DoctorProfileDocument> = {
+    const baseFilter: FilterQuery<DoctorProfileDocument> = {
       ...this.notDeleted,
     };
 
     if (query.hospitalId && Types.ObjectId.isValid(query.hospitalId)) {
-      filter.hospitalId = new Types.ObjectId(query.hospitalId);
+      baseFilter.hospitalId = new Types.ObjectId(query.hospitalId);
     }
 
     if (query.specialization != null && query.specialization.trim() !== '') {
-      filter.specialization = new RegExp(query.specialization.trim(), 'i');
+      baseFilter.specialization = new RegExp(query.specialization.trim(), 'i');
     }
 
     if (query.designation != null && query.designation.trim() !== '') {
-      filter.designation = new RegExp(query.designation.trim(), 'i');
+      baseFilter.designation = new RegExp(query.designation.trim(), 'i');
     }
 
     if (query.search != null && query.search.trim() !== '') {
       const searchRegex = new RegExp(query.search.trim(), 'i');
-      filter.$or = [
+      baseFilter.$or = [
         { fullName: searchRegex },
         { specialization: searchRegex },
         { designation: searchRegex },
@@ -128,23 +128,88 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       ['fullName', 'createdAt'] as const,
     );
 
-    const paginationOptions: PaginationOptions = {
-      page: query.page,
-      limit: query.limit,
-    };
+    const skip = (query.page - 1) * query.limit;
 
-    const result = await findWithPagination(
-      this.doctorProfileModel,
-      filter,
-      paginationOptions,
-      sort,
+    // When isVerified is not provided, use the fast simple path (no join)
+    if (query.isVerified === undefined) {
+      const paginationOptions: PaginationOptions = {
+        page: query.page,
+        limit: query.limit,
+      };
+
+      const result = await findWithPagination(
+        this.doctorProfileModel,
+        baseFilter,
+        paginationOptions,
+        sort,
+      );
+
+      return {
+        doctors: result.items.map((doc) => DoctorProfileMapper.toDomain(doc)),
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+      };
+    }
+
+    // Explicitly cast to boolean as query params might arrive as strings despite DTO transforms
+    const isVerifiedBool = String(query.isVerified).toLowerCase() === 'true';
+
+    console.log(
+      `[DoctorProfilesRepository] isVerified raw value: ${query.isVerified} (type: ${typeof query.isVerified}) -> cast to boolean: ${isVerifiedBool}`,
     );
 
+    // When isVerified is provided (true or false), use aggregation to join accounts.
+    // preserveNullAndEmptyArrays: true ensures doctors with no linked account are
+    // NOT silently dropped — they will have account: null and be treated as isVerified: false.
+    const pipeline: Parameters<typeof this.doctorProfileModel.aggregate>[0] = [
+      { $match: baseFilter },
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'accountId',
+          foreignField: '_id',
+          as: 'account',
+        },
+      },
+      {
+        $unwind: {
+          path: '$account',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          $expr: {
+            $eq: [{ $ifNull: ['$account.isVerified', false] }, isVerifiedBool],
+          },
+        },
+      },
+    ];
+
+    // Run count and data fetch in parallel
+    const [countResult, docs] = await Promise.all([
+      this.doctorProfileModel.aggregate<{ total: number }>([
+        ...pipeline,
+        { $count: 'total' },
+      ]),
+      this.doctorProfileModel.aggregate([
+        ...pipeline,
+        { $sort: sort },
+        { $skip: skip },
+        { $limit: query.limit },
+      ]),
+    ]);
+
+    const total = countResult[0]?.total ?? 0;
+
     return {
-      doctors: result.items.map((doc) => DoctorProfileMapper.toDomain(doc)),
-      total: result.total,
-      page: result.page,
-      limit: result.limit,
+      doctors: docs.map((doc) =>
+        DoctorProfileMapper.toDomain(doc as DoctorProfileDocument),
+      ),
+      total,
+      page: query.page,
+      limit: query.limit,
     };
   }
 
@@ -161,6 +226,8 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       updatePayload.specialization = data.specialization;
     if (data.bio !== undefined) updatePayload.bio = data.bio;
     if (data.slug != null) updatePayload.slug = data.slug;
+    if (data.hasExperience !== undefined)
+      updatePayload.hasExperience = data.hasExperience;
 
     if (Object.keys(updatePayload).length === 0) return this.findById(id);
 
@@ -190,5 +257,38 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       .lean()
       .exec();
     return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
+
+  async findSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<{ hospitalId: string; specialization: string }[]> {
+    const validIds = hospitalIds
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => String(id));
+
+    if (validIds.length === 0) return [];
+
+    const results = (await this.doctorProfileModel
+      .aggregate([
+        {
+          $match: {
+            hospitalId: { $in: validIds },
+            specialization: { $exists: true, $ne: null },
+            ...this.notDeleted,
+          },
+        },
+        {
+          $project: {
+            hospitalId: 1,
+            specialization: 1,
+          },
+        },
+      ])
+      .exec()) as { hospitalId: Types.ObjectId; specialization: string }[];
+
+    return results.map((res) => ({
+      hospitalId: res.hospitalId.toString(),
+      specialization: res.specialization,
+    }));
   }
 }

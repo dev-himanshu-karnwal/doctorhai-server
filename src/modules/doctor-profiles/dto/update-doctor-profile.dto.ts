@@ -33,4 +33,15 @@ export class UpdateDoctorProfileDto {
   @IsString()
   @MaxLength(2000)
   bio?: string;
+
+  @ApiProperty({
+    example: '5 years in cardiology',
+    description:
+      "Indicates the doctor's experience level. Can only be set on update.",
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  hasExperience?: string;
 }

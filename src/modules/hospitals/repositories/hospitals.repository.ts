@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types, FilterQuery } from 'mongoose';
+import {
+  ClientSession,
+  Model,
+  Types,
+  FilterQuery,
+  PipelineStage,
+} from 'mongoose';
 import { HospitalDocument } from '../schemas';
 import { HospitalEntity } from '../entities';
 import { HospitalMapper } from '../mappers';
@@ -18,6 +24,15 @@ export class HospitalsRepository implements IHospitalRepository {
   ) {}
 
   private readonly notDeleted = { deletedAt: null };
+
+  async findById(id: string): Promise<HospitalEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const doc = await this.hospitalModel
+      .findOne({ _id: new Types.ObjectId(id), ...this.notDeleted })
+      .lean()
+      .exec();
+    return doc ? HospitalMapper.toDomain(doc) : null;
+  }
 
   async findByAccountId(accountId: string): Promise<HospitalEntity | null> {
     if (!Types.ObjectId.isValid(accountId)) return null;
@@ -60,20 +75,13 @@ export class HospitalsRepository implements IHospitalRepository {
       search,
       name,
       isActive,
+      isVerified,
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
 
     const skip = (page - 1) * limit;
     const filter: FilterQuery<HospitalDocument> = { ...this.notDeleted };
-
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } },
-      ];
-    }
 
     if (name) {
       filter.name = { $regex: name, $options: 'i' };
@@ -83,16 +91,70 @@ export class HospitalsRepository implements IHospitalRepository {
       filter.isActive = isActive === 'true';
     }
 
-    const [docs, total] = await Promise.all([
-      this.hospitalModel
-        .find(filter)
-        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean()
-        .exec(),
-      this.hospitalModel.countDocuments(filter).exec(),
-    ]);
+    const pipeline: PipelineStage[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'accountId',
+          foreignField: '_id',
+          as: 'account',
+        },
+      },
+      { $unwind: '$account' },
+    ];
+
+    if (isVerified !== undefined) {
+      pipeline.push({
+        $match: { 'account.isVerified': isVerified === 'true' },
+      });
+    }
+
+    pipeline.push({
+      $lookup: {
+        from: 'doctor_profiles',
+        localField: '_id',
+        foreignField: 'hospitalId',
+        as: 'doctors',
+      },
+    });
+
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { type: { $regex: search, $options: 'i' } },
+            { 'doctors.specialization': { $regex: search, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    const sortStage: PipelineStage.Sort = {
+      $sort: {
+        [sortBy === 'createdAt' ? 'createdAt' : sortBy]:
+          sortOrder === 'asc' ? 1 : -1,
+      },
+    };
+
+    const [result] = await this.hospitalModel
+      .aggregate<{
+        data: HospitalDocument[];
+        total: { count: number }[];
+      }>([
+        ...pipeline,
+        {
+          $facet: {
+            data: [sortStage, { $skip: skip }, { $limit: limit }],
+            total: [{ $count: 'count' }],
+          },
+        },
+      ])
+      .exec();
+
+    const docs = result?.data ?? [];
+    const total = result?.total?.[0]?.count ?? 0;
 
     return {
       hospitals: docs.map((doc) => HospitalMapper.toDomain(doc)),
@@ -115,6 +177,37 @@ export class HospitalsRepository implements IHospitalRepository {
       )
       .lean()
       .exec();
+    return doc ? HospitalMapper.toDomain(doc) : null;
+  }
+
+  async update(
+    id: string,
+    data: Partial<Omit<CreateHospitalInput, 'accountId'>>,
+    session?: ClientSession,
+  ): Promise<HospitalEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+
+    const op = session ? { session, new: true } : { new: true };
+    const updateData: Record<string, unknown> = {
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    // Handle string to ObjectId conversion for addressId
+    if (data.addressId !== undefined) {
+      updateData['addressId'] =
+        data.addressId != null ? new Types.ObjectId(data.addressId) : null;
+    }
+
+    const doc = await this.hospitalModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(id), ...this.notDeleted },
+        { $set: updateData },
+        op,
+      )
+      .lean()
+      .exec();
+
     return doc ? HospitalMapper.toDomain(doc) : null;
   }
 }

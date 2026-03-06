@@ -2,6 +2,10 @@ import type { ClientSession } from 'mongoose';
 import { DoctorProfileEntity } from '../entities';
 import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
 import type { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
+import type {
+  DoctorProfileResponseDto,
+  PaginatedDoctorsResponseDto,
+} from '../dto/doctor-profile-response.dto';
 
 export interface CreateDoctorProfileData {
   fullName: string;
@@ -30,6 +34,7 @@ export interface HospitalDoctorsQuery {
 
 export interface DoctorsQuery extends HospitalDoctorsQuery {
   hospitalId?: string;
+  isVerified?: boolean;
 }
 
 export interface PaginatedDoctorProfiles {
@@ -53,7 +58,8 @@ export interface IDoctorProfileService {
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
   ): Promise<DoctorProfileEntity>;
-  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles>;
+  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorsResponseDto>;
+  getDoctorById(id: string): Promise<DoctorProfileResponseDto>;
   updateProfile(
     doctorProfileId: string,
     dto: UpdateDoctorProfileDto,
@@ -63,4 +69,7 @@ export interface IDoctorProfileService {
     accountId: string,
     email: string,
   ): Promise<DoctorProfileEntity | null>;
+  getSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<Map<string, string[]>>;
 }

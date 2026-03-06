@@ -17,6 +17,6 @@ import { AddressesService } from './services';
     { provide: ADDRESS_REPOSITORY_TOKEN, useClass: AddressesRepository },
     { provide: ADDRESS_SERVICE_TOKEN, useClass: AddressesService },
   ],
-  exports: [ADDRESS_SERVICE_TOKEN],
+  exports: [ADDRESS_SERVICE_TOKEN, ADDRESS_REPOSITORY_TOKEN],
 })
 export class AddressesModule {}
