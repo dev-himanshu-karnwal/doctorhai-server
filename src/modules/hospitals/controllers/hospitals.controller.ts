@@ -37,7 +37,6 @@ import {
 import { ResourceNotFoundException } from '../../../common/exceptions';
 import type { IAddressService } from '../../addresses/interfaces';
 import { AddressEntity } from '../../addresses/entities';
-import { GetHospitalDoctorsQueryDto } from '../../doctor-profiles/dto/get-hospital-doctors-query.dto';
 
 @ApiTags('hospitals')
 @Controller('hospitals')
@@ -61,7 +60,6 @@ export class HospitalsController {
   @ApiBadRequestResponse({ description: 'Validation failed' })
   async getHospitalById(
     @Param('id') id: string,
-    @Query() query: GetHospitalDoctorsQueryDto,
   ): Promise<DataKeyWrapper<'hospital'>> {
     const hospital = await this.hospitalService.findById(id);
     if (!hospital) {
@@ -79,18 +77,6 @@ export class HospitalsController {
         // Silently fail if address not found or keep it null
       }
     }
-
-    // Fetch doctors associated with this hospital id with pagination and filters
-    const doctorsResult = await this.doctorProfileService.getDoctors({
-      hospitalId: id,
-      page: query.page,
-      limit: query.limit,
-      search: query.search,
-      specialization: query.specialization,
-      designation: query.designation,
-      sortBy: query.sortBy,
-      sortOrder: query.sortOrder,
-    });
 
     const response: HospitalDetailDto = {
       id: hospital.id,
@@ -117,20 +103,6 @@ export class HospitalsController {
             pincode: address.pincode,
           }
         : null,
-      doctors: {
-        items: doctorsResult.doctors.map((d) => ({
-          id: d.id,
-          fullName: d.fullName,
-          designation: d.designation,
-          specialization: d.specialization,
-          bio: d.bio,
-          slug: d.slug,
-          profilePhotoUrl: d.profilePhotoUrl,
-          status: d.status,
-          hasExperience: d.hasExperience,
-        })),
-        meta: doctorsResult.paginatedmetadata,
-      },
     };
 
     return ApiResponse.withDataKey('hospital', response);
