@@ -107,6 +107,7 @@ export class AuthMeService {
           email: doctor.email,
           slug: doctor.slug,
           bio: doctor.bio,
+          hasExperience: doctor.hasExperience,
           profilePhotoUrl: doctor.profilePhotoUrl,
           hospitalId: doctor.hospitalId,
           createdAt: doctor.createdAt,

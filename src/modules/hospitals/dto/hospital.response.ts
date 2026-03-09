@@ -168,9 +168,6 @@ export class HospitalDetailDto {
 
   @ApiProperty({ type: HospitalDetailAddressDto, nullable: true })
   address: HospitalDetailAddressDto | null;
-
-  @ApiProperty({ type: HospitalDoctorsPaginatedDto })
-  doctors: HospitalDoctorsPaginatedDto;
   @ApiProperty({ example: 150 })
   public_view_count: number;
   @ApiProperty()
