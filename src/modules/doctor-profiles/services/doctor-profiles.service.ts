@@ -187,6 +187,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         hasExperience: doctor.hasExperience,
         bio: doctor.bio,
         hospitalId: doctor.hospitalId,
+        public_view_count: doctor.public_view_count,
         status: s
           ? {
               status: s.status,
@@ -216,6 +217,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
 
   async getDoctorById(id: string): Promise<DoctorProfileResponseDto> {
     this.logger.debug(`Getting doctor profile by id: ${id}`);
+    await this.doctorProfileRepo.incrementViewCount(id);
     const doctor = await this.doctorProfileRepo.findById(id);
     if (!doctor) {
       throw new BusinessRuleViolationException('Doctor profile not found');
@@ -233,6 +235,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       hasExperience: doctor.hasExperience,
       bio: doctor.bio,
       hospitalId: doctor.hospitalId,
+      public_view_count: doctor.public_view_count,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);

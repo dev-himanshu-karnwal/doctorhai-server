@@ -26,6 +26,7 @@ export interface HospitalDocLike {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
+  public_view_count?: number;
 }
 
 export class HospitalMapper {
@@ -44,6 +45,7 @@ export class HospitalMapper {
       doc.type ?? null,
       doc.timeline ?? null,
       doc.facilities ?? null,
+      doc.public_view_count ?? 0,
       doc.createdAt,
       doc.updatedAt,
       doc.deletedAt ?? null,

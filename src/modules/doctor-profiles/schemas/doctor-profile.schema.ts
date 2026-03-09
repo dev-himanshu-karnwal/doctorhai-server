@@ -17,6 +17,7 @@ export interface DoctorProfileDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  public_view_count: number;
 }
 
 export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
@@ -45,6 +46,7 @@ export const DoctorProfileSchema = new Schema<DoctorProfileDocument>(
     hospitalId: { type: Schema.Types.ObjectId, ref: 'Hospital', default: null },
     hasExperience: { type: String, required: false, default: null },
     deletedAt: { type: Date, default: null },
+    public_view_count: { type: Number, default: 0 },
   },
   { timestamps: true, collection: 'doctor_profiles' },
 );

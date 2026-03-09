@@ -25,6 +25,7 @@ export interface HospitalDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  public_view_count: number;
 }
 
 export const HospitalSchema = new Schema<HospitalDocument>(
@@ -61,6 +62,7 @@ export const HospitalSchema = new Schema<HospitalDocument>(
     ],
     facilities: { type: [String], default: [] },
     deletedAt: { type: Date, default: null },
+    public_view_count: { type: Number, default: 0 },
   },
   { timestamps: true, collection: 'hospitals' },
 );

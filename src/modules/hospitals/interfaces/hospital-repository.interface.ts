@@ -37,4 +37,5 @@ export interface IHospitalRepository {
     data: Partial<Omit<CreateHospitalInput, 'accountId'>>,
     session?: ClientSession,
   ): Promise<HospitalEntity | null>;
+  incrementViewCount(id: string): Promise<void>;
 }

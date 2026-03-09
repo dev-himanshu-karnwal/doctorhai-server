@@ -14,6 +14,7 @@ export class DoctorProfileEntity {
     public readonly createdBy: string | null,
     public readonly hospitalId: string | null,
     public readonly hasExperience: string | null,
+    public readonly public_view_count: number,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly deletedAt: Date | null,

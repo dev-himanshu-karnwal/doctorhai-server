@@ -89,6 +89,7 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
               ? new Types.ObjectId(data.hospitalId)
               : null,
           deletedAt: null,
+          public_view_count: 0,
         },
       ],
       options,
@@ -132,7 +133,7 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     const sort = buildSort<NonNullable<DoctorsQuery['sortBy']>>(
       { sortBy: query.sortBy, sortOrder: query.sortOrder },
       'fullName',
-      ['fullName', 'createdAt'] as const,
+      ['fullName', 'createdAt', 'public_view_count'] as const,
     );
 
     const skip = (query.page - 1) * query.limit;
@@ -297,5 +298,11 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       hospitalId: res.hospitalId.toString(),
       specialization: res.specialization,
     }));
+  }
+  async incrementViewCount(id: string): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    await this.doctorProfileModel
+      .findByIdAndUpdate(id, { $inc: { public_view_count: 1 } })
+      .exec();
   }
 }

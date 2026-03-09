@@ -8,7 +8,7 @@ export interface HospitalsQuery {
   name?: string;
   isActive?: string;
   isVerified?: string;
-  sortBy?: 'name' | 'createdAt';
+  sortBy?: 'name' | 'createdAt' | 'public_view_count';
   sortOrder?: 'asc' | 'desc';
 }
 

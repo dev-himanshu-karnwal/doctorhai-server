@@ -42,6 +42,8 @@ export class HospitalListItemDto {
 
   @ApiProperty({ example: ['Cardiology', 'Neurology'] })
   specialist: string[];
+  @ApiProperty({ example: 100 })
+  public_view_count: number;
 }
 
 export class HospitalDetailAddressDto {
@@ -169,7 +171,8 @@ export class HospitalDetailDto {
 
   @ApiProperty({ type: HospitalDoctorsPaginatedDto })
   doctors: HospitalDoctorsPaginatedDto;
-
+  @ApiProperty({ example: 150 })
+  public_view_count: number;
   @ApiProperty()
   createdAt: Date;
 

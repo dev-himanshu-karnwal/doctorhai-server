@@ -37,12 +37,12 @@ export class GetHospitalDoctorsQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     description: 'Sort field',
-    enum: ['fullName', 'createdAt'],
+    enum: ['fullName', 'createdAt', 'public_view_count'],
     default: 'fullName',
   })
   @IsOptional()
-  @IsIn(['fullName', 'createdAt'])
-  sortBy?: 'fullName' | 'createdAt';
+  @IsIn(['fullName', 'createdAt', 'public_view_count'])
+  sortBy?: 'fullName' | 'createdAt' | 'public_view_count';
 
   @ApiPropertyOptional({
     description: 'Sort direction',

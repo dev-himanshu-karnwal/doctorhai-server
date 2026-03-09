@@ -52,4 +52,5 @@ export interface IDoctorProfileRepository {
   findSpecializationsByHospitalIds(
     hospitalIds: string[],
   ): Promise<{ hospitalId: string; specialization: string }[]>;
+  incrementViewCount(id: string): Promise<void>;
 }

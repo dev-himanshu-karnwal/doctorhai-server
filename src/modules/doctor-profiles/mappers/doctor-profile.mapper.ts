@@ -18,6 +18,7 @@ export interface DoctorProfileDocLike {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
+  public_view_count?: number;
 }
 
 export class DoctorProfileMapper {
@@ -37,6 +38,7 @@ export class DoctorProfileMapper {
       doc.createdBy != null ? doc.createdBy.toString() : null,
       doc.hospitalId != null ? doc.hospitalId.toString() : null,
       doc.hasExperience ?? null,
+      doc.public_view_count ?? 0,
       doc.createdAt,
       doc.updatedAt,
       doc.deletedAt ?? null,

@@ -28,7 +28,7 @@ export interface HospitalDoctorsQuery {
   search?: string;
   specialization?: string;
   designation?: string;
-  sortBy?: 'fullName' | 'createdAt';
+  sortBy?: 'fullName' | 'createdAt' | 'public_view_count';
   sortOrder?: 'asc' | 'desc';
 }
 

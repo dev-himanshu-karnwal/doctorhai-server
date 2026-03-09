@@ -61,6 +61,7 @@ export class HospitalsRepository implements IHospitalRepository {
           coverPhotoUrl: data.coverPhotoUrl ?? null,
           isActive: true,
           deletedAt: null,
+          public_view_count: 0,
         },
       ],
       options,
@@ -209,5 +210,11 @@ export class HospitalsRepository implements IHospitalRepository {
       .exec();
 
     return doc ? HospitalMapper.toDomain(doc) : null;
+  }
+  async incrementViewCount(id: string): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    await this.hospitalModel
+      .findByIdAndUpdate(id, { $inc: { public_view_count: 1 } })
+      .exec();
   }
 }

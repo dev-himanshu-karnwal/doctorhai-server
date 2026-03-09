@@ -105,6 +105,7 @@ export class HospitalsController {
       type: hospital.type,
       timeline: hospital.timeline,
       facilities: hospital.facilities,
+      public_view_count: hospital.public_view_count,
       createdAt: hospital.createdAt,
       updatedAt: hospital.updatedAt,
       address: address
@@ -184,6 +185,7 @@ export class HospitalsController {
         specialist: specialistsMap.get(hospital.id) ?? [],
 
         facilities: hospital.facilities,
+        public_view_count: hospital.public_view_count,
         createdAt: hospital.createdAt,
         updatedAt: hospital.updatedAt,
       }),

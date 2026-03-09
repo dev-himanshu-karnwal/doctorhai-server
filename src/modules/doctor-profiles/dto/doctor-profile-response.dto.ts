@@ -53,6 +53,9 @@ export class DoctorProfileResponseDto {
   @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
   hospitalId: string | null;
 
+  @ApiProperty({ example: 42 })
+  public_view_count: number;
+
   @ApiPropertyOptional({ type: DoctorStatusResponseDto })
   status?: DoctorStatusResponseDto | null;
 }
