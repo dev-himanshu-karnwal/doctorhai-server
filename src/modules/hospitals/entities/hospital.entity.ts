@@ -9,6 +9,7 @@ export class HospitalEntity {
     public readonly email: string,
     public readonly coverPhotoUrl: string | null,
     public readonly isActive: boolean,
+    public readonly isVerified: boolean,
     public readonly location: {
       latitude: number;
       longitude: number;

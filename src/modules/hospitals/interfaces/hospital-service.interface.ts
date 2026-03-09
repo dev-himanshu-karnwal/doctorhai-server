@@ -1,5 +1,6 @@
 import type { ClientSession } from 'mongoose';
 import { HospitalEntity } from '../entities';
+import { HospitalStats } from '../dto/hospital_stats.dto';
 
 export interface HospitalsQuery {
   page: number;
@@ -49,7 +50,7 @@ export interface IHospitalService {
         IHospitalService['create'] extends (
           data: infer D,
           ...args: any[]
-        ) => any
+        ) => Promise<any>
           ? D
           : any,
         'accountId'
@@ -59,4 +60,5 @@ export interface IHospitalService {
   getHospitals(query: HospitalsQuery): Promise<PaginatedHospitals>;
   findById(id: string): Promise<HospitalEntity | null>;
   incrementHospitalViewCount(hospitalId: string): Promise<void>;
+  getStats(): Promise<HospitalStats>;
 }

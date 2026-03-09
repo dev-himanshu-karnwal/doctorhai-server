@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
+import {
+  ClientSession,
+  FilterQuery,
+  Model,
+  PipelineStage,
+  Types,
+} from 'mongoose';
 import { DoctorProfileDocument } from '../schemas';
 import { DoctorProfileEntity } from '../entities';
 import { DoctorProfileMapper } from '../mappers';
@@ -8,17 +14,13 @@ import type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
   UpdateDoctorProfileInput,
+  DoctorStats,
 } from '../interfaces';
 import type {
   DoctorsQuery,
   PaginatedDoctorProfiles,
 } from '../interfaces/doctor-profile-service.interface';
-import {
-  buildSort,
-  findWithPagination,
-} from '../../../common/mongoose/query-helpers';
-import type { PaginationOptions } from '../../../common/interfaces';
-import console from 'console';
+import { buildSort } from '../../../common/mongoose/query-helpers';
 
 @Injectable()
 export class DoctorProfilesRepository implements IDoctorProfileRepository {
@@ -32,6 +34,7 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
   async findById(
     id: string,
   ): Promise<Awaited<ReturnType<IDoctorProfileRepository['findById']>>> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.doctorProfileModel.findById(id).exec();
     return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
@@ -138,39 +141,8 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
 
     const skip = (query.page - 1) * query.limit;
 
-    // When isVerified is not provided, use the fast simple path (no join)
-    if (query.isVerified === undefined) {
-      const paginationOptions: PaginationOptions = {
-        page: query.page,
-        limit: query.limit,
-      };
-
-      const result = await findWithPagination(
-        this.doctorProfileModel,
-        baseFilter,
-        paginationOptions,
-        sort,
-      );
-
-      return {
-        doctors: result.items.map((doc) => DoctorProfileMapper.toDomain(doc)),
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-      };
-    }
-
-    // Explicitly cast to boolean as query params might arrive as strings despite DTO transforms
-    const isVerifiedBool = String(query.isVerified).toLowerCase() === 'true';
-
-    console.log(
-      `[DoctorProfilesRepository] isVerified raw value: ${query.isVerified} (type: ${typeof query.isVerified}) -> cast to boolean: ${isVerifiedBool}`,
-    );
-
-    // When isVerified is provided (true or false), use aggregation to join accounts.
-    // preserveNullAndEmptyArrays: true ensures doctors with no linked account are
-    // NOT silently dropped — they will have account: null and be treated as isVerified: false.
-    const pipeline: Parameters<typeof this.doctorProfileModel.aggregate>[0] = [
+    // Build the aggregation pipeline to always join accounts and fetch isVerified
+    const pipeline: PipelineStage[] = [
       { $match: baseFilter },
       {
         $lookup: {
@@ -183,17 +155,25 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       {
         $unwind: {
           path: '$account',
-          preserveNullAndEmptyArrays: true,
+          preserveNullAndEmptyArrays: true, // Handle doctors without accounts gracefully
         },
       },
       {
-        $match: {
-          $expr: {
-            $eq: [{ $ifNull: ['$account.isVerified', false] }, isVerifiedBool],
-          },
+        $addFields: {
+          isVerified: { $ifNull: ['$account.isVerified', false] },
         },
       },
     ];
+
+    // If isVerified filter is provided, add it to the pipeline
+    if (query.isVerified !== undefined) {
+      const isVerifiedBool = String(query.isVerified).toLowerCase() === 'true';
+      pipeline.push({
+        $match: {
+          isVerified: isVerifiedBool,
+        },
+      });
+    }
 
     // Run count and data fetch in parallel
     const [countResult, docs] = await Promise.all([
@@ -304,5 +284,77 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     await this.doctorProfileModel
       .findByIdAndUpdate(id, { $inc: { public_view_count: 1 } })
       .exec();
+  }
+
+  async getStats(hospitalId?: string): Promise<DoctorStats> {
+    const matchStage: FilterQuery<DoctorProfileDocument> = { deletedAt: null };
+    if (hospitalId && Types.ObjectId.isValid(hospitalId)) {
+      matchStage.hospitalId = new Types.ObjectId(hospitalId);
+    }
+
+    const statsResult = await this.doctorProfileModel
+      .aggregate<DoctorStats>([
+        { $match: matchStage },
+        {
+          $lookup: {
+            from: 'accounts',
+            localField: 'accountId',
+            foreignField: '_id',
+            as: 'account',
+          },
+        },
+        { $unwind: { path: '$account', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'doctor_statuses',
+            localField: '_id',
+            foreignField: 'doctorProfileId',
+            as: 'status_info',
+          },
+        },
+        { $unwind: { path: '$status_info', preserveNullAndEmptyArrays: true } },
+        {
+          $group: {
+            _id: null,
+            total_doctor_count: { $sum: 1 },
+            total_verfied_count: {
+              $sum: { $cond: [{ $eq: ['$account.isVerified', true] }, 1, 0] },
+            },
+            total_unverified_count: {
+              $sum: {
+                $cond: [
+                  { $eq: [{ $ifNull: ['$account.isVerified', false] }, false] },
+                  1,
+                  0,
+                ],
+              },
+            },
+            total_available: {
+              $sum: {
+                $cond: [{ $eq: ['$status_info.status', 'available'] }, 1, 0],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            total_doctor_count: 1,
+            total_verfied_count: 1,
+            total_unverified_count: 1,
+            total_available: 1,
+          },
+        },
+      ])
+      .exec();
+
+    return (
+      statsResult[0] || {
+        total_doctor_count: 0,
+        total_verfied_count: 0,
+        total_unverified_count: 0,
+        total_available: 0,
+      }
+    );
   }
 }

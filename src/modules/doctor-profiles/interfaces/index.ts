@@ -2,6 +2,7 @@ export type {
   IDoctorProfileRepository,
   CreateDoctorProfileInput,
   UpdateDoctorProfileInput,
+  DoctorStats,
 } from './doctor-profile-repository.interface';
 export type {
   IDoctorProfileService,

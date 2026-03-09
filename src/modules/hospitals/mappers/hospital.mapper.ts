@@ -27,6 +27,7 @@ export interface HospitalDocLike {
   updatedAt: Date;
   deletedAt?: Date | null;
   public_view_count?: number;
+  isVerified?: boolean;
 }
 
 export class HospitalMapper {
@@ -41,6 +42,7 @@ export class HospitalMapper {
       doc.email,
       doc.coverPhotoUrl ?? null,
       doc.isActive ?? true,
+      doc.isVerified ?? false,
       doc.location ?? null,
       doc.type ?? null,
       doc.timeline ?? null,

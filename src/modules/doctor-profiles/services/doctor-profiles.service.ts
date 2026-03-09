@@ -31,6 +31,7 @@ import {
   DoctorProfileResponseDto,
   PaginatedDoctorsResponseDto,
 } from '../dto/doctor-profile-response.dto';
+import { DoctorStats } from '../dto/doctor-stats.dto';
 
 /**
  * Service for managing doctor profiles.
@@ -188,6 +189,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         bio: doctor.bio,
         hospitalId: doctor.hospitalId,
         public_view_count: doctor.public_view_count,
+        isVerified: doctor.isVerified,
         status: s
           ? {
               status: s.status,
@@ -235,6 +237,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       bio: doctor.bio,
       hospitalId: doctor.hospitalId,
       public_view_count: doctor.public_view_count,
+      isVerified: doctor.isVerified,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
@@ -343,5 +346,12 @@ export class DoctorProfilesService implements IDoctorProfileService {
     }
 
     return map;
+  }
+
+  async getStats(hospitalId?: string): Promise<DoctorStats> {
+    this.logger.debug(
+      `Fetching doctor profile statistics${hospitalId ? ` for hospital: ${hospitalId}` : ''}`,
+    );
+    return this.doctorProfileRepo.getStats(hospitalId);
   }
 }

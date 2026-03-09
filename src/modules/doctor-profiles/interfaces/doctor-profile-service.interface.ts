@@ -6,6 +6,7 @@ import type {
   DoctorProfileResponseDto,
   PaginatedDoctorsResponseDto,
 } from '../dto/doctor-profile-response.dto';
+import { DoctorStats } from '../dto/doctor-stats.dto';
 
 export interface CreateDoctorProfileData {
   fullName: string;
@@ -73,4 +74,5 @@ export interface IDoctorProfileService {
     hospitalIds: string[],
   ): Promise<Map<string, string[]>>;
   incrementDoctorViewCount(doctorProfileId: string): Promise<void>;
+  getStats(hospitalId?: string): Promise<DoctorStats>;
 }

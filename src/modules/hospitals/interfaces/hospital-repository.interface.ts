@@ -4,6 +4,8 @@ import type {
   HospitalsQuery,
   PaginatedHospitals,
 } from './hospital-service.interface';
+import { HospitalStats } from '../dto/hospital_stats.dto';
+export { HospitalStats };
 
 export interface CreateHospitalInput {
   accountId: string;
@@ -38,4 +40,5 @@ export interface IHospitalRepository {
     session?: ClientSession,
   ): Promise<HospitalEntity | null>;
   incrementViewCount(id: string): Promise<void>;
+  getStats(): Promise<HospitalStats>;
 }

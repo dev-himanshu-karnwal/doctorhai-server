@@ -56,6 +56,9 @@ export class DoctorProfileResponseDto {
   @ApiProperty({ example: 42 })
   public_view_count: number;
 
+  @ApiProperty({ example: true })
+  isVerified: boolean;
+
   @ApiPropertyOptional({ type: DoctorStatusResponseDto })
   status?: DoctorStatusResponseDto | null;
 }

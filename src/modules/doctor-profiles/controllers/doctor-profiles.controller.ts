@@ -21,6 +21,7 @@ import {
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import {
   CurrentUser,
@@ -49,6 +50,22 @@ export class DoctorProfilesController {
     @Inject(DOCTOR_PROFILE_SERVICE_TOKEN)
     private readonly doctorProfileService: IDoctorProfileService,
   ) {}
+
+  @Get('stats')
+  @Public()
+  @ApiOperation({
+    summary: 'Get doctor statistics',
+    description:
+      'Returns total, verified, unverified and available counts for doctors.',
+  })
+  @ApiOkResponse({ description: 'Statistics retrieved successfully' })
+  @ApiQuery({ name: 'hospitalId', required: false, type: String })
+  async getStats(
+    @Query('hospitalId') hospitalId?: string,
+  ): Promise<DataKeyWrapper<'doctorStats'>> {
+    const doctorStats = await this.doctorProfileService.getStats(hospitalId);
+    return ApiResponse.withDataKey('doctorStats', doctorStats);
+  }
 
   @Get()
   @Public()

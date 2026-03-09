@@ -51,6 +51,21 @@ export class HospitalsController {
     private readonly addressService: IAddressService,
   ) {}
 
+  @Get('stats')
+  @Public()
+  @ApiOperation({
+    summary: 'Get hospital statistics',
+    description:
+      'Returns total, verified, and unverified counts for hospitals.',
+  })
+  @ApiOkResponse({
+    description: 'Statistics retrieved successfully',
+  })
+  async getStats(): Promise<DataKeyWrapper<'hospitalStats'>> {
+    const hospitalStats = await this.hospitalService.getStats();
+    return ApiResponse.withDataKey('hospitalStats', hospitalStats);
+  }
+
   @Get(':id')
   @Public()
   @ApiOperation({
@@ -93,6 +108,7 @@ export class HospitalsController {
       timeline: hospital.timeline,
       facilities: hospital.facilities,
       public_view_count: hospital.public_view_count,
+      isVerified: hospital.isVerified,
       createdAt: hospital.createdAt,
       updatedAt: hospital.updatedAt,
       address: address
@@ -159,6 +175,7 @@ export class HospitalsController {
 
         facilities: hospital.facilities,
         public_view_count: hospital.public_view_count,
+        isVerified: hospital.isVerified,
         createdAt: hospital.createdAt,
         updatedAt: hospital.updatedAt,
       }),

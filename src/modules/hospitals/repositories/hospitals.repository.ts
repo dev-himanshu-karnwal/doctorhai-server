@@ -10,7 +10,11 @@ import {
 import { HospitalDocument } from '../schemas';
 import { HospitalEntity } from '../entities';
 import { HospitalMapper } from '../mappers';
-import type { IHospitalRepository, CreateHospitalInput } from '../interfaces';
+import {
+  IHospitalRepository,
+  CreateHospitalInput,
+  HospitalStats,
+} from '../interfaces';
 import {
   HospitalsQuery,
   PaginatedHospitals,
@@ -103,6 +107,11 @@ export class HospitalsRepository implements IHospitalRepository {
         },
       },
       { $unwind: '$account' },
+      {
+        $addFields: {
+          isVerified: '$account.isVerified',
+        },
+      },
     ];
 
     if (isVerified !== undefined) {
@@ -216,5 +225,50 @@ export class HospitalsRepository implements IHospitalRepository {
     await this.hospitalModel
       .findByIdAndUpdate(id, { $inc: { public_view_count: 1 } })
       .exec();
+  }
+
+  async getStats(): Promise<HospitalStats> {
+    const statsResult = await this.hospitalModel
+      .aggregate<HospitalStats>([
+        { $match: { deletedAt: null } },
+        {
+          $lookup: {
+            from: 'accounts',
+            localField: 'accountId',
+            foreignField: '_id',
+            as: 'account',
+          },
+        },
+        { $unwind: '$account' },
+        {
+          $group: {
+            _id: null,
+            total_hospital_count: { $sum: 1 },
+            total_verified_count: {
+              $sum: { $cond: [{ $eq: ['$account.isVerified', true] }, 1, 0] },
+            },
+            total_unverified_count: {
+              $sum: { $cond: [{ $eq: ['$account.isVerified', false] }, 1, 0] },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            total_hospital_count: 1,
+            total_verified_count: 1,
+            total_unverified_count: 1,
+          },
+        },
+      ])
+      .exec();
+
+    return (
+      statsResult[0] || {
+        total_hospital_count: 0,
+        total_verified_count: 0,
+        total_unverified_count: 0,
+      }
+    );
   }
 }
