@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Post,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -197,5 +198,19 @@ export class HospitalsController {
   ): Promise<DataKeyWrapper<'hospital'>> {
     const hospital = await this.hospitalService.update(id, dto);
     return ApiResponse.withDataKey('hospital', hospital);
+  }
+
+  @Post(':hospitalId/increment-view-count')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Increment hospital view count',
+  })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
+  async incrementViewCount(
+    @Param('hospitalId') hospitalId: string,
+  ): Promise<DataKeyWrapper<'hospital'>> {
+    await this.hospitalService.incrementHospitalViewCount(hospitalId);
+    return ApiResponse.withDataKey('hospital', null);
   }
 }

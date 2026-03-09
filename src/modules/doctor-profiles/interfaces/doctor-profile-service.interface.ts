@@ -72,4 +72,5 @@ export interface IDoctorProfileService {
   getSpecializationsByHospitalIds(
     hospitalIds: string[],
   ): Promise<Map<string, string[]>>;
+  incrementDoctorViewCount(doctorProfileId: string): Promise<void>;
 }

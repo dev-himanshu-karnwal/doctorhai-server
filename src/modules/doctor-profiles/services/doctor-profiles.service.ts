@@ -217,7 +217,6 @@ export class DoctorProfilesService implements IDoctorProfileService {
 
   async getDoctorById(id: string): Promise<DoctorProfileResponseDto> {
     this.logger.debug(`Getting doctor profile by id: ${id}`);
-    await this.doctorProfileRepo.incrementViewCount(id);
     const doctor = await this.doctorProfileRepo.findById(id);
     if (!doctor) {
       throw new BusinessRuleViolationException('Doctor profile not found');
@@ -249,6 +248,11 @@ export class DoctorProfilesService implements IDoctorProfileService {
     }
 
     return response;
+  }
+
+  async incrementDoctorViewCount(id: string): Promise<void> {
+    this.logger.debug(`Incrementing view count for doctor profile: ${id}`);
+    await this.doctorProfileRepo.incrementViewCount(id);
   }
 
   async updateEmailByAccountId(

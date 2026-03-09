@@ -151,4 +151,18 @@ export class DoctorProfilesController {
     );
     return ApiResponse.withDataKey('doctor', doctor);
   }
+
+  @Post(':doctorProfileId/increment-view-count')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Increment doctor profile view count',
+  })
+  @ApiBadRequestResponse({ description: 'Validation failed' })
+  async incrementViewCount(
+    @Param('doctorProfileId') doctorProfileId: string,
+  ): Promise<DataKeyWrapper<'doctor'>> {
+    await this.doctorProfileService.incrementDoctorViewCount(doctorProfileId);
+    return ApiResponse.withDataKey('doctor', null);
+  }
 }

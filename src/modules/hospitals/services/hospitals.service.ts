@@ -65,7 +65,11 @@ export class HospitalsService implements IHospitalService {
     id: string,
   ): Promise<Awaited<ReturnType<IHospitalService['findById']>>> {
     this.logger.debug(`Finding hospital by id: ${id}`);
-    await this.hospitalRepo.incrementViewCount(id);
     return this.hospitalRepo.findById(id);
+  }
+
+  async incrementHospitalViewCount(id: string): Promise<void> {
+    this.logger.debug(`Incrementing view count for hospital: ${id}`);
+    await this.hospitalRepo.incrementViewCount(id);
   }
 }

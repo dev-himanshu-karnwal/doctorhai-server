@@ -58,4 +58,5 @@ export interface IHospitalService {
   ): Promise<HospitalEntity | null>;
   getHospitals(query: HospitalsQuery): Promise<PaginatedHospitals>;
   findById(id: string): Promise<HospitalEntity | null>;
+  incrementHospitalViewCount(hospitalId: string): Promise<void>;
 }
