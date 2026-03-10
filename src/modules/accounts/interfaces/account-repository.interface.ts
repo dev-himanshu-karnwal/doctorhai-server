@@ -7,4 +7,9 @@ export interface IAccountRepository {
   findAccounts(
     query: AccountsQueryDto,
   ): Promise<PaginatedResult<AccountEntity>>;
+  updateVerificationStatus(
+    id: string,
+    isVerified: boolean,
+  ): Promise<AccountEntity | null>;
+  delete(id: string, session?: import('mongoose').ClientSession): Promise<void>;
 }

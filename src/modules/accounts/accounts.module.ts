@@ -11,6 +11,7 @@ import { AccountsController } from './controllers/accounts.controller';
 import { DoctorProfilesModule } from '../doctor-profiles/doctor-profiles.module';
 import { HospitalsModule } from '../hospitals/hospitals.module';
 import { AddressesModule } from '../addresses/addresses.module';
+import { DoctorStatusesModule } from '../doctor-statuses/doctor-statuses.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { AuthModule } from '../auth/auth.module';
     DoctorProfilesModule,
     HospitalsModule,
     AddressesModule,
+    DoctorStatusesModule,
     AuthModule,
   ],
   controllers: [AccountsController],

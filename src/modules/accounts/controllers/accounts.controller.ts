@@ -1,8 +1,11 @@
 import {
   Controller,
   Get,
+  Patch,
+  Delete,
   Query,
   Param,
+  Body,
   HttpStatus,
   Inject,
   UseGuards,
@@ -18,6 +21,7 @@ import { PermissionsGuard } from '../../auth/guards/permissions.guard';
 import type { IAccountService } from '../interfaces/account-service.interface';
 import { AccountsQueryDto } from '../dto/accounts-query.dto';
 import { AccountResponseDto } from '../dto/account-response.dto';
+import { UpdateAccountVerificationDto } from '../dto/update-account-verification.dto';
 import { ApiResponse } from '../../../common/classes/api-response.class';
 import { ACCOUNT_SERVICE_TOKEN } from '../../../common/constants';
 
@@ -57,6 +61,37 @@ export class AccountsController {
       account,
       'Account retrieved successfully',
       'account',
+    );
+  }
+
+  @Patch(':id/verify')
+  @RequirePermissions({ permissions: ['super_admin.manage'] })
+  @ApiOperation({ summary: 'Update the verification status of an account' })
+  @SwaggerResponse({ status: HttpStatus.OK, type: AccountResponseDto })
+  async updateVerificationStatus(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateAccountVerificationDto,
+  ) {
+    const account = await this.accountService.updateVerificationStatus(
+      id,
+      updateDto.isVerified,
+    );
+    return ApiResponse.success(
+      account,
+      'Account verification status updated successfully',
+      'account',
+    );
+  }
+
+  @Delete(':id')
+  @RequirePermissions({ permissions: ['super_admin.manage'] })
+  @ApiOperation({ summary: 'Delete account and all related data (cascade)' })
+  @SwaggerResponse({ status: HttpStatus.OK, description: 'Account deleted' })
+  async deleteAccount(@Param('id') id: string) {
+    await this.accountService.deleteAccount(id);
+    return ApiResponse.success(
+      null,
+      'Account and related data deleted successfully',
     );
   }
 }

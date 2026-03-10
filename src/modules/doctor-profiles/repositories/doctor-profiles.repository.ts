@@ -357,4 +357,29 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       }
     );
   }
+  async findByHospitalId(hospitalId: string): Promise<DoctorProfileEntity[]> {
+    if (!Types.ObjectId.isValid(hospitalId)) return [];
+    const docs = await this.doctorProfileModel
+      .find({ hospitalId: new Types.ObjectId(hospitalId), ...this.notDeleted })
+      .lean()
+      .exec();
+    return docs.map((doc) => DoctorProfileMapper.toDomain(doc));
+  }
+
+  async delete(id: string, session?: ClientSession): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    const options = session ? { session } : {};
+    await this.doctorProfileModel.findByIdAndDelete(id, options).exec();
+  }
+
+  async deleteByHospitalId(
+    hospitalId: string,
+    session?: ClientSession,
+  ): Promise<void> {
+    if (!Types.ObjectId.isValid(hospitalId)) return;
+    const options = session ? { session } : {};
+    await this.doctorProfileModel
+      .deleteMany({ hospitalId: new Types.ObjectId(hospitalId) }, options)
+      .exec();
+  }
 }

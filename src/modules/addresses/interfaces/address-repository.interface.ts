@@ -17,4 +17,5 @@ export interface IAddressRepository {
     data: CreateAddressInput,
     session?: ClientSession,
   ): Promise<AddressEntity>;
+  delete(id: string, session?: ClientSession): Promise<void>;
 }

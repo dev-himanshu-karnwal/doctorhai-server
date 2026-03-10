@@ -56,4 +56,10 @@ export interface IDoctorProfileRepository {
   ): Promise<{ hospitalId: string; specialization: string }[]>;
   incrementViewCount(id: string): Promise<void>;
   getStats(hospitalId?: string): Promise<DoctorStats>;
+  findByHospitalId(hospitalId: string): Promise<DoctorProfileEntity[]>;
+  delete(id: string, session?: ClientSession): Promise<void>;
+  deleteByHospitalId(
+    hospitalId: string,
+    session?: ClientSession,
+  ): Promise<void>;
 }

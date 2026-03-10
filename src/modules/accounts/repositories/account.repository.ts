@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types, ClientSession } from 'mongoose';
 import { AccountDocument } from '../../auth/schemas';
 import { AccountEntity } from '../../auth/entities';
 import { AccountMapper } from '../mappers/account.mapper';
@@ -58,5 +58,26 @@ export class AccountRepository implements IAccountRepository {
       page: result.page,
       limit: result.limit,
     };
+  }
+
+  async updateVerificationStatus(
+    id: string,
+    isVerified: boolean,
+  ): Promise<AccountEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const doc = await this.accountModel
+      .findByIdAndUpdate(
+        id,
+        { $set: { isVerified } },
+        { new: true, runValidators: true },
+      )
+      .exec();
+    return doc ? AccountMapper.toDomain(doc) : null;
+  }
+
+  async delete(id: string, session?: ClientSession): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    const options = session ? { session } : {};
+    await this.accountModel.findByIdAndDelete(id, options).exec();
   }
 }

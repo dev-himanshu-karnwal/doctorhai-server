@@ -41,4 +41,5 @@ export interface IHospitalRepository {
   ): Promise<HospitalEntity | null>;
   incrementViewCount(id: string): Promise<void>;
   getStats(): Promise<HospitalStats>;
+  delete(id: string, session?: ClientSession): Promise<void>;
 }

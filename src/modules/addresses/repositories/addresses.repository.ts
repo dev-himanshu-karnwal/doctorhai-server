@@ -43,4 +43,10 @@ export class AddressesRepository implements IAddressRepository {
     );
     return AddressMapper.toDomain(doc);
   }
+
+  async delete(id: string, session?: ClientSession): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    const options = session ? { session } : {};
+    await this.addressModel.findByIdAndDelete(id, options).exec();
+  }
 }
