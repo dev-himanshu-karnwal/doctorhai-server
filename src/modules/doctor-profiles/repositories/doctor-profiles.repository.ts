@@ -106,13 +106,18 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     };
 
     if (query.hospitalId) {
-      if (Types.ObjectId.isValid(query.hospitalId)) {
-        // Match both ObjectId and its string representation to be safe
-        // because some records might have it stored as a string.
-        baseFilter.hospitalId = query.hospitalId;
-      } else {
-        baseFilter.hospitalId = String(query.hospitalId);
-      }
+      const hospitalIdStr = String(query.hospitalId);
+
+      const hospitalFilter = Types.ObjectId.isValid(hospitalIdStr)
+        ? {
+            $or: [
+              { hospitalId: new Types.ObjectId(hospitalIdStr) },
+              { hospitalId: hospitalIdStr },
+            ],
+          }
+        : { hospitalId: hospitalIdStr };
+
+      baseFilter.$and = [...(baseFilter.$and || []), hospitalFilter];
     }
 
     if (query.specialization != null && query.specialization.trim() !== '') {
