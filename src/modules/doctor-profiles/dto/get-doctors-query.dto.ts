@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsMongoId, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsMongoId, IsOptional } from 'class-validator';
 import { GetHospitalDoctorsQueryDto } from './get-hospital-doctors-query.dto';
 
 export class GetDoctorsQueryDto extends GetHospitalDoctorsQueryDto {
@@ -11,4 +12,18 @@ export class GetDoctorsQueryDto extends GetHospitalDoctorsQueryDto {
   @IsOptional()
   @IsMongoId()
   hospitalId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Filter by account verification status. Omit to return all doctors.',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
+  isVerified?: boolean;
 }

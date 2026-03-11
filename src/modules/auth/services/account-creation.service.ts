@@ -1,16 +1,15 @@
 import { Injectable, Inject } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
-import { AppConfigService } from '../../../config';
 import {
   ACCOUNT_SERVICE_TOKEN,
   ROLE_SERVICE_TOKEN,
+  PASSWORD_SERVICE_TOKEN,
+  IDENTITY_SERVICE_TOKEN,
 } from '../../../common/constants';
-import {
-  BusinessRuleViolationException,
-  ResourceNotFoundException,
-} from '../../../common/exceptions';
+import { ResourceNotFoundException } from '../../../common/exceptions';
 import type { IAccountService } from '../interfaces/account-service.interface';
 import type { IRoleService } from '../interfaces/role-service.interface';
+import type { IPasswordService } from '../interfaces/password-service.interface';
+import type { IIdentityService } from '../interfaces/identity-service.interface';
 import type { IAccountCreationService } from '../interfaces/account-creation-service.interface';
 import type { AccountEntity } from '../entities';
 import type { CreateAccountDto } from '../dto';
@@ -23,19 +22,14 @@ export class AccountCreationService implements IAccountCreationService {
     private readonly accountService: IAccountService,
     @Inject(ROLE_SERVICE_TOKEN)
     private readonly roleService: IRoleService,
-    private readonly appConfig: AppConfigService,
+    @Inject(PASSWORD_SERVICE_TOKEN)
+    private readonly passwordService: IPasswordService,
+    @Inject(IDENTITY_SERVICE_TOKEN)
+    private readonly identityService: IIdentityService,
   ) {}
 
   async ensureUsernameAvailable(username: string): Promise<void> {
-    const existing = await this.accountService.findOneByLogin(
-      'username',
-      username.trim(),
-    );
-    if (existing) {
-      throw new BusinessRuleViolationException(
-        `Username '${username}' is already taken`,
-      );
-    }
+    await this.identityService.ensureUsernameAvailable(username);
   }
 
   async createUsernameAccount(
@@ -50,11 +44,7 @@ export class AccountCreationService implements IAccountCreationService {
       throw new ResourceNotFoundException('Role', roleName);
     }
 
-    const bcryptRounds = this.appConfig.bcryptRounds;
-    const passwordHash = (await bcrypt.hash(
-      plainPassword,
-      bcryptRounds,
-    )) as string;
+    const passwordHash = await this.passwordService.hash(plainPassword);
 
     const createAccountDto: CreateAccountDto = {
       loginType: 'username',

@@ -4,6 +4,8 @@ import type {
   HospitalsQuery,
   PaginatedHospitals,
 } from './hospital-service.interface';
+import { HospitalStats } from '../dto/hospital_stats.dto';
+export { HospitalStats };
 
 export interface CreateHospitalInput {
   accountId: string;
@@ -13,9 +15,15 @@ export interface CreateHospitalInput {
   phone: string;
   email: string;
   coverPhotoUrl?: string | null;
+  location?: { latitude: number; longitude: number } | null;
+  type?: string | null;
+  timeline?: { day: string; opentime: string; closetime: string }[] | null;
+  facilities?: string[] | null;
+  isActive?: boolean;
 }
 
 export interface IHospitalRepository {
+  findById(id: string): Promise<HospitalEntity | null>;
   findByAccountId(accountId: string): Promise<HospitalEntity | null>;
   create(
     data: CreateHospitalInput,
@@ -26,4 +34,11 @@ export interface IHospitalRepository {
     accountId: string,
     email: string,
   ): Promise<HospitalEntity | null>;
+  update(
+    id: string,
+    data: Partial<Omit<CreateHospitalInput, 'accountId'>>,
+    session?: ClientSession,
+  ): Promise<HospitalEntity | null>;
+  incrementViewCount(id: string): Promise<void>;
+  getStats(): Promise<HospitalStats>;
 }

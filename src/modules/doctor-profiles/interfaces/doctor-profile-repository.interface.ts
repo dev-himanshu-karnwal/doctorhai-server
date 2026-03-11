@@ -4,6 +4,8 @@ import type {
   DoctorsQuery,
   PaginatedDoctorProfiles,
 } from './doctor-profile-service.interface';
+import { DoctorStats } from '../dto/doctor-stats.dto';
+export { DoctorStats };
 
 export interface CreateDoctorProfileInput {
   fullName: string;
@@ -26,6 +28,7 @@ export interface UpdateDoctorProfileInput {
   specialization?: string | null;
   bio?: string | null;
   slug?: string;
+  hasExperience?: string | null;
 }
 
 export interface IDoctorProfileRepository {
@@ -48,4 +51,9 @@ export interface IDoctorProfileRepository {
     accountId: string,
     email: string,
   ): Promise<DoctorProfileEntity | null>;
+  findSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<{ hospitalId: string; specialization: string }[]>;
+  incrementViewCount(id: string): Promise<void>;
+  getStats(hospitalId?: string): Promise<DoctorStats>;
 }

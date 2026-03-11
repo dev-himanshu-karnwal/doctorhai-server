@@ -53,6 +53,7 @@ export class AuthMeService {
       username: account.username,
       roles: roleNames,
       isActive: account.isActive,
+      isVerified: account.isVerified,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
     };
@@ -106,6 +107,7 @@ export class AuthMeService {
           email: doctor.email,
           slug: doctor.slug,
           bio: doctor.bio,
+          hasExperience: doctor.hasExperience,
           profilePhotoUrl: doctor.profilePhotoUrl,
           hospitalId: doctor.hospitalId,
           createdAt: doctor.createdAt,

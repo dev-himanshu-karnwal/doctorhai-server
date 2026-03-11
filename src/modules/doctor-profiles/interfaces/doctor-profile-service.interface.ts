@@ -2,7 +2,11 @@ import type { ClientSession } from 'mongoose';
 import { DoctorProfileEntity } from '../entities';
 import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
 import type { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
-import { UpdateDoctorStatusDto } from '../dto/update-doctor-status.dto';
+import type {
+  DoctorProfileResponseDto,
+  PaginatedDoctorsResponseDto,
+} from '../dto/doctor-profile-response.dto';
+import { DoctorStats } from '../dto/doctor-stats.dto';
 
 export interface CreateDoctorProfileData {
   fullName: string;
@@ -25,12 +29,13 @@ export interface HospitalDoctorsQuery {
   search?: string;
   specialization?: string;
   designation?: string;
-  sortBy?: 'fullName' | 'createdAt';
+  sortBy?: 'fullName' | 'createdAt' | 'public_view_count';
   sortOrder?: 'asc' | 'desc';
 }
 
 export interface DoctorsQuery extends HospitalDoctorsQuery {
   hospitalId?: string;
+  isVerified?: boolean;
 }
 
 export interface PaginatedDoctorProfiles {
@@ -54,8 +59,8 @@ export interface IDoctorProfileService {
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
   ): Promise<DoctorProfileEntity>;
-  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles>;
-  updateStatus(data: UpdateDoctorStatusDto): Promise<void>;
+  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorsResponseDto>;
+  getDoctorById(id: string): Promise<DoctorProfileResponseDto>;
   updateProfile(
     doctorProfileId: string,
     dto: UpdateDoctorProfileDto,
@@ -65,4 +70,9 @@ export interface IDoctorProfileService {
     accountId: string,
     email: string,
   ): Promise<DoctorProfileEntity | null>;
+  getSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<Map<string, string[]>>;
+  incrementDoctorViewCount(doctorProfileId: string): Promise<void>;
+  getStats(hospitalId?: string): Promise<DoctorStats>;
 }

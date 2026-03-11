@@ -15,10 +15,11 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
   app.use(cookieParser());
+
   const config = app.get(AppConfigService);
 
   app.enableCors({
-    origin: config.corsOrigins as string[],
+    origin: config.corsOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization',

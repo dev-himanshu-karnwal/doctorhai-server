@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Joi schema builder API */
 import * as Joi from 'joi';
 
 /**
  * Schema for required env vars. App will NOT start if any required var is missing or invalid.
  * Optional vars have defaults; required vars must be set in .env (or environment).
  */
-export const envValidationSchema: Joi.ObjectSchema = Joi.object({
+export const envValidationSchema = Joi.object({
   // --- Required (no safe default) ---
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
@@ -32,4 +31,7 @@ export const envValidationSchema: Joi.ObjectSchema = Joi.object({
   MAIL_SMTP_SECURE: Joi.string().valid('true', 'false', '').default('false'),
   MAIL_SMTP_USER: Joi.string().allow('').default(''),
   MAIL_SMTP_PASS: Joi.string().allow('').default(''),
+  COOKIE_NAME: Joi.string().default('access_token'),
+  COOKIE_MAX_AGE: Joi.number().default(1036800000), // 12 days in ms
+  COOKIE_SECURE: Joi.boolean().default(false),
 });

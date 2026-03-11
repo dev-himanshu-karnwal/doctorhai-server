@@ -1,20 +1,17 @@
-import {
-  Injectable,
-  Logger,
-  Inject,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { AppConfigService } from '../../../config';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
 import type { Connection } from 'mongoose';
+import type { Response } from 'express';
+import { AppConfigService } from '../../../config';
 import {
   ACCOUNT_REPOSITORY_TOKEN,
   ROLE_SERVICE_TOKEN,
   DOCTOR_PROFILE_SERVICE_TOKEN,
   HOSPITAL_SERVICE_TOKEN,
-  ACCOUNT_CREATION_SERVICE_TOKEN,
+  PASSWORD_SERVICE_TOKEN,
+  IDENTITY_SERVICE_TOKEN,
+  CREDENTIAL_SERVICE_TOKEN,
+  TOKEN_SERVICE_TOKEN,
 } from '../../../common/constants';
 import {
   BusinessRuleViolationException,
@@ -23,7 +20,10 @@ import {
 import { generateSlugFromName } from '../../../common/utils';
 import type { IAccountRepository } from '../interfaces/account-repository.interface';
 import type { IRoleService } from '../interfaces/role-service.interface';
-import type { IAccountCreationService } from '../interfaces/account-creation-service.interface';
+import type { IPasswordService } from '../interfaces/password-service.interface';
+import type { IIdentityService } from '../interfaces/identity-service.interface';
+import type { ICredentialService } from '../interfaces/credential-service.interface';
+import type { ITokenService } from '../interfaces/token-service.interface';
 import type { IDoctorProfileService } from '../../doctor-profiles/interfaces';
 import type { IHospitalService } from '../../hospitals/interfaces';
 import type {
@@ -33,7 +33,6 @@ import type {
   CheckUsernameResponseDto,
 } from '../dto';
 import type { CreateAccountDto } from '../dto';
-import type { AccountEntity } from '../entities';
 import type { RegistrationType } from '../enums/registration-type.enum';
 
 @Injectable()
@@ -49,15 +48,23 @@ export class AuthRegistrationService {
     private readonly doctorProfileService: IDoctorProfileService,
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
-    @Inject(ACCOUNT_CREATION_SERVICE_TOKEN)
-    private readonly accountCreationService: IAccountCreationService,
-    private readonly jwtService: JwtService,
-    private readonly appConfig: AppConfigService,
+    @Inject(PASSWORD_SERVICE_TOKEN)
+    private readonly passwordService: IPasswordService,
+    @Inject(IDENTITY_SERVICE_TOKEN)
+    private readonly identityService: IIdentityService,
+    @Inject(CREDENTIAL_SERVICE_TOKEN)
+    private readonly credentialService: ICredentialService,
+    @Inject(TOKEN_SERVICE_TOKEN)
+    private readonly tokenService: ITokenService,
+    private readonly config: AppConfigService,
     @InjectConnection()
     private readonly connection: Connection,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResponseDto> {
+  async register(
+    dto: RegisterDto,
+    response?: Response,
+  ): Promise<AuthResponseDto> {
     const roleName = this.registrationTypeToRoleName(dto.registrationType);
     const email = dto.email.toLowerCase().trim();
 
@@ -67,9 +74,7 @@ export class AuthRegistrationService {
           'Username is required when registering as doctor',
         );
       }
-      await this.accountCreationService.ensureUsernameAvailable(
-        dto.username.trim(),
-      );
+      await this.identityService.ensureUsernameAvailable(dto.username.trim());
     }
 
     if (dto.registrationType === 'doctor') {
@@ -93,11 +98,7 @@ export class AuthRegistrationService {
         ? (dto.username as string).trim()
         : null;
 
-    const bcryptRounds = this.appConfig.bcryptRounds;
-    const passwordHash = (await bcrypt.hash(
-      dto.password,
-      bcryptRounds,
-    )) as string;
+    const passwordHash = await this.passwordService.hash(dto.password);
 
     const createAccountDto: CreateAccountDto = {
       loginType,
@@ -154,7 +155,11 @@ export class AuthRegistrationService {
       this.logger.log(
         `Registered account ${account.id} as ${dto.registrationType} (${account.loginType}:${identifier})`,
       );
-      return this.signAndReturnAuthResponse(account);
+      const result = this.tokenService.signAuthPayload(account);
+      if (response) {
+        this.setAuthCookie(response, result.accessToken);
+      }
+      return result;
     } catch (err) {
       await session.abortTransaction();
       throw err;
@@ -163,7 +168,7 @@ export class AuthRegistrationService {
     }
   }
 
-  async login(dto: LoginDto): Promise<AuthResponseDto> {
+  async login(dto: LoginDto, response?: Response): Promise<AuthResponseDto> {
     const loginValue = dto.loginType === 'email' ? dto.email : dto.username;
     if (!loginValue) {
       throw new BusinessRuleViolationException(
@@ -173,75 +178,46 @@ export class AuthRegistrationService {
       );
     }
 
-    const account = await this.accountRepo.findOneByLogin(
+    const account = await this.credentialService.verifyCredentials(
       dto.loginType,
       loginValue,
-    );
-    if (!account) {
-      this.logger.warn(
-        `Login failed: no account for ${dto.loginType}:${loginValue}`,
-      );
-      throw new UnauthorizedException('Invalid login credentials');
-    }
-    if (!account.passwordHash) {
-      this.logger.warn(`Login failed: account ${account.id} has no password`);
-      throw new UnauthorizedException('Invalid login credentials');
-    }
-    if (!account.isActive) {
-      throw new UnauthorizedException('Account is inactive');
-    }
-
-    const passwordValid = (await bcrypt.compare(
       dto.password,
-      account.passwordHash,
-    )) as boolean;
-    if (!passwordValid) {
-      this.logger.warn(
-        `Login failed: wrong password for ${dto.loginType}:${loginValue}`,
-      );
-      throw new UnauthorizedException('Invalid login credentials');
-    }
+    );
 
     this.logger.log(
       `Logged in account ${account.id} (${dto.loginType}:${loginValue})`,
     );
 
-    return this.signAndReturnAuthResponse(account);
+    const result = this.tokenService.signAuthPayload(account);
+    if (response) {
+      this.setAuthCookie(response, result.accessToken);
+    }
+    return result;
   }
 
   async checkUsernameAvailable(
     username: string,
   ): Promise<CheckUsernameResponseDto> {
-    const existing = await this.accountRepo.findOneByLogin(
-      'username',
-      username,
-    );
+    const available =
+      await this.identityService.checkUsernameAvailable(username);
     return {
       username,
-      available: !existing,
+      available,
     };
+  }
+
+  private setAuthCookie(response: Response, token: string): void {
+    response.cookie(this.config.cookieName, token, {
+      httpOnly: true,
+      secure: this.config.cookieSecure,
+      sameSite: 'lax',
+      maxAge: this.config.cookieMaxAge,
+    });
   }
 
   private registrationTypeToRoleName(
     registrationType: RegistrationType,
   ): string {
     return registrationType;
-  }
-
-  private signAndReturnAuthResponse(account: AccountEntity): AuthResponseDto {
-    const payload = {
-      sub: account.id,
-      loginType: account.loginType,
-      email: account.email,
-      username: account.username,
-    };
-    const accessToken = this.jwtService.sign(payload);
-    return {
-      accessToken,
-      accountId: account.id,
-      loginType: account.loginType,
-      email: account.email,
-      username: account.username,
-    };
   }
 }

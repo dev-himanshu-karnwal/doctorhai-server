@@ -14,9 +14,12 @@ export interface DoctorProfileDocLike {
   profilePhotoUrl?: string | null;
   createdBy?: { toString(): string } | null;
   hospitalId?: { toString(): string } | null;
+  hasExperience?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
+  public_view_count?: number;
+  isVerified?: boolean;
 }
 
 export class DoctorProfileMapper {
@@ -35,6 +38,9 @@ export class DoctorProfileMapper {
       doc.profilePhotoUrl ?? null,
       doc.createdBy != null ? doc.createdBy.toString() : null,
       doc.hospitalId != null ? doc.hospitalId.toString() : null,
+      doc.hasExperience ?? null,
+      doc.public_view_count ?? 0,
+      doc.isVerified ?? false,
       doc.createdAt,
       doc.updatedAt,
       doc.deletedAt ?? null,

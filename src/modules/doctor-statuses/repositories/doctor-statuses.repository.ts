@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
-import { DoctorStatusDocument } from '../schemas';
-import { DoctorStatusEntity } from '../entities';
+import { DoctorStatusDocument } from '../schemas/doctor-status.schema';
+import { DoctorStatusEntity } from '../entities/doctor-status.entity';
 import {
   DoctorStatusMapper,
   DoctorStatusDocLike,
@@ -29,6 +29,23 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
       .lean()
       .exec()) as DoctorStatusDocLike | null;
     return doc ? DoctorStatusMapper.toDomain(doc) : null;
+  }
+
+  async findByDoctorProfileIds(
+    doctorProfileIds: string[],
+  ): Promise<DoctorStatusEntity[]> {
+    const validIds = doctorProfileIds
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    if (validIds.length === 0) return [];
+
+    const docs = (await this.doctorStatusModel
+      .find({ doctorProfileId: { $in: validIds } })
+      .lean()
+      .exec()) as DoctorStatusDocLike[];
+
+    return docs.map((doc) => DoctorStatusMapper.toDomain(doc));
   }
 
   async create(

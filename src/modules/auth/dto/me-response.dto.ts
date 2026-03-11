@@ -53,6 +53,9 @@ export class AccountMeDto {
   })
   roles: string[];
 
+  @ApiProperty({ description: 'Whether account is verified' })
+  isVerified: boolean;
+
   @ApiProperty({ description: 'Whether account is active' })
   isActive: boolean;
 
@@ -122,6 +125,9 @@ export class DoctorMeDto {
 
   @ApiPropertyOptional()
   profilePhotoUrl: string | null;
+
+  @ApiPropertyOptional()
+  hasExperience: string | null;
 
   @ApiPropertyOptional({ description: 'Hospital ID if doctor is affiliated' })
   hospitalId: string | null;

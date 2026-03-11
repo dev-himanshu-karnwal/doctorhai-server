@@ -10,9 +10,24 @@ export interface HospitalDocLike {
   email: string;
   coverPhotoUrl?: string | null;
   isActive?: boolean;
+  location?: {
+    latitude: number;
+    longitude: number;
+  } | null;
+  type?: string | null;
+  timeline?:
+    | {
+        day: string;
+        opentime: string;
+        closetime: string;
+      }[]
+    | null;
+  facilities?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
+  public_view_count?: number;
+  isVerified?: boolean;
 }
 
 export class HospitalMapper {
@@ -27,6 +42,12 @@ export class HospitalMapper {
       doc.email,
       doc.coverPhotoUrl ?? null,
       doc.isActive ?? true,
+      doc.isVerified ?? false,
+      doc.location ?? null,
+      doc.type ?? null,
+      doc.timeline ?? null,
+      doc.facilities ?? null,
+      doc.public_view_count ?? 0,
       doc.createdAt,
       doc.updatedAt,
       doc.deletedAt ?? null,

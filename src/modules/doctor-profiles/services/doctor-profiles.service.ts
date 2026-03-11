@@ -3,30 +3,40 @@ import { InjectConnection } from '@nestjs/mongoose';
 import {
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
   ACCOUNT_CREATION_SERVICE_TOKEN,
-  DOCTOR_STATUS_REPOSITORY_TOKEN,
   ROLE_SERVICE_TOKEN,
   ACCOUNT_SERVICE_TOKEN,
   HOSPITAL_SERVICE_TOKEN,
+  PROFILE_PERMISSION_SERVICE_TOKEN,
+  PROFILE_CORE_SERVICE_TOKEN,
+  DOCTOR_STATUS_REPOSITORY_TOKEN,
 } from '../../../common/constants';
 import { BusinessRuleViolationException } from '../../../common/exceptions';
-import { generateSlugFromName } from '../../../common/utils';
 import type { IAccountCreationService } from '../../auth/interfaces/account-creation-service.interface';
 import type { IRoleService } from '../../auth/interfaces/role-service.interface';
 import type { IAccountService } from '../../auth/interfaces/account-service.interface';
 import type { IHospitalService } from '../../hospitals/interfaces';
+import type { IDoctorStatusRepository } from '../../doctor-statuses/interfaces';
 import type { ClientSession, Connection } from 'mongoose';
 import type {
   IDoctorProfileRepository,
-  IDoctorStatusRepository,
   IDoctorProfileService,
   CreateDoctorProfileData,
   DoctorsQuery,
-  PaginatedDoctorProfiles,
+  IProfilePermissionService,
+  IProfileCoreService,
 } from '../interfaces';
-import type { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
+import { CreateDoctorByHospitalDto } from '../dto/create-doctor-by-hospital.dto';
 import type { UpdateDoctorProfileDto } from '../dto/update-doctor-profile.dto';
-import { UpdateDoctorStatusDto } from '../dto/update-doctor-status.dto';
+import {
+  DoctorProfileResponseDto,
+  PaginatedDoctorsResponseDto,
+} from '../dto/doctor-profile-response.dto';
+import { DoctorStats } from '../dto/doctor-stats.dto';
 
+/**
+ * Service for managing doctor profiles.
+ * Refactored to use ProfilePermissionService and ProfileCoreService for better reusability.
+ */
 @Injectable()
 export class DoctorProfilesService implements IDoctorProfileService {
   private readonly logger = new Logger(DoctorProfilesService.name);
@@ -34,16 +44,20 @@ export class DoctorProfilesService implements IDoctorProfileService {
   constructor(
     @Inject(DOCTOR_PROFILE_REPOSITORY_TOKEN)
     private readonly doctorProfileRepo: IDoctorProfileRepository,
+    @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN)
+    private readonly doctorStatusRepo: IDoctorStatusRepository,
     @Inject(ACCOUNT_CREATION_SERVICE_TOKEN)
     private readonly accountCreationService: IAccountCreationService,
-    @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN as symbol)
-    private readonly doctorStatusRepo: IDoctorStatusRepository,
     @Inject(ROLE_SERVICE_TOKEN)
     private readonly roleService: IRoleService,
     @Inject(ACCOUNT_SERVICE_TOKEN)
     private readonly accountService: IAccountService,
     @Inject(HOSPITAL_SERVICE_TOKEN)
     private readonly hospitalService: IHospitalService,
+    @Inject(PROFILE_PERMISSION_SERVICE_TOKEN)
+    private readonly profilePermissionService: IProfilePermissionService,
+    @Inject(PROFILE_CORE_SERVICE_TOKEN)
+    private readonly profileCoreService: IProfileCoreService,
     @InjectConnection()
     private readonly connection: Connection,
   ) {}
@@ -75,20 +89,20 @@ export class DoctorProfilesService implements IDoctorProfileService {
     return this.doctorProfileRepo.create(data, session);
   }
 
+  /**
+   * Complex workflow to create a doctor account and profile initiated by a hospital.
+   */
   async createByHospital(
     dto: CreateDoctorByHospitalDto,
     createdByAccountId: string,
   ): Promise<Awaited<ReturnType<IDoctorProfileService['createByHospital']>>> {
-    // Determine hospitalId from the creator's account:
-    // - If creator is a hospital account, use that hospital's id
-    // - If creator is a doctor account linked to a hospital, use that hospitalId
-    // - Otherwise, no hospital context (null)
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
       let hospitalId: string | null = null;
       const email = dto.email.toLowerCase().trim();
 
+      // Determine the hospital ID for the new doctor
       const hospital =
         await this.hospitalService.findByAccountId(createdByAccountId);
       if (hospital) {
@@ -99,14 +113,13 @@ export class DoctorProfilesService implements IDoctorProfileService {
         hospitalId = creatorDoctor?.hospitalId ?? null;
       }
 
-      if (
-        await this.doctorProfileRepo.findByEmailAndHospitalId(email, hospitalId)
-      ) {
-        throw new BusinessRuleViolationException(
-          `Email '${email}' is already used for a doctor profile at this hospital`,
-        );
-      }
+      // Use ProfileCoreService to ensure email uniqueness within the hospital
+      await this.profileCoreService.ensureEmailAvailableForHospital(
+        email,
+        hospitalId,
+      );
 
+      // Create the authentication account
       const account = await this.accountCreationService.createUsernameAccount(
         dto.username,
         email,
@@ -115,16 +128,18 @@ export class DoctorProfilesService implements IDoctorProfileService {
         session,
       );
 
+      // Create the profile linked to the new account
       const doctor = await this.doctorProfileRepo.create(
         {
           fullName: dto.fullName.trim(),
           designation: null,
-          specialization: null,
+
+          specialization: dto.specialization ? dto.specialization : null,
           phone: dto.phone,
           email,
           addressId: null,
           accountId: account.id,
-          slug: generateSlugFromName(dto.fullName.trim()),
+          slug: this.profileCoreService.generateSlug(dto.fullName),
           bio: null,
           profilePhotoUrl: null,
           createdBy: createdByAccountId,
@@ -148,83 +163,99 @@ export class DoctorProfilesService implements IDoctorProfileService {
     }
   }
 
-  getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorProfiles> {
+  async getDoctors(query: DoctorsQuery): Promise<PaginatedDoctorsResponseDto> {
     this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
-    return this.doctorProfileRepo.findDoctors(query);
+    const result = await this.doctorProfileRepo.findDoctors(query);
+
+    const doctorIds = result.doctors.map((d) => d.id);
+    const statuses =
+      await this.doctorStatusRepo.findByDoctorProfileIds(doctorIds);
+    const statusMap = new Map(
+      statuses.map((s) => [s.doctorProfileId.toString(), s]),
+    );
+
+    const doctors: DoctorProfileResponseDto[] = result.doctors.map((doctor) => {
+      const s = statusMap.get(doctor.id);
+      return {
+        id: doctor.id,
+        fullName: doctor.fullName,
+        designation: doctor.designation,
+        specialization: doctor.specialization,
+        phone: doctor.phone,
+        email: doctor.email,
+        slug: doctor.slug,
+        profilePhotoUrl: doctor.profilePhotoUrl,
+        hasExperience: doctor.hasExperience,
+        bio: doctor.bio,
+        hospitalId: doctor.hospitalId,
+        public_view_count: doctor.public_view_count,
+        isVerified: doctor.isVerified,
+        status: s
+          ? {
+              status: s.status,
+              expectedAt: s.expectedAt,
+              expectedAtNote: s.expectedAtNote,
+              updatedAt: s.updatedAt,
+            }
+          : null,
+      };
+    });
+
+    const totalPages =
+      result.limit > 0
+        ? Math.max(1, Math.ceil(result.total / result.limit))
+        : 1;
+
+    return {
+      doctors,
+      paginatedmetadata: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages,
+      },
+    };
   }
 
-  async updateStatus(data: UpdateDoctorStatusDto): Promise<void> {
-    this.logger.debug(
-      `Updating status for doctor profile ${data.doctorProfileId} by account ${data.updatedByAccountId}`,
-    );
-
-    if (!data.doctorProfileId) {
-      throw new BusinessRuleViolationException('Doctor profile id is required');
-    }
-    if (!data.updatedByAccountId) {
-      throw new BusinessRuleViolationException(
-        'Updated by account id is required',
-      );
-    }
-
-    const doctorProfile = await this.doctorProfileRepo.findById(
-      data.doctorProfileId,
-    );
-    if (!doctorProfile) {
+  async getDoctorById(id: string): Promise<DoctorProfileResponseDto> {
+    this.logger.debug(`Getting doctor profile by id: ${id}`);
+    const doctor = await this.doctorProfileRepo.findById(id);
+    if (!doctor) {
       throw new BusinessRuleViolationException('Doctor profile not found');
     }
 
-    const account = await this.accountService.findById(data.updatedByAccountId);
-    const roleNames: string[] = [];
-    for (const assignment of account.roles) {
-      const role = await this.roleService.findById(assignment.roleId);
-      roleNames.push(role.name);
+    const response: DoctorProfileResponseDto = {
+      id: doctor.id,
+      fullName: doctor.fullName,
+      designation: doctor.designation,
+      specialization: doctor.specialization,
+      phone: doctor.phone,
+      email: doctor.email,
+      slug: doctor.slug,
+      profilePhotoUrl: doctor.profilePhotoUrl,
+      hasExperience: doctor.hasExperience,
+      bio: doctor.bio,
+      hospitalId: doctor.hospitalId,
+      public_view_count: doctor.public_view_count,
+      isVerified: doctor.isVerified,
+    };
+
+    const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
+    if (status) {
+      response.status = {
+        status: status.status,
+        expectedAt: status.expectedAt,
+        expectedAtNote: status.expectedAtNote,
+        updatedAt: status.updatedAt,
+      };
     }
 
-    const isSuperAdmin = roleNames.includes('super_admin');
-    const isDoctor = roleNames.includes('doctor');
-    const isHospital = roleNames.includes('hospital');
+    return response;
+  }
 
-    let isAuthorized = false;
-    let updaterRoleId = '';
-
-    if (isSuperAdmin) {
-      isAuthorized = true;
-      const saIndex = roleNames.indexOf('super_admin');
-      updaterRoleId = account.roles[saIndex].roleId;
-    } else if (isDoctor) {
-      if (doctorProfile.accountId === data.updatedByAccountId) {
-        isAuthorized = true;
-        const doctorIndex = roleNames.indexOf('doctor');
-        updaterRoleId = account.roles[doctorIndex].roleId;
-      }
-    } else if (isHospital) {
-      const hospital = await this.hospitalService.findByAccountId(
-        data.updatedByAccountId,
-      );
-      if (
-        hospital &&
-        (doctorProfile.hospitalId === hospital.id ||
-          doctorProfile.hospitalId === hospital.accountId)
-      ) {
-        isAuthorized = true;
-        const hospitalIndex = roleNames.indexOf('hospital');
-        updaterRoleId = account.roles[hospitalIndex].roleId;
-      }
-    }
-
-    if (!isAuthorized) {
-      throw new ForbiddenException(
-        'You are not authorized to update this doctor status',
-      );
-    }
-
-    await this.doctorStatusRepo.updateStatus({
-      ...data,
-      doctorProfileId: data.doctorProfileId,
-      updatedByAccountId: data.updatedByAccountId,
-      updatedByRoleId: updaterRoleId,
-    });
+  async incrementDoctorViewCount(id: string): Promise<void> {
+    this.logger.debug(`Incrementing view count for doctor profile: ${id}`);
+    await this.doctorProfileRepo.incrementViewCount(id);
   }
 
   async updateEmailByAccountId(
@@ -239,6 +270,10 @@ export class DoctorProfilesService implements IDoctorProfileService {
     return this.doctorProfileRepo.updateEmailByAccountId(accountId, email);
   }
 
+  /**
+   * Updates a doctor's profile data.
+   * Leverages ProfilePermissionService for shared authorization logic.
+   */
   async updateProfile(
     doctorProfileId: string,
     dto: UpdateDoctorProfileDto,
@@ -248,41 +283,14 @@ export class DoctorProfilesService implements IDoctorProfileService {
       `Updating profile for doctor ${doctorProfileId} by account ${updatedByAccountId}`,
     );
 
-    const doctorProfile =
-      await this.doctorProfileRepo.findById(doctorProfileId);
-    if (!doctorProfile) {
-      throw new BusinessRuleViolationException('Doctor profile not found');
-    }
+    // Verify ownership/permission via centralized ProfilePermissionService
+    const { authorized } =
+      await this.profilePermissionService.canUpdateDoctorProfile(
+        updatedByAccountId,
+        doctorProfileId,
+      );
 
-    const account = await this.accountService.findById(updatedByAccountId);
-    const roleNames: string[] = [];
-    for (const assignment of account.roles) {
-      const role = await this.roleService.findById(assignment.roleId);
-      roleNames.push(role.name);
-    }
-
-    const isSuperAdmin = roleNames.includes('super_admin');
-    const isDoctor = roleNames.includes('doctor');
-    const isHospital = roleNames.includes('hospital');
-
-    let isAuthorized = false;
-    if (isSuperAdmin) {
-      isAuthorized = true;
-    } else if (isDoctor && doctorProfile.accountId === updatedByAccountId) {
-      isAuthorized = true;
-    } else if (isHospital) {
-      const hospital =
-        await this.hospitalService.findByAccountId(updatedByAccountId);
-      if (
-        hospital &&
-        (doctorProfile.hospitalId === hospital.id ||
-          doctorProfile.hospitalId === hospital.accountId)
-      ) {
-        isAuthorized = true;
-      }
-    }
-
-    if (!isAuthorized) {
+    if (!authorized) {
       throw new ForbiddenException(
         'You are not authorized to update this doctor profile',
       );
@@ -294,17 +302,21 @@ export class DoctorProfilesService implements IDoctorProfileService {
       specialization?: string | null;
       bio?: string | null;
       slug?: string;
+      hasExperience?: string | null;
     } = {};
 
+    // Map DTO to update object and regenerate slug if name changes
     if (dto.fullName != null) {
       updateData.fullName = dto.fullName;
-      updateData.slug = generateSlugFromName(dto.fullName);
+      updateData.slug = this.profileCoreService.generateSlug(dto.fullName);
     }
     if (dto.designation !== undefined)
       updateData.designation = dto.designation?.trim() || null;
     if (dto.specialization !== undefined)
       updateData.specialization = dto.specialization?.trim() || null;
     if (dto.bio !== undefined) updateData.bio = dto.bio?.trim() || null;
+    if (dto.hasExperience !== undefined)
+      updateData.hasExperience = dto.hasExperience ?? null;
 
     const updated = await this.doctorProfileRepo.update(
       doctorProfileId,
@@ -314,5 +326,32 @@ export class DoctorProfilesService implements IDoctorProfileService {
       throw new BusinessRuleViolationException('Doctor profile not found');
     }
     return updated;
+  }
+
+  async getSpecializationsByHospitalIds(
+    hospitalIds: string[],
+  ): Promise<Map<string, string[]>> {
+    const rawData =
+      await this.doctorProfileRepo.findSpecializationsByHospitalIds(
+        hospitalIds,
+      );
+    const map = new Map<string, string[]>();
+
+    for (const item of rawData) {
+      const existing = map.get(item.hospitalId) || [];
+      if (!existing.includes(item.specialization)) {
+        existing.push(item.specialization);
+      }
+      map.set(item.hospitalId, existing);
+    }
+
+    return map;
+  }
+
+  async getStats(hospitalId?: string): Promise<DoctorStats> {
+    this.logger.debug(
+      `Fetching doctor profile statistics${hospitalId ? ` for hospital: ${hospitalId}` : ''}`,
+    );
+    return this.doctorProfileRepo.getStats(hospitalId);
   }
 }

@@ -1,5 +1,6 @@
 import type { ClientSession } from 'mongoose';
 import { HospitalEntity } from '../entities';
+import { HospitalStats } from '../dto/hospital_stats.dto';
 
 export interface HospitalsQuery {
   page: number;
@@ -7,7 +8,8 @@ export interface HospitalsQuery {
   search?: string;
   name?: string;
   isActive?: string;
-  sortBy?: 'name' | 'createdAt';
+  isVerified?: string;
+  sortBy?: 'name' | 'createdAt' | 'public_view_count';
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -33,8 +35,30 @@ export interface IHospitalService {
       phone: string;
       email: string;
       coverPhotoUrl?: string | null;
+      location?: { latitude: number; longitude: number } | null;
+      type?: string | null;
+      timeline?: { day: string; opentime: string; closetime: string }[] | null;
+      facilities?: string[] | null;
+      isActive?: boolean;
     },
     session?: ClientSession,
   ): Promise<HospitalEntity>;
+  update(
+    id: string,
+    data: Partial<
+      Omit<
+        IHospitalService['create'] extends (
+          data: infer D,
+          ...args: any[]
+        ) => Promise<any>
+          ? D
+          : any,
+        'accountId'
+      >
+    >,
+  ): Promise<HospitalEntity | null>;
   getHospitals(query: HospitalsQuery): Promise<PaginatedHospitals>;
+  findById(id: string): Promise<HospitalEntity | null>;
+  incrementHospitalViewCount(hospitalId: string): Promise<void>;
+  getStats(): Promise<HospitalStats>;
 }
