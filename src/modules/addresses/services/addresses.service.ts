@@ -30,4 +30,15 @@ export class AddressesService implements IAddressService {
     this.logger.debug('Creating address');
     return this.addressRepo.create(data, session);
   }
+
+  async update(
+    id: string,
+    data: Parameters<IAddressService['update']>[1],
+    session?: ClientSession,
+  ): Promise<Awaited<ReturnType<IAddressService['update']>>> {
+    this.logger.debug(`Updating address by id: ${id}`);
+    const updated = await this.addressRepo.update(id, data, session);
+    if (!updated) throw new ResourceNotFoundException('Address', id);
+    return updated;
+  }
 }

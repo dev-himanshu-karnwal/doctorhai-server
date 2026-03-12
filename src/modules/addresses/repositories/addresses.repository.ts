@@ -3,8 +3,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { AddressDocument } from '../schemas';
 import { AddressEntity } from '../entities';
-import { AddressMapper } from '../mappers';
-import type { IAddressRepository, CreateAddressInput } from '../interfaces';
+import { AddressMapper, type AddressDocLike } from '../mappers';
+import type {
+  IAddressRepository,
+  CreateAddressInput,
+  UpdateAddressInput,
+} from '../interfaces';
 
 @Injectable()
 export class AddressesRepository implements IAddressRepository {
@@ -42,6 +46,29 @@ export class AddressesRepository implements IAddressRepository {
       options,
     );
     return AddressMapper.toDomain(doc);
+  }
+
+  async update(
+    id: string,
+    data: UpdateAddressInput,
+    session?: ClientSession,
+  ): Promise<AddressEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const options = session ? { session, new: true } : { new: true };
+    const doc = await this.addressModel
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            ...data,
+            updatedAt: new Date(),
+          },
+        },
+        options,
+      )
+      .lean()
+      .exec();
+    return doc ? AddressMapper.toDomain(doc as AddressDocLike) : null;
   }
 
   async delete(id: string, session?: ClientSession): Promise<void> {

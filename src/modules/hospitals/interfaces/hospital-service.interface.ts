@@ -61,4 +61,5 @@ export interface IHospitalService {
   findById(id: string): Promise<HospitalEntity | null>;
   incrementHospitalViewCount(hospitalId: string): Promise<void>;
   getStats(): Promise<HospitalStats>;
+  findByAddressId(addressId: string): Promise<HospitalEntity | null>;
 }

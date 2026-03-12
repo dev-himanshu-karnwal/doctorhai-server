@@ -387,4 +387,15 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       .deleteMany({ hospitalId: new Types.ObjectId(hospitalId) }, options)
       .exec();
   }
+
+  async findByAddressId(
+    addressId: string,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(addressId)) return null;
+    const doc = await this.doctorProfileModel
+      .findOne({ addressId: new Types.ObjectId(addressId), ...this.notDeleted })
+      .lean()
+      .exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
+  }
 }

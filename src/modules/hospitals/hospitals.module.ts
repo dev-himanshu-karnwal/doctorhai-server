@@ -14,7 +14,7 @@ import { HospitalsController } from './controllers/hospitals.controller';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Hospital', schema: HospitalSchema }]),
-    AddressesModule,
+    forwardRef(() => AddressesModule),
     forwardRef(() => DoctorProfilesModule),
   ],
   controllers: [HospitalsController],

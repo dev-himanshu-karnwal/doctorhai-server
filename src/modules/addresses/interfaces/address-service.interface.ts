@@ -15,4 +15,17 @@ export interface IAddressService {
     },
     session?: ClientSession,
   ): Promise<AddressEntity>;
+  update(
+    id: string,
+    data: {
+      addressLine1?: string;
+      addressLine2?: string | null;
+      city?: string;
+      state?: string;
+      pincode?: string;
+      latitude?: number | null;
+      longitude?: number | null;
+    },
+    session?: ClientSession,
+  ): Promise<AddressEntity | null>;
 }

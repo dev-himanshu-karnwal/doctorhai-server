@@ -272,6 +272,15 @@ export class HospitalsRepository implements IHospitalRepository {
     );
   }
 
+  async findByAddressId(addressId: string): Promise<HospitalEntity | null> {
+    if (!Types.ObjectId.isValid(addressId)) return null;
+    const doc = await this.hospitalModel
+      .findOne({ addressId: new Types.ObjectId(addressId), ...this.notDeleted })
+      .lean()
+      .exec();
+    return doc ? HospitalMapper.toDomain(doc) : null;
+  }
+
   async delete(id: string, session?: ClientSession): Promise<void> {
     if (!Types.ObjectId.isValid(id)) return;
     const options = session ? { session } : {};

@@ -62,4 +62,5 @@ export interface IDoctorProfileRepository {
     hospitalId: string,
     session?: ClientSession,
   ): Promise<void>;
+  findByAddressId(addressId: string): Promise<DoctorProfileEntity | null>;
 }

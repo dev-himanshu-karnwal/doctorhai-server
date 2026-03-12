@@ -75,4 +75,5 @@ export interface IDoctorProfileService {
   ): Promise<Map<string, string[]>>;
   incrementDoctorViewCount(doctorProfileId: string): Promise<void>;
   getStats(hospitalId?: string): Promise<DoctorStats>;
+  findByAddressId(addressId: string): Promise<DoctorProfileEntity | null>;
 }

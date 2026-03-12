@@ -32,6 +32,7 @@ import {
   PaginatedDoctorsResponseDto,
 } from '../dto/doctor-profile-response.dto';
 import { DoctorStats } from '../dto/doctor-stats.dto';
+import { DoctorProfileEntity } from '../entities';
 
 /**
  * Service for managing doctor profiles.
@@ -355,5 +356,12 @@ export class DoctorProfilesService implements IDoctorProfileService {
       `Fetching doctor profile statistics${hospitalId ? ` for hospital: ${hospitalId}` : ''}`,
     );
     return this.doctorProfileRepo.getStats(hospitalId);
+  }
+
+  async findByAddressId(
+    addressId: string,
+  ): Promise<DoctorProfileEntity | null> {
+    this.logger.debug(`Finding doctor profile by addressId: ${addressId}`);
+    return await this.doctorProfileRepo.findByAddressId(addressId);
   }
 }

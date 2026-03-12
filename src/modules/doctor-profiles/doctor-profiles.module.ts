@@ -24,8 +24,8 @@ import {
     MongooseModule.forFeature([
       { name: 'DoctorProfile', schema: DoctorProfileSchema },
     ]),
-    AddressesModule,
-    HospitalsModule,
+    forwardRef(() => AddressesModule),
+    forwardRef(() => HospitalsModule),
     DoctorStatusesModule,
     forwardRef(() => AuthModule),
   ],

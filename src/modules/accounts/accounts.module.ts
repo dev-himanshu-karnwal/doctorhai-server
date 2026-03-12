@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountSchema } from '../auth/schemas';
 import {
@@ -17,11 +17,11 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Account', schema: AccountSchema }]),
-    DoctorProfilesModule,
-    HospitalsModule,
-    AddressesModule,
+    forwardRef(() => DoctorProfilesModule),
+    forwardRef(() => HospitalsModule),
+    forwardRef(() => AddressesModule),
     DoctorStatusesModule,
-    AuthModule,
+    forwardRef(() => AuthModule),
   ],
   controllers: [AccountsController],
   providers: [
