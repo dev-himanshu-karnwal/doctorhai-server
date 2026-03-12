@@ -167,7 +167,6 @@ export class DoctorProfilesService implements IDoctorProfileService {
     this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
     const result = await this.doctorProfileRepo.findDoctors(query);
 
-    console.log('result :', result);
     const doctorIds = result.doctors.map((d) => d.id);
     const statuses =
       await this.doctorStatusRepo.findByDoctorProfileIds(doctorIds);
