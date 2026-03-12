@@ -51,6 +51,9 @@ export class DoctorProfileResponseDto {
   hasExperience: string | null;
 
   @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
+  accountId: string;
+
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
   hospitalId: string | null;
 
   @ApiProperty({ example: 42 })

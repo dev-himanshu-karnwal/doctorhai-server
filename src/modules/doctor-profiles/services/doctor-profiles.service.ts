@@ -167,6 +167,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
     this.logger.debug(`Listing doctors with query: ${JSON.stringify(query)}`);
     const result = await this.doctorProfileRepo.findDoctors(query);
 
+    console.log('result :', result);
     const doctorIds = result.doctors.map((d) => d.id);
     const statuses =
       await this.doctorStatusRepo.findByDoctorProfileIds(doctorIds);
@@ -190,6 +191,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         hospitalId: doctor.hospitalId,
         public_view_count: doctor.public_view_count,
         isVerified: doctor.isVerified,
+        accountId: doctor.accountId,
         status: s
           ? {
               status: s.status,
@@ -238,6 +240,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       hospitalId: doctor.hospitalId,
       public_view_count: doctor.public_view_count,
       isVerified: doctor.isVerified,
+      accountId: doctor.accountId,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
