@@ -16,6 +16,8 @@ export class DoctorProfileEntity {
     public readonly hasExperience: string | null,
     public readonly public_view_count: number,
     public readonly isVerified: boolean,
+    public readonly latitude: number | null,
+    public readonly longitude: number | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly deletedAt: Date | null,

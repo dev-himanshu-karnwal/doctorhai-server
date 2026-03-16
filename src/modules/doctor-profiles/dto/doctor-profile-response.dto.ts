@@ -65,6 +65,12 @@ export class DoctorProfileResponseDto {
   @ApiProperty({ example: true })
   isVerified: boolean;
 
+  @ApiPropertyOptional({ example: 28.6139 })
+  latitude?: number | null;
+
+  @ApiPropertyOptional({ example: 77.209 })
+  longitude?: number | null;
+
   @ApiPropertyOptional({ type: DoctorStatusResponseDto })
   status?: DoctorStatusResponseDto | null;
 }

@@ -48,6 +48,25 @@ export class GetHospitalsQueryDto extends PaginationQueryDto {
   isVerified?: string;
 
   @ApiPropertyOptional({
+    description: 'Filter by doctor availability in the hospital',
+    example: 'true',
+  })
+  @IsOptional()
+  @IsBooleanString()
+  isAvailable?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by doctor specialities in the hospital',
+    example: 'Cardiology,Neurology',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string | string[] }) => {
+    if (typeof value === 'string') return value.split(',').map((s) => s.trim());
+    return value;
+  })
+  specialities?: string[];
+
+  @ApiPropertyOptional({
     description: 'Sort field',
     enum: ['name', 'createdAt', 'public_view_count'],
     default: 'createdAt',

@@ -180,6 +180,66 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       });
     }
 
+    // Join with addresses based on addressId
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: 'addressId',
+          foreignField: '_id',
+          as: 'address',
+        },
+      },
+      {
+        $unwind: { path: '$address', preserveNullAndEmptyArrays: true },
+      },
+      {
+        $addFields: {
+          latitude: { $ifNull: ['$address.latitude', null] },
+          longitude: { $ifNull: ['$address.longitude', null] },
+        },
+      },
+    );
+
+    // Filter by availability
+    if (query.isAvailable !== undefined) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'doctor_statuses',
+            localField: '_id',
+            foreignField: 'doctorProfileId',
+            as: 'status_info',
+          },
+        },
+        {
+          $match: {
+            'status_info.status': query.isAvailable
+              ? 'available'
+              : { $nin: ['available'] },
+          },
+        },
+      );
+    }
+
+    // Filter by specialities
+    if (query.specialities && query.specialities.length > 0) {
+      pipeline.push({
+        $match: {
+          specialization: { $in: query.specialities },
+        },
+      });
+    }
+
+    // Filter by experience
+    if (query.experience && query.experience.length > 0) {
+      pipeline.push({
+        $match: {
+          hasExperience: { $in: query.experience },
+        },
+      });
+    }
+
     // Run count and data fetch in parallel
     const [countResult, docs] = await Promise.all([
       this.doctorProfileModel.aggregate<{ total: number }>([

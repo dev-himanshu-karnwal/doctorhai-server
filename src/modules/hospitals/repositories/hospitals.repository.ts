@@ -81,6 +81,8 @@ export class HospitalsRepository implements IHospitalRepository {
       name,
       isActive,
       isVerified,
+      isAvailable,
+      specialities,
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
@@ -116,9 +118,38 @@ export class HospitalsRepository implements IHospitalRepository {
 
     if (isVerified !== undefined) {
       pipeline.push({
-        $match: { 'account.isVerified': isVerified === 'true' },
+        $match: { isVerified: isVerified === 'true' },
       });
     }
+
+    // Join with addresses based on addressId
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: 'addressId',
+          foreignField: '_id',
+          as: 'address',
+        },
+      },
+      {
+        $unwind: { path: '$address', preserveNullAndEmptyArrays: true },
+      },
+      {
+        $addFields: {
+          location: {
+            $cond: [
+              { $ifNull: ['$address', false] },
+              {
+                latitude: { $ifNull: ['$address.latitude', null] },
+                longitude: { $ifNull: ['$address.longitude', null] },
+              },
+              '$location',
+            ],
+          },
+        },
+      },
+    );
 
     pipeline.push({
       $lookup: {
@@ -137,6 +168,33 @@ export class HospitalsRepository implements IHospitalRepository {
             { type: { $regex: search, $options: 'i' } },
             { 'doctors.specialization': { $regex: search, $options: 'i' } },
           ],
+        },
+      });
+    }
+
+    if (isAvailable !== undefined) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'doctor_statuses',
+            localField: 'doctors._id',
+            foreignField: 'doctorProfileId',
+            as: 'doctorStatuses',
+          },
+        },
+        {
+          $match: {
+            'doctorStatuses.status':
+              isAvailable === 'true' ? 'available' : { $nin: ['available'] },
+          },
+        },
+      );
+    }
+
+    if (specialities && specialities.length > 0) {
+      pipeline.push({
+        $match: {
+          'doctors.specialization': { $in: specialities },
         },
       });
     }

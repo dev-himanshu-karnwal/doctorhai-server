@@ -9,6 +9,8 @@ export interface HospitalsQuery {
   name?: string;
   isActive?: string;
   isVerified?: string;
+  isAvailable?: string;
+  specialities?: string[];
   sortBy?: 'name' | 'createdAt' | 'public_view_count';
   sortOrder?: 'asc' | 'desc';
 }

@@ -20,6 +20,8 @@ export interface DoctorProfileDocLike {
   deletedAt?: Date | null;
   public_view_count?: number;
   isVerified?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export class DoctorProfileMapper {
@@ -41,6 +43,8 @@ export class DoctorProfileMapper {
       doc.hasExperience ?? null,
       doc.public_view_count ?? 0,
       doc.isVerified ?? false,
+      doc.latitude ?? null,
+      doc.longitude ?? null,
       doc.createdAt,
       doc.updatedAt,
       doc.deletedAt ?? null,

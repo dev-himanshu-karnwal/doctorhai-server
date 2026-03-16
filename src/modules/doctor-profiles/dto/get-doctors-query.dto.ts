@@ -26,4 +26,39 @@ export class GetDoctorsQueryDto extends GetHospitalDoctorsQueryDto {
     return value;
   })
   isVerified?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter by availability status',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
+  isAvailable?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter by specialities (comma-separated)',
+    example: 'Cardiology,Neurology',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string | string[] }) => {
+    if (typeof value === 'string') return value.split(',').map((s) => s.trim());
+    return value;
+  })
+  specialities?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Filter by experience levels (comma-separated)',
+    example: '1-3 years,5+ years',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string | string[] }) => {
+    if (typeof value === 'string') return value.split(',').map((s) => s.trim());
+    return value;
+  })
+  experience?: string[];
 }
