@@ -59,6 +59,9 @@ export class DoctorProfileResponseDto {
   @ApiProperty({ example: 42 })
   public_view_count: number;
 
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
+  addressId: string | null;
+
   @ApiProperty({ example: true })
   isVerified: boolean;
 

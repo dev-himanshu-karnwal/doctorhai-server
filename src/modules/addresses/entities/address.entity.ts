@@ -1,6 +1,7 @@
 export class AddressEntity {
   constructor(
     public readonly id: string,
+    public readonly accountId: string | null,
     public readonly addressLine1: string,
     public readonly addressLine2: string | null,
     public readonly city: string,

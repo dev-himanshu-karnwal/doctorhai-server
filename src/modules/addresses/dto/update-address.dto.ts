@@ -7,6 +7,11 @@ export class UpdateAddressDto {
   @IsOptional()
   addressLine1?: string;
 
+  @ApiPropertyOptional({ example: '69b7cf2f81ff0d6abe3bdf25' })
+  @IsString()
+  @IsOptional()
+  addressId?: string;
+
   @ApiPropertyOptional({ example: 'Apt 4B' })
   @IsString()
   @IsOptional()

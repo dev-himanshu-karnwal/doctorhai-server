@@ -23,7 +23,7 @@ import { AccountsQueryDto } from '../dto/accounts-query.dto';
 import { AccountResponseDto } from '../dto/account-response.dto';
 import { UpdateAccountVerificationDto } from '../dto/update-account-verification.dto';
 import { ApiResponse } from '../../../common/classes/api-response.class';
-import { ACCOUNT_SERVICE_TOKEN } from '../../../common/constants';
+import { ACCOUNT_MANAGEMENT_SERVICE_TOKEN } from '../../../common/constants';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
@@ -32,7 +32,7 @@ import { ACCOUNT_SERVICE_TOKEN } from '../../../common/constants';
 @Controller('accounts')
 export class AccountsController {
   constructor(
-    @Inject(ACCOUNT_SERVICE_TOKEN)
+    @Inject(ACCOUNT_MANAGEMENT_SERVICE_TOKEN)
     private readonly accountService: IAccountService,
   ) {}
 

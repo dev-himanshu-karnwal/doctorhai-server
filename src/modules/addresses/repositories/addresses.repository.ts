@@ -26,6 +26,15 @@ export class AddressesRepository implements IAddressRepository {
     return doc ? AddressMapper.toDomain(doc) : null;
   }
 
+  async findByAccountId(accountId: string): Promise<AddressEntity | null> {
+    if (!Types.ObjectId.isValid(accountId)) return null;
+    const doc = await this.addressModel
+      .findOne({ accountId: new Types.ObjectId(accountId) })
+      .lean()
+      .exec();
+    return doc ? AddressMapper.toDomain(doc as AddressDocLike) : null;
+  }
+
   async create(
     data: CreateAddressInput,
     session?: ClientSession,
@@ -34,6 +43,7 @@ export class AddressesRepository implements IAddressRepository {
     const [doc] = await this.addressModel.create(
       [
         {
+          accountId: new Types.ObjectId(data.accountId),
           addressLine1: data.addressLine1,
           addressLine2: data.addressLine2 ?? null,
           city: data.city,
@@ -55,12 +65,19 @@ export class AddressesRepository implements IAddressRepository {
   ): Promise<AddressEntity | null> {
     if (!Types.ObjectId.isValid(id)) return null;
     const options = session ? { session, new: true } : { new: true };
+    const updatePayload: Record<string, any> = { ...data };
+    if (data.accountId) {
+      updatePayload.accountId = new Types.ObjectId(data.accountId);
+    }
+    // Remove addressId from payload if it leaked in from the controller
+    delete updatePayload.addressId;
+
     const doc = await this.addressModel
       .findByIdAndUpdate(
         id,
         {
           $set: {
-            ...data,
+            ...updatePayload,
             updatedAt: new Date(),
           },
         },

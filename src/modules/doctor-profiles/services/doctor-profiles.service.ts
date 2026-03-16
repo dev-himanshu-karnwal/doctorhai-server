@@ -70,6 +70,13 @@ export class DoctorProfilesService implements IDoctorProfileService {
     return this.doctorProfileRepo.findByAccountId(accountId);
   }
 
+  async findById(
+    id: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileService['findById']>>> {
+    this.logger.debug(`Finding doctor profile by id: ${id}`);
+    return this.doctorProfileRepo.findById(id);
+  }
+
   async findByEmailAndHospitalId(
     email: string,
     hospitalId: string | null,
@@ -192,6 +199,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
         public_view_count: doctor.public_view_count,
         isVerified: doctor.isVerified,
         accountId: doctor.accountId,
+        addressId: doctor.addressId,
         status: s
           ? {
               status: s.status,
@@ -241,6 +249,7 @@ export class DoctorProfilesService implements IDoctorProfileService {
       public_view_count: doctor.public_view_count,
       isVerified: doctor.isVerified,
       accountId: doctor.accountId,
+      addressId: doctor.addressId,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
@@ -363,5 +372,10 @@ export class DoctorProfilesService implements IDoctorProfileService {
   ): Promise<DoctorProfileEntity | null> {
     this.logger.debug(`Finding doctor profile by addressId: ${addressId}`);
     return await this.doctorProfileRepo.findByAddressId(addressId);
+  }
+
+  async updateAddressId(id: string, addressId: string): Promise<void> {
+    this.logger.debug(`Updating addressId for doctor profile: ${id}`);
+    await this.doctorProfileRepo.update(id, { addressId });
   }
 }

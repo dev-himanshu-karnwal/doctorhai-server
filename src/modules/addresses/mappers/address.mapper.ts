@@ -9,6 +9,7 @@ export interface AddressDocLike {
   pincode: string;
   latitude?: number | null;
   longitude?: number | null;
+  accountId?: { toString(): string } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ export class AddressMapper {
   static toDomain(doc: AddressDocLike): AddressEntity {
     return new AddressEntity(
       doc._id.toString(),
+      doc.accountId ? doc.accountId.toString() : null,
       doc.addressLine1,
       doc.addressLine2 ?? null,
       doc.city,

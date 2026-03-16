@@ -1,6 +1,7 @@
-import { Schema, Document } from 'mongoose';
+import { Schema, Document, Types } from 'mongoose';
 
 export interface AddressDocument extends Document {
+  accountId: Types.ObjectId;
   addressLine1: string;
   addressLine2: string | null;
   city: string;
@@ -14,6 +15,7 @@ export interface AddressDocument extends Document {
 
 export const AddressSchema = new Schema<AddressDocument>(
   {
+    accountId: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
     addressLine1: { type: String, required: true },
     addressLine2: { type: String, default: null },
     city: { type: String, required: true },
@@ -25,5 +27,6 @@ export const AddressSchema = new Schema<AddressDocument>(
   { timestamps: true, collection: 'addresses' },
 );
 
+AddressSchema.index({ accountId: 1 });
 AddressSchema.index({ city: 1, state: 1 });
 AddressSchema.index({ pincode: 1 });

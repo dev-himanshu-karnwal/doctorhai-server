@@ -47,6 +47,7 @@ export interface PaginatedDoctorProfiles {
 
 export interface IDoctorProfileService {
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
+  findById(id: string): Promise<DoctorProfileEntity | null>;
   findByEmailAndHospitalId(
     email: string,
     hospitalId: string | null,
@@ -76,4 +77,5 @@ export interface IDoctorProfileService {
   incrementDoctorViewCount(doctorProfileId: string): Promise<void>;
   getStats(hospitalId?: string): Promise<DoctorStats>;
   findByAddressId(addressId: string): Promise<DoctorProfileEntity | null>;
+  updateAddressId(id: string, addressId: string): Promise<void>;
 }

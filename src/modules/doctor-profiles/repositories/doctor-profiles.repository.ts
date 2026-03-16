@@ -221,6 +221,10 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     if (data.slug != null) updatePayload.slug = data.slug;
     if (data.hasExperience !== undefined)
       updatePayload.hasExperience = data.hasExperience;
+    if (data.addressId !== undefined) {
+      updatePayload.addressId =
+        data.addressId != null ? new Types.ObjectId(data.addressId) : null;
+    }
 
     if (Object.keys(updatePayload).length === 0) return this.findById(id);
 

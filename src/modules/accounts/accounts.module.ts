@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AccountSchema } from '../auth/schemas';
 import {
   ACCOUNT_REPOSITORY_TOKEN,
-  ACCOUNT_SERVICE_TOKEN,
+  ACCOUNT_MANAGEMENT_SERVICE_TOKEN,
 } from '../../common/constants';
 import { AccountRepository } from './repositories';
 import { AccountsService } from './services';
@@ -30,10 +30,10 @@ import { AuthModule } from '../auth/auth.module';
       useClass: AccountRepository,
     },
     {
-      provide: ACCOUNT_SERVICE_TOKEN,
+      provide: ACCOUNT_MANAGEMENT_SERVICE_TOKEN,
       useClass: AccountsService,
     },
   ],
-  exports: [ACCOUNT_SERVICE_TOKEN],
+  exports: [ACCOUNT_MANAGEMENT_SERVICE_TOKEN],
 })
 export class AccountsModule {}

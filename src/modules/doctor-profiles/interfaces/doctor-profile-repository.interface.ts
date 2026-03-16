@@ -29,6 +29,7 @@ export interface UpdateDoctorProfileInput {
   bio?: string | null;
   slug?: string;
   hasExperience?: string | null;
+  addressId?: string | null;
 }
 
 export interface IDoctorProfileRepository {
