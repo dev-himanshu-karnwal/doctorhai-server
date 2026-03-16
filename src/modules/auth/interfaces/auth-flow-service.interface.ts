@@ -32,4 +32,5 @@ export interface IAuthFlowService {
     accountId: string,
     dto: VerifyPasswordDto,
   ): Promise<VerifyPasswordResponseDto>;
+  logout(response: Response): void;
 }
