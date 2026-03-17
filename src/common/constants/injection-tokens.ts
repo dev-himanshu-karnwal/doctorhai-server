@@ -42,6 +42,7 @@ export const PROFILE_PERMISSION_SERVICE_TOKEN = Symbol(
   'PROFILE_PERMISSION_SERVICE_TOKEN',
 );
 export const PROFILE_CORE_SERVICE_TOKEN = Symbol('PROFILE_CORE_SERVICE_TOKEN');
+export const GLOBAL_SERVICE_TOKEN = Symbol('IGlobalService');
 
 // Infra
 export const MAIL_SERVICE_TOKEN = Symbol('IMailService');
