@@ -4,6 +4,7 @@ import { GlobalFilterQueryDto } from './dto/global-filter-query.dto';
 import { GlobalFilterResponseDto } from './dto/global-filter-response.dto';
 import type { IGlobalSearchService } from './interfaces/global-service.interface';
 import { GLOBAL_SERVICE_TOKEN } from '../../common/constants';
+import { Public } from '../../common/decorators';
 
 @ApiTags('Global')
 @Controller('global-search')
@@ -13,6 +14,7 @@ export class GlobalSearchController {
     private readonly globalService: IGlobalSearchService,
   ) {}
 
+  @Public()
   @Get()
   @ApiOperation({
     summary: 'Global search for doctors and hospitals',

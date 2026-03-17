@@ -14,7 +14,7 @@ import { AddressesModule } from './modules/addresses/addresses.module';
 import { HospitalsModule } from './modules/hospitals/hospitals.module';
 import { DoctorProfilesModule } from './modules/doctor-profiles/doctor-profiles.module';
 import { DoctorStatusesModule } from './modules/doctor-statuses/doctor-statuses.module';
-import { GlobalSearchModule } from './modules/global/global-search.module';
+import { GlobalSearchModule } from './modules/global-search/global-search.module';
 import { MailModule } from './infra/mail/mail.module';
 
 @Module({
