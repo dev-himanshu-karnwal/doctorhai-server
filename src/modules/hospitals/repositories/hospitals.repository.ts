@@ -151,6 +151,23 @@ export class HospitalsRepository implements IHospitalRepository {
       },
     );
 
+    // Filter by city/state
+    if (query.city) {
+      pipeline.push({
+        $match: {
+          'address.city': { $regex: query.city.trim(), $options: 'i' },
+        },
+      });
+    }
+
+    if (query.state) {
+      pipeline.push({
+        $match: {
+          'address.state': { $regex: query.state.trim(), $options: 'i' },
+        },
+      });
+    }
+
     pipeline.push({
       $lookup: {
         from: 'doctor_profiles',
@@ -197,6 +214,52 @@ export class HospitalsRepository implements IHospitalRepository {
           'doctors.specialization': { $in: specialities },
         },
       });
+    }
+
+    // Filter by doctor experience
+    if (query.experience && query.experience.length > 0) {
+      const expValue = parseInt(query.experience[0], 10);
+      if (!isNaN(expValue)) {
+        pipeline.push({
+          $addFields: {
+            maxExp: {
+              $max: {
+                $map: {
+                  input: '$doctors',
+                  as: 'doc',
+                  in: {
+                    $toInt: {
+                      $ifNull: [
+                        {
+                          $let: {
+                            vars: {
+                              found: {
+                                $regexFind: {
+                                  input: {
+                                    $ifNull: ['$$doc.hasExperience', '0'],
+                                  },
+                                  regex: '[0-9]+',
+                                },
+                              },
+                            },
+                            in: { $ifNull: ['$$found.match', '0'] },
+                          },
+                        },
+                        '0',
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+        pipeline.push({
+          $match: {
+            maxExp: { $gte: expValue },
+          },
+        });
+      }
     }
 
     const sortStage: PipelineStage.Sort = {

@@ -31,7 +31,7 @@ export class GlobalFilterQueryDto {
   @ApiPropertyOptional({ description: 'Filter by doctor experience years' })
   @IsOptional()
   @IsString()
-  experience?: string;
+  hasexperience?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by doctor status (e.g., available)',

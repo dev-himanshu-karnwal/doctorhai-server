@@ -201,6 +201,23 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       },
     );
 
+    // Filter by city/state
+    if (query.city) {
+      pipeline.push({
+        $match: {
+          'address.city': { $regex: query.city.trim(), $options: 'i' },
+        },
+      });
+    }
+
+    if (query.state) {
+      pipeline.push({
+        $match: {
+          'address.state': { $regex: query.state.trim(), $options: 'i' },
+        },
+      });
+    }
+
     // Filter by availability
     if (query.isAvailable !== undefined) {
       pipeline.push(
@@ -233,11 +250,38 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
 
     // Filter by experience
     if (query.experience && query.experience.length > 0) {
-      pipeline.push({
-        $match: {
-          hasExperience: { $in: query.experience },
-        },
-      });
+      const expValue = parseInt(query.experience[0], 10);
+      if (!isNaN(expValue)) {
+        pipeline.push({
+          $match: {
+            $expr: {
+              $gte: [
+                {
+                  $toInt: {
+                    $ifNull: [
+                      {
+                        $let: {
+                          vars: {
+                            found: {
+                              $regexFind: {
+                                input: { $ifNull: ['$hasExperience', '0'] },
+                                regex: '[0-9]+',
+                              },
+                            },
+                          },
+                          in: { $ifNull: ['$$found.match', '0'] },
+                        },
+                      },
+                      '0',
+                    ],
+                  },
+                },
+                expValue,
+              ],
+            },
+          },
+        });
+      }
     }
 
     // Run count and data fetch in parallel

@@ -13,6 +13,9 @@ export interface HospitalsQuery {
   specialities?: string[];
   sortBy?: 'name' | 'createdAt' | 'public_view_count';
   sortOrder?: 'asc' | 'desc';
+  city?: string;
+  state?: string;
+  experience?: string[];
 }
 
 export interface PaginatedHospitals {

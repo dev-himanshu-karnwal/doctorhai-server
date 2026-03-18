@@ -39,6 +39,8 @@ export interface DoctorsQuery extends HospitalDoctorsQuery {
   isAvailable?: boolean;
   specialities?: string[];
   experience?: string[];
+  city?: string;
+  state?: string;
 }
 
 export interface PaginatedDoctorProfiles {

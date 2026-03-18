@@ -28,9 +28,11 @@ export class GlobalSearchService implements IGlobalSearchService {
 
     const {
       search,
+      city,
+      state,
       speciality,
       designation,
-      experience,
+      hasexperience,
       status,
       page = 1,
       limit = 10,
@@ -55,8 +57,10 @@ export class GlobalSearchService implements IGlobalSearchService {
       search,
       specialization: speciality,
       designation,
-      experience: experience ? [experience] : undefined,
+      experience: hasexperience ? [hasexperience] : undefined,
       isAvailable: status === 'available' ? true : undefined,
+      city,
+      state,
       sortBy: ['fullName', 'createdAt', 'public_view_count'].includes(docSortBy)
         ? docSortBy
         : 'createdAt',
@@ -69,6 +73,9 @@ export class GlobalSearchService implements IGlobalSearchService {
       limit,
       search,
       specialities: speciality ? [speciality] : undefined,
+      city,
+      state,
+      experience: hasexperience ? [hasexperience] : undefined,
       sortBy: ['name', 'createdAt', 'public_view_count'].includes(hospSortBy)
         ? hospSortBy
         : 'createdAt',
