@@ -41,6 +41,9 @@ export interface DoctorsQuery extends HospitalDoctorsQuery {
   experience?: string[];
   city?: string;
   state?: string;
+  lat?: number;
+  lng?: number;
+  distance?: number;
 }
 
 export interface PaginatedDoctorProfiles {

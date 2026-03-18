@@ -1,4 +1,10 @@
-import { IsOptional, IsString, IsNumber, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -39,6 +45,22 @@ export class GlobalFilterQueryDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiPropertyOptional({ description: 'Latitude for distance filtering' })
+  @ValidateIf((o) => o.distance !== undefined)
+  @IsNumber()
+  lat?: number;
+
+  @ApiPropertyOptional({ description: 'Longitude for distance filtering' })
+  @ValidateIf((o) => o.distance !== undefined)
+  @IsNumber()
+  lng?: number;
+
+  @ApiPropertyOptional({ description: 'Distance in km' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  distance?: number;
 
   @ApiPropertyOptional({ description: 'Page number', default: 1 })
   @IsOptional()

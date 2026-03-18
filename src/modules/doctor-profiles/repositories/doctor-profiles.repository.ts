@@ -201,6 +201,67 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       },
     );
 
+    if (query.lat != null && query.lng != null && query.distance != null) {
+      pipeline.push({
+        $addFields: {
+          distanceInKm: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ['$latitude', null] },
+                  { $ne: ['$longitude', null] },
+                ],
+              },
+              {
+                $multiply: [
+                  6371,
+                  {
+                    $acos: {
+                      $let: {
+                        vars: {
+                          lat1: { $degreesToRadians: query.lat },
+                          lat2: { $degreesToRadians: '$latitude' },
+                          lonDelta: {
+                            $degreesToRadians: {
+                              $subtract: ['$longitude', query.lng],
+                            },
+                          },
+                        },
+                        in: {
+                          $add: [
+                            {
+                              $multiply: [
+                                { $sin: '$$lat1' },
+                                { $sin: '$$lat2' },
+                              ],
+                            },
+                            {
+                              $multiply: [
+                                { $cos: '$$lat1' },
+                                { $cos: '$$lat2' },
+                                { $cos: '$$lonDelta' },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      });
+
+      pipeline.push({
+        $match: {
+          distanceInKm: { $lte: query.distance },
+        },
+      });
+    }
+
     // Filter by city/state
     if (query.city) {
       pipeline.push({

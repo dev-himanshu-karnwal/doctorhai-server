@@ -34,6 +34,9 @@ export class GlobalSearchService implements IGlobalSearchService {
       designation,
       hasexperience,
       status,
+      lat,
+      lng,
+      distance,
       page = 1,
       limit = 10,
       sortBy = 'createdAt',
@@ -61,6 +64,9 @@ export class GlobalSearchService implements IGlobalSearchService {
       isAvailable: status === 'available' ? true : undefined,
       city,
       state,
+      lat,
+      lng,
+      distance,
       sortBy: ['fullName', 'createdAt', 'public_view_count'].includes(docSortBy)
         ? docSortBy
         : 'createdAt',
@@ -76,6 +82,9 @@ export class GlobalSearchService implements IGlobalSearchService {
       city,
       state,
       experience: hasexperience ? [hasexperience] : undefined,
+      lat,
+      lng,
+      distance,
       sortBy: ['name', 'createdAt', 'public_view_count'].includes(hospSortBy)
         ? hospSortBy
         : 'createdAt',

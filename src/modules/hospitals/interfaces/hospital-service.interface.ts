@@ -16,6 +16,9 @@ export interface HospitalsQuery {
   city?: string;
   state?: string;
   experience?: string[];
+  lat?: number;
+  lng?: number;
+  distance?: number;
 }
 
 export interface PaginatedHospitals {
