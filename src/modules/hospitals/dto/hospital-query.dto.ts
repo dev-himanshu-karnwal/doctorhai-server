@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsBooleanString,
   IsIn,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -83,4 +84,31 @@ export class GetHospitalsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({
+    description: 'Latitude of the user',
+    example: '12.9716',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  latitude?: number;
+
+  @ApiPropertyOptional({
+    description: 'Longitude of the user',
+    example: '77.5946',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  longitude?: number;
+
+  @ApiPropertyOptional({
+    description: 'Distance from the user',
+    example: '10',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  distance?: number;
 }

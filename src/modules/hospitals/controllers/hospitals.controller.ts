@@ -149,6 +149,9 @@ export class HospitalsController {
       specialities: query.specialities,
       sortBy: query.sortBy ?? 'createdAt',
       sortOrder: query.sortOrder ?? 'desc',
+      lat: query.latitude,
+      lng: query.longitude,
+      distance: query.distance,
     };
 
     const result: PaginatedHospitals =
