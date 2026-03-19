@@ -58,4 +58,9 @@ export interface DetailedAccountResponse {
 export interface IAccountService {
   getAccounts(query: AccountsQueryDto): Promise<PaginatedAccountsResponse>;
   getAccountById(id: string): Promise<DetailedAccountResponse>;
+  updateVerificationStatus(
+    id: string,
+    isVerified: boolean,
+  ): Promise<AccountEntity>;
+  deleteAccount(id: string): Promise<void>;
 }

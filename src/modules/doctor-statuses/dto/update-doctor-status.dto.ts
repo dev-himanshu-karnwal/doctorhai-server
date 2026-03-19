@@ -1,4 +1,5 @@
 import { IsEnum, IsOptional, IsString, IsDate } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { AvailabilityStatus } from '../enums/availability-status.enum';
 
@@ -28,6 +29,7 @@ export class UpdateDoctorStatusDto {
   @ApiProperty({ required: false, example: new Date().toISOString() })
   @IsOptional()
   @IsDate()
+  @Type(() => Date)
   expectedAt?: Date;
 
   @ApiProperty({ required: false, example: 'I will be back in 10 minutes' })

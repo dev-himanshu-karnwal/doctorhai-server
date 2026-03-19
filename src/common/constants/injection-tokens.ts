@@ -28,6 +28,9 @@ export const OTP_SERVICE_TOKEN = Symbol('IOtpService');
 export const PERMISSION_SERVICE_TOKEN = Symbol('IPermissionService');
 export const ROLE_SERVICE_TOKEN = Symbol('IRoleService');
 export const ACCOUNT_SERVICE_TOKEN = Symbol('IAccountService');
+export const ACCOUNT_MANAGEMENT_SERVICE_TOKEN = Symbol(
+  'IAccountManagementService',
+);
 export const PASSWORD_RESET_SERVICE_TOKEN = Symbol('IPasswordResetService');
 export const AUTH_FLOW_SERVICE_TOKEN = Symbol('IAuthFlowService');
 export const ACCOUNT_CREATION_SERVICE_TOKEN = Symbol('IAccountCreationService');
@@ -39,6 +42,7 @@ export const PROFILE_PERMISSION_SERVICE_TOKEN = Symbol(
   'PROFILE_PERMISSION_SERVICE_TOKEN',
 );
 export const PROFILE_CORE_SERVICE_TOKEN = Symbol('PROFILE_CORE_SERVICE_TOKEN');
+export const GLOBAL_SERVICE_TOKEN = Symbol('IGlobalService');
 
 // Infra
 export const MAIL_SERVICE_TOKEN = Symbol('IMailService');

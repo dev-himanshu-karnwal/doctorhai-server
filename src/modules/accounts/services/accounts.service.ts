@@ -1,9 +1,12 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 import {
   ACCOUNT_REPOSITORY_TOKEN,
   DOCTOR_PROFILE_REPOSITORY_TOKEN,
   HOSPITAL_REPOSITORY_TOKEN,
   ADDRESS_REPOSITORY_TOKEN,
+  DOCTOR_STATUS_REPOSITORY_TOKEN,
 } from '../../../common/constants';
 import type {
   IAccountService,
@@ -16,6 +19,7 @@ import type { AccountsQueryDto } from '../dto/accounts-query.dto';
 import type { IDoctorProfileRepository } from '../../doctor-profiles/interfaces';
 import type { IHospitalRepository } from '../../hospitals/interfaces';
 import type { IAddressRepository } from '../../addresses/interfaces';
+import type { IDoctorStatusRepository } from '../../doctor-statuses/interfaces';
 import { DoctorProfileEntity } from '../../doctor-profiles/entities';
 import { HospitalEntity } from '../../hospitals/entities';
 import { AddressEntity } from '../../addresses/entities';
@@ -31,6 +35,10 @@ export class AccountsService implements IAccountService {
     private readonly hospitalRepo: IHospitalRepository,
     @Inject(ADDRESS_REPOSITORY_TOKEN)
     private readonly addressRepo: IAddressRepository,
+    @Inject(DOCTOR_STATUS_REPOSITORY_TOKEN)
+    private readonly doctorStatusRepo: IDoctorStatusRepository,
+    @InjectConnection()
+    private readonly connection: Connection,
   ) {}
 
   async getAccounts(
@@ -137,5 +145,84 @@ export class AccountsService implements IAccountService {
     }
 
     return response;
+  }
+
+  async updateVerificationStatus(
+    id: string,
+    isVerified: boolean,
+  ): Promise<AccountEntity> {
+    const updatedAccount = await this.accountRepo.updateVerificationStatus(
+      id,
+      isVerified,
+    );
+
+    if (!updatedAccount) {
+      throw new NotFoundException(`Account with ID ${id} not found`);
+    }
+
+    return updatedAccount;
+  }
+
+  async deleteAccount(id: string): Promise<void> {
+    const account = await this.accountRepo.findById(id);
+    if (!account) {
+      throw new NotFoundException(`Account with ID ${id} not found`);
+    }
+
+    const session = await this.connection.startSession();
+    session.startTransaction();
+
+    try {
+      // 1. Handle Hospital deletion
+      const hospital = await this.hospitalRepo.findByAccountId(id);
+      if (hospital) {
+        // Find all doctors belonging to this hospital
+        const hospitalDoctors = await this.doctorRepo.findByHospitalId(
+          hospital.id,
+        );
+        for (const doctor of hospitalDoctors) {
+          // Delete each doctor's status
+          await this.doctorStatusRepo.deleteByDoctorProfileId(
+            doctor.id,
+            session,
+          );
+          // Delete each doctor's address if exists
+          if (doctor.addressId) {
+            await this.addressRepo.delete(doctor.addressId, session);
+          }
+          // Delete the doctor profile itself
+          await this.doctorRepo.delete(doctor.id, session);
+        }
+        // Delete hospital's address
+        if (hospital.addressId) {
+          await this.addressRepo.delete(hospital.addressId, session);
+        }
+        // Delete hospital profile
+        await this.hospitalRepo.delete(hospital.id, session);
+      }
+
+      // 2. Handle Individual Doctor deletion (if not already handled or if it's a standalone doctor account)
+      const doctor = await this.doctorRepo.findByAccountId(id);
+      if (doctor) {
+        // Delete doctor status
+        await this.doctorStatusRepo.deleteByDoctorProfileId(doctor.id, session);
+        // Delete doctor address
+        if (doctor.addressId) {
+          await this.addressRepo.delete(doctor.addressId, session);
+        }
+        // Delete doctor profile
+        await this.doctorRepo.delete(doctor.id, session);
+      }
+
+      // 3. Finally delete the account itself
+      await this.accountRepo.delete(id, session);
+
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 }

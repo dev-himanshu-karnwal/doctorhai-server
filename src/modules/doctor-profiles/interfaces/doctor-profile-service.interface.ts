@@ -36,6 +36,14 @@ export interface HospitalDoctorsQuery {
 export interface DoctorsQuery extends HospitalDoctorsQuery {
   hospitalId?: string;
   isVerified?: boolean;
+  isAvailable?: boolean;
+  specialities?: string[];
+  experience?: string[];
+  city?: string;
+  state?: string;
+  lat?: number;
+  lng?: number;
+  distance?: number;
 }
 
 export interface PaginatedDoctorProfiles {
@@ -47,6 +55,7 @@ export interface PaginatedDoctorProfiles {
 
 export interface IDoctorProfileService {
   findByAccountId(accountId: string): Promise<DoctorProfileEntity | null>;
+  findById(id: string): Promise<DoctorProfileEntity | null>;
   findByEmailAndHospitalId(
     email: string,
     hospitalId: string | null,
@@ -75,4 +84,6 @@ export interface IDoctorProfileService {
   ): Promise<Map<string, string[]>>;
   incrementDoctorViewCount(doctorProfileId: string): Promise<void>;
   getStats(hospitalId?: string): Promise<DoctorStats>;
+  findByAddressId(addressId: string): Promise<DoctorProfileEntity | null>;
+  updateAddressId(id: string, addressId: string): Promise<void>;
 }

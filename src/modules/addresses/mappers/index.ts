@@ -1,1 +1,1 @@
-export { AddressMapper } from './address.mapper';
+export { AddressMapper, type AddressDocLike } from './address.mapper';

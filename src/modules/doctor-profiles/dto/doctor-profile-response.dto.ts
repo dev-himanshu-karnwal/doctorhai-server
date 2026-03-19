@@ -51,13 +51,25 @@ export class DoctorProfileResponseDto {
   hasExperience: string | null;
 
   @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
+  accountId: string;
+
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
   hospitalId: string | null;
 
   @ApiProperty({ example: 42 })
   public_view_count: number;
 
+  @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
+  addressId: string | null;
+
   @ApiProperty({ example: true })
   isVerified: boolean;
+
+  @ApiPropertyOptional({ example: 28.6139 })
+  latitude?: number | null;
+
+  @ApiPropertyOptional({ example: 77.209 })
+  longitude?: number | null;
 
   @ApiPropertyOptional({ type: DoctorStatusResponseDto })
   status?: DoctorStatusResponseDto | null;

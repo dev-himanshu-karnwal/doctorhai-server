@@ -96,4 +96,18 @@ export class DoctorStatusesRepository implements IDoctorStatusRepository {
 
     return DoctorStatusMapper.toDomain(doc);
   }
+
+  async deleteByDoctorProfileId(
+    doctorProfileId: string,
+    session?: ClientSession,
+  ): Promise<void> {
+    if (!Types.ObjectId.isValid(doctorProfileId)) return;
+    const options = session ? { session } : {};
+    await this.doctorStatusModel
+      .deleteOne(
+        { doctorProfileId: new Types.ObjectId(doctorProfileId) },
+        options,
+      )
+      .exec();
+  }
 }

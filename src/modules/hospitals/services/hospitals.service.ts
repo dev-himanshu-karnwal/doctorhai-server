@@ -74,4 +74,14 @@ export class HospitalsService implements IHospitalService {
     this.logger.debug('Fetching hospital statistics');
     return await this.hospitalRepo.getStats();
   }
+
+  async findByAddressId(addressId: string): Promise<HospitalEntity | null> {
+    this.logger.debug(`Finding hospital by addressId: ${addressId}`);
+    return await this.hospitalRepo.findByAddressId(addressId);
+  }
+
+  async updateAddressId(id: string, addressId: string): Promise<void> {
+    this.logger.debug(`Updating addressId for hospital: ${id}`);
+    await this.hospitalRepo.update(id, { addressId });
+  }
 }

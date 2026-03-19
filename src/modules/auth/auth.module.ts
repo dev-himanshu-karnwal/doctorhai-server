@@ -72,9 +72,9 @@ import { HospitalsModule } from '../hospitals';
       }),
       inject: [AppConfigService],
     }),
-    AddressesModule,
+    forwardRef(() => AddressesModule),
     forwardRef(() => DoctorProfilesModule),
-    HospitalsModule,
+    forwardRef(() => HospitalsModule),
   ],
   controllers: [AuthController],
   providers: [

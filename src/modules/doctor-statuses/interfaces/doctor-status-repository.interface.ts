@@ -24,4 +24,8 @@ export interface IDoctorStatusRepository {
     session?: ClientSession,
   ): Promise<DoctorStatusEntity>;
   updateStatus(data: UpdateDoctorStatusDto): Promise<DoctorStatusEntity>;
+  deleteByDoctorProfileId(
+    doctorProfileId: string,
+    session?: ClientSession,
+  ): Promise<void>;
 }

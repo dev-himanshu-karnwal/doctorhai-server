@@ -225,6 +225,10 @@ export class AuthFlowService implements IAuthFlowService {
     };
   }
 
+  logout(response: Response): void {
+    this.authRegistrationService.logout(response);
+  }
+
   private async ensureCanManageAccount(
     requestedByAccountId: string,
     targetAccountId: string,

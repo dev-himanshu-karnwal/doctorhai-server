@@ -32,6 +32,7 @@ import {
   PaginatedDoctorsResponseDto,
 } from '../dto/doctor-profile-response.dto';
 import { DoctorStats } from '../dto/doctor-stats.dto';
+import { DoctorProfileEntity } from '../entities';
 
 /**
  * Service for managing doctor profiles.
@@ -67,6 +68,13 @@ export class DoctorProfilesService implements IDoctorProfileService {
   ): Promise<Awaited<ReturnType<IDoctorProfileService['findByAccountId']>>> {
     this.logger.debug(`Finding doctor profile by accountId: ${accountId}`);
     return this.doctorProfileRepo.findByAccountId(accountId);
+  }
+
+  async findById(
+    id: string,
+  ): Promise<Awaited<ReturnType<IDoctorProfileService['findById']>>> {
+    this.logger.debug(`Finding doctor profile by id: ${id}`);
+    return this.doctorProfileRepo.findById(id);
   }
 
   async findByEmailAndHospitalId(
@@ -190,6 +198,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
         hospitalId: doctor.hospitalId,
         public_view_count: doctor.public_view_count,
         isVerified: doctor.isVerified,
+        accountId: doctor.accountId,
+        addressId: doctor.addressId,
         status: s
           ? {
               status: s.status,
@@ -238,6 +248,8 @@ export class DoctorProfilesService implements IDoctorProfileService {
       hospitalId: doctor.hospitalId,
       public_view_count: doctor.public_view_count,
       isVerified: doctor.isVerified,
+      accountId: doctor.accountId,
+      addressId: doctor.addressId,
     };
 
     const status = await this.doctorStatusRepo.findByDoctorProfileId(id);
@@ -353,5 +365,17 @@ export class DoctorProfilesService implements IDoctorProfileService {
       `Fetching doctor profile statistics${hospitalId ? ` for hospital: ${hospitalId}` : ''}`,
     );
     return this.doctorProfileRepo.getStats(hospitalId);
+  }
+
+  async findByAddressId(
+    addressId: string,
+  ): Promise<DoctorProfileEntity | null> {
+    this.logger.debug(`Finding doctor profile by addressId: ${addressId}`);
+    return await this.doctorProfileRepo.findByAddressId(addressId);
+  }
+
+  async updateAddressId(id: string, addressId: string): Promise<void> {
+    this.logger.debug(`Updating addressId for doctor profile: ${id}`);
+    await this.doctorProfileRepo.update(id, { addressId });
   }
 }

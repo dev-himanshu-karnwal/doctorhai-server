@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsBooleanString,
   IsIn,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -48,6 +49,25 @@ export class GetHospitalsQueryDto extends PaginationQueryDto {
   isVerified?: string;
 
   @ApiPropertyOptional({
+    description: 'Filter by doctor availability in the hospital',
+    example: 'true',
+  })
+  @IsOptional()
+  @IsBooleanString()
+  isAvailable?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by doctor specialities in the hospital',
+    example: 'Cardiology,Neurology',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string | string[] }) => {
+    if (typeof value === 'string') return value.split(',').map((s) => s.trim());
+    return value;
+  })
+  specialities?: string[];
+
+  @ApiPropertyOptional({
     description: 'Sort field',
     enum: ['name', 'createdAt', 'public_view_count'],
     default: 'createdAt',
@@ -64,4 +84,31 @@ export class GetHospitalsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({
+    description: 'Latitude of the user',
+    example: '12.9716',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  latitude?: number;
+
+  @ApiPropertyOptional({
+    description: 'Longitude of the user',
+    example: '77.5946',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  longitude?: number;
+
+  @ApiPropertyOptional({
+    description: 'Distance from the user',
+    example: '10',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  distance?: number;
 }

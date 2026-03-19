@@ -9,8 +9,16 @@ export interface HospitalsQuery {
   name?: string;
   isActive?: string;
   isVerified?: string;
+  isAvailable?: string;
+  specialities?: string[];
   sortBy?: 'name' | 'createdAt' | 'public_view_count';
   sortOrder?: 'asc' | 'desc';
+  city?: string;
+  state?: string;
+  experience?: string[];
+  lat?: number;
+  lng?: number;
+  distance?: number;
 }
 
 export interface PaginatedHospitals {
@@ -61,4 +69,6 @@ export interface IHospitalService {
   findById(id: string): Promise<HospitalEntity | null>;
   incrementHospitalViewCount(hospitalId: string): Promise<void>;
   getStats(): Promise<HospitalStats>;
+  findByAddressId(addressId: string): Promise<HospitalEntity | null>;
+  updateAddressId(id: string, addressId: string): Promise<void>;
 }

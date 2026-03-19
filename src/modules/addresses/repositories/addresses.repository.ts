@@ -3,8 +3,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { AddressDocument } from '../schemas';
 import { AddressEntity } from '../entities';
-import { AddressMapper } from '../mappers';
-import type { IAddressRepository, CreateAddressInput } from '../interfaces';
+import { AddressMapper, type AddressDocLike } from '../mappers';
+import type {
+  IAddressRepository,
+  CreateAddressInput,
+  UpdateAddressInput,
+} from '../interfaces';
 
 @Injectable()
 export class AddressesRepository implements IAddressRepository {
@@ -22,6 +26,15 @@ export class AddressesRepository implements IAddressRepository {
     return doc ? AddressMapper.toDomain(doc) : null;
   }
 
+  async findByAccountId(accountId: string): Promise<AddressEntity | null> {
+    if (!Types.ObjectId.isValid(accountId)) return null;
+    const doc = await this.addressModel
+      .findOne({ accountId: new Types.ObjectId(accountId) })
+      .lean()
+      .exec();
+    return doc ? AddressMapper.toDomain(doc as AddressDocLike) : null;
+  }
+
   async create(
     data: CreateAddressInput,
     session?: ClientSession,
@@ -30,6 +43,7 @@ export class AddressesRepository implements IAddressRepository {
     const [doc] = await this.addressModel.create(
       [
         {
+          accountId: new Types.ObjectId(data.accountId),
           addressLine1: data.addressLine1,
           addressLine2: data.addressLine2 ?? null,
           city: data.city,
@@ -42,5 +56,41 @@ export class AddressesRepository implements IAddressRepository {
       options,
     );
     return AddressMapper.toDomain(doc);
+  }
+
+  async update(
+    id: string,
+    data: UpdateAddressInput,
+    session?: ClientSession,
+  ): Promise<AddressEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    const options = session ? { session, new: true } : { new: true };
+    const updatePayload: Record<string, any> = { ...data };
+    if (data.accountId) {
+      updatePayload.accountId = new Types.ObjectId(data.accountId);
+    }
+    // Remove addressId from payload if it leaked in from the controller
+    delete updatePayload.addressId;
+
+    const doc = await this.addressModel
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            ...updatePayload,
+            updatedAt: new Date(),
+          },
+        },
+        options,
+      )
+      .lean()
+      .exec();
+    return doc ? AddressMapper.toDomain(doc as AddressDocLike) : null;
+  }
+
+  async delete(id: string, session?: ClientSession): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    const options = session ? { session } : {};
+    await this.addressModel.findByIdAndDelete(id, options).exec();
   }
 }

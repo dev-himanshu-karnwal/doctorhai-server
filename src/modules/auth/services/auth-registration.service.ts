@@ -206,6 +206,11 @@ export class AuthRegistrationService {
     };
   }
 
+  logout(response: Response): void {
+    response.clearCookie(this.config.cookieName);
+    this.logger.log('User logged out, auth cookie cleared');
+  }
+
   private setAuthCookie(response: Response, token: string): void {
     response.cookie(this.config.cookieName, token, {
       httpOnly: true,

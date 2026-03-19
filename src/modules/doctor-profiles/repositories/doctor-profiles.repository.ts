@@ -180,6 +180,171 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
       });
     }
 
+    // Join with addresses based on addressId
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: 'addressId',
+          foreignField: '_id',
+          as: 'address',
+        },
+      },
+      {
+        $unwind: { path: '$address', preserveNullAndEmptyArrays: true },
+      },
+      {
+        $addFields: {
+          latitude: { $ifNull: ['$address.latitude', null] },
+          longitude: { $ifNull: ['$address.longitude', null] },
+        },
+      },
+    );
+
+    if (query.lat != null && query.lng != null && query.distance != null) {
+      pipeline.push({
+        $addFields: {
+          distanceInKm: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ['$latitude', null] },
+                  { $ne: ['$longitude', null] },
+                ],
+              },
+              {
+                $multiply: [
+                  6371,
+                  {
+                    $acos: {
+                      $let: {
+                        vars: {
+                          lat1: { $degreesToRadians: query.lat },
+                          lat2: { $degreesToRadians: '$latitude' },
+                          lonDelta: {
+                            $degreesToRadians: {
+                              $subtract: ['$longitude', query.lng],
+                            },
+                          },
+                        },
+                        in: {
+                          $add: [
+                            {
+                              $multiply: [
+                                { $sin: '$$lat1' },
+                                { $sin: '$$lat2' },
+                              ],
+                            },
+                            {
+                              $multiply: [
+                                { $cos: '$$lat1' },
+                                { $cos: '$$lat2' },
+                                { $cos: '$$lonDelta' },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      });
+
+      pipeline.push({
+        $match: {
+          distanceInKm: { $lte: query.distance },
+        },
+      });
+    }
+
+    // Filter by city/state
+    if (query.city) {
+      pipeline.push({
+        $match: {
+          'address.city': { $regex: query.city.trim(), $options: 'i' },
+        },
+      });
+    }
+
+    if (query.state) {
+      pipeline.push({
+        $match: {
+          'address.state': { $regex: query.state.trim(), $options: 'i' },
+        },
+      });
+    }
+
+    // Filter by availability
+    if (query.isAvailable !== undefined) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'doctor_statuses',
+            localField: '_id',
+            foreignField: 'doctorProfileId',
+            as: 'status_info',
+          },
+        },
+        {
+          $match: {
+            'status_info.status': query.isAvailable
+              ? 'available'
+              : { $nin: ['available'] },
+          },
+        },
+      );
+    }
+
+    // Filter by specialities
+    if (query.specialities && query.specialities.length > 0) {
+      pipeline.push({
+        $match: {
+          specialization: { $in: query.specialities },
+        },
+      });
+    }
+
+    // Filter by experience
+    if (query.experience && query.experience.length > 0) {
+      const expValue = parseInt(query.experience[0], 10);
+      if (!isNaN(expValue)) {
+        pipeline.push({
+          $match: {
+            $expr: {
+              $gte: [
+                {
+                  $toInt: {
+                    $ifNull: [
+                      {
+                        $let: {
+                          vars: {
+                            found: {
+                              $regexFind: {
+                                input: { $ifNull: ['$hasExperience', '0'] },
+                                regex: '[0-9]+',
+                              },
+                            },
+                          },
+                          in: { $ifNull: ['$$found.match', '0'] },
+                        },
+                      },
+                      '0',
+                    ],
+                  },
+                },
+                expValue,
+              ],
+            },
+          },
+        });
+      }
+    }
+
     // Run count and data fetch in parallel
     const [countResult, docs] = await Promise.all([
       this.doctorProfileModel.aggregate<{ total: number }>([
@@ -221,6 +386,10 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
     if (data.slug != null) updatePayload.slug = data.slug;
     if (data.hasExperience !== undefined)
       updatePayload.hasExperience = data.hasExperience;
+    if (data.addressId !== undefined) {
+      updatePayload.addressId =
+        data.addressId != null ? new Types.ObjectId(data.addressId) : null;
+    }
 
     if (Object.keys(updatePayload).length === 0) return this.findById(id);
 
@@ -361,5 +530,41 @@ export class DoctorProfilesRepository implements IDoctorProfileRepository {
         total_available: 0,
       }
     );
+  }
+  async findByHospitalId(hospitalId: string): Promise<DoctorProfileEntity[]> {
+    if (!Types.ObjectId.isValid(hospitalId)) return [];
+    const docs = await this.doctorProfileModel
+      .find({ hospitalId: new Types.ObjectId(hospitalId), ...this.notDeleted })
+      .lean()
+      .exec();
+    return docs.map((doc) => DoctorProfileMapper.toDomain(doc));
+  }
+
+  async delete(id: string, session?: ClientSession): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    const options = session ? { session } : {};
+    await this.doctorProfileModel.findByIdAndDelete(id, options).exec();
+  }
+
+  async deleteByHospitalId(
+    hospitalId: string,
+    session?: ClientSession,
+  ): Promise<void> {
+    if (!Types.ObjectId.isValid(hospitalId)) return;
+    const options = session ? { session } : {};
+    await this.doctorProfileModel
+      .deleteMany({ hospitalId: new Types.ObjectId(hospitalId) }, options)
+      .exec();
+  }
+
+  async findByAddressId(
+    addressId: string,
+  ): Promise<DoctorProfileEntity | null> {
+    if (!Types.ObjectId.isValid(addressId)) return null;
+    const doc = await this.doctorProfileModel
+      .findOne({ addressId: new Types.ObjectId(addressId), ...this.notDeleted })
+      .lean()
+      .exec();
+    return doc ? DoctorProfileMapper.toDomain(doc) : null;
   }
 }

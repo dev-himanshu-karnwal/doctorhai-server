@@ -142,6 +142,22 @@ export class AuthController {
     return ApiResponse.withDataKey('user', result);
   }
 
+  @Post('logout')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Logout',
+    description: 'Clears the authentication cookie.',
+  })
+  @ApiOkResponse({ description: 'Logged out successfully' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  logout(
+    @Res({ passthrough: true }) response: Response,
+  ): DataKeyWrapper<'message'> {
+    this.authFlowService.logout(response);
+    return ApiResponse.withDataKey('message', 'Logged out successfully');
+  }
+
   @Patch('accounts/:accountId/email')
   @UseGuards(PermissionsGuard)
   @RequirePermissions({

@@ -81,6 +81,8 @@ export class HospitalsRepository implements IHospitalRepository {
       name,
       isActive,
       isVerified,
+      isAvailable,
+      specialities,
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
@@ -116,7 +118,115 @@ export class HospitalsRepository implements IHospitalRepository {
 
     if (isVerified !== undefined) {
       pipeline.push({
-        $match: { 'account.isVerified': isVerified === 'true' },
+        $match: { isVerified: isVerified === 'true' },
+      });
+    }
+
+    // Join with addresses based on addressId
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: 'addressId',
+          foreignField: '_id',
+          as: 'address',
+        },
+      },
+      {
+        $unwind: { path: '$address', preserveNullAndEmptyArrays: true },
+      },
+      {
+        $addFields: {
+          location: {
+            $cond: [
+              { $ifNull: ['$address', false] },
+              {
+                latitude: { $ifNull: ['$address.latitude', null] },
+                longitude: { $ifNull: ['$address.longitude', null] },
+              },
+              '$location',
+            ],
+          },
+        },
+      },
+    );
+
+    // Calculate distance if lat, lng, and distance are provided
+    if (query.lat != null && query.lng != null && query.distance != null) {
+      pipeline.push({
+        $addFields: {
+          distanceInKm: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ['$location.latitude', null] },
+                  { $ne: ['$location.longitude', null] },
+                ],
+              },
+              {
+                $multiply: [
+                  6371,
+                  {
+                    $acos: {
+                      $let: {
+                        vars: {
+                          lat1: { $degreesToRadians: query.lat },
+                          lat2: { $degreesToRadians: '$location.latitude' },
+                          lonDelta: {
+                            $degreesToRadians: {
+                              $subtract: ['$location.longitude', query.lng],
+                            },
+                          },
+                        },
+                        in: {
+                          $add: [
+                            {
+                              $multiply: [
+                                { $sin: '$$lat1' },
+                                { $sin: '$$lat2' },
+                              ],
+                            },
+                            {
+                              $multiply: [
+                                { $cos: '$$lat1' },
+                                { $cos: '$$lat2' },
+                                { $cos: '$$lonDelta' },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      });
+
+      pipeline.push({
+        $match: {
+          distanceInKm: { $lte: query.distance },
+        },
+      });
+    }
+
+    // Filter by city/state
+    if (query.city) {
+      pipeline.push({
+        $match: {
+          'address.city': { $regex: query.city.trim(), $options: 'i' },
+        },
+      });
+    }
+
+    if (query.state) {
+      pipeline.push({
+        $match: {
+          'address.state': { $regex: query.state.trim(), $options: 'i' },
+        },
       });
     }
 
@@ -139,6 +249,79 @@ export class HospitalsRepository implements IHospitalRepository {
           ],
         },
       });
+    }
+
+    if (isAvailable !== undefined) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'doctor_statuses',
+            localField: 'doctors._id',
+            foreignField: 'doctorProfileId',
+            as: 'doctorStatuses',
+          },
+        },
+        {
+          $match: {
+            'doctorStatuses.status':
+              isAvailable === 'true' ? 'available' : { $nin: ['available'] },
+          },
+        },
+      );
+    }
+
+    if (specialities && specialities.length > 0) {
+      pipeline.push({
+        $match: {
+          'doctors.specialization': { $in: specialities },
+        },
+      });
+    }
+
+    // Filter by doctor experience
+    if (query.experience && query.experience.length > 0) {
+      const expValue = parseInt(query.experience[0], 10);
+      if (!isNaN(expValue)) {
+        pipeline.push({
+          $addFields: {
+            maxExp: {
+              $max: {
+                $map: {
+                  input: '$doctors',
+                  as: 'doc',
+                  in: {
+                    $toInt: {
+                      $ifNull: [
+                        {
+                          $let: {
+                            vars: {
+                              found: {
+                                $regexFind: {
+                                  input: {
+                                    $ifNull: ['$$doc.hasExperience', '0'],
+                                  },
+                                  regex: '[0-9]+',
+                                },
+                              },
+                            },
+                            in: { $ifNull: ['$$found.match', '0'] },
+                          },
+                        },
+                        '0',
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+        pipeline.push({
+          $match: {
+            maxExp: { $gte: expValue },
+          },
+        });
+      }
     }
 
     const sortStage: PipelineStage.Sort = {
@@ -270,5 +453,20 @@ export class HospitalsRepository implements IHospitalRepository {
         total_unverified_count: 0,
       }
     );
+  }
+
+  async findByAddressId(addressId: string): Promise<HospitalEntity | null> {
+    if (!Types.ObjectId.isValid(addressId)) return null;
+    const doc = await this.hospitalModel
+      .findOne({ addressId: new Types.ObjectId(addressId), ...this.notDeleted })
+      .lean()
+      .exec();
+    return doc ? HospitalMapper.toDomain(doc) : null;
+  }
+
+  async delete(id: string, session?: ClientSession): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) return;
+    const options = session ? { session } : {};
+    await this.hospitalModel.findByIdAndDelete(id, options).exec();
   }
 }
